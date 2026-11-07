@@ -33,6 +33,17 @@ def digest(value) -> str:
     return hashlib.sha256(dumps(value).encode("utf-8")).hexdigest()
 
 
+def gross_error_flag(evaluation: dict) -> bool | None:
+    """Distinguish a confirmed flag from a check still awaiting evidence."""
+    if evaluation["score"].get("gross_error", False):
+        return True
+    unresolved = {result["criterion_id"] for result in evaluation["results"] if result["status"] == "needs_review"}
+    if any(criterion.get("gross_error_rule") and criterion["criterion_id"] in unresolved
+           for criterion in evaluation["checklist"]["criteria"]):
+        return None
+    return False
+
+
 class Store:
     def __init__(self, database_path: str | Path):
         self.memory = str(database_path) == ":memory:"
@@ -151,8 +162,8 @@ class Store:
     def list_conversations(self, group_id=None, language=None, channel=None, gross_error=None):
         """Filter the latest reviewed result only when its source is still current.
 
-        Unassessed or changed conversations have an unknown flag (None), so they
-        match neither gross_error=True nor gross_error=False.
+        Unassessed or changed conversations and unresolved gross-error checks
+        have an unknown flag (None) unless a violation has been confirmed.
         """
         conditions, params = [], []
         for name, value in (("group_id", group_id), ("language", language), ("channel", channel)):
@@ -174,7 +185,7 @@ class Store:
                     if digest(payload["conversation"]) == row["content_hash"]:
                         latest_payload = payload
                         break
-                latest_gross_error = bool(latest_payload["score"].get("gross_error", False)) if latest_payload else None
+                latest_gross_error = gross_error_flag(latest_payload) if latest_payload else None
                 if gross_error is not None and latest_gross_error is not gross_error:
                     continue
                 messages = conversation["transcript"]
@@ -317,7 +328,7 @@ class Store:
         where = " WHERE " + " AND ".join(conditions) if conditions else ""
         with self.read() as db:
             evaluations = [self._evaluation(db, row["evaluation_id"]) for row in db.execute("SELECT evaluation_id FROM evaluations" + where + " ORDER BY created_at DESC,rowid DESC", params).fetchall()]
-        return [evaluation for evaluation in evaluations if gross_error is None or bool(evaluation["score"].get("gross_error", False)) is gross_error]
+        return [evaluation for evaluation in evaluations if gross_error is None or gross_error_flag(evaluation) is gross_error]
 
     def submission_snapshot(self, group_id: str) -> tuple[list[Conversation], list[dict]]:
         """Read the source set and its evaluation history at the same point in time."""

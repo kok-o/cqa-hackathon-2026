@@ -1,3 +1,4 @@
+import asyncio
 from copy import deepcopy
 import json
 from pathlib import Path
@@ -64,6 +65,30 @@ class OfficialApiTests(unittest.TestCase):
                 self.assertEqual(sum(r["status"] == "error" for r in document["results"]), 9)
                 bad = client.get("/api/submission/export", params={**params, "split": "dev"})
                 self.assertEqual(bad.status_code, 422)
+
+                # A queued job can retain the old transcript and finish after
+                # the new version has already been imported and evaluated.
+                store = client.app.state.store
+                old = store.conversation("PROD_TEST", "official-api-0")
+                checklist = store.checklist(rules["checklist_id"], 1)
+                old_job, _ = store.create_job(old, checklist)
+                store.begin_job(old_job["job_id"])
+                chosen.update(model="gpt-6.1-sol", contact=True)
+                old_run = asyncio.run(evaluator(old, checklist))
+                updated = deepcopy(source)
+                updated["data"]["records"][0]["transcript"][0]["text"] = "Обновлённый исходный текст"
+                client.post("/api/datasets/import", json={"dataset": updated}).raise_for_status()
+                chosen.update(model="gpt-6.1-sol", contact=False)
+                client.post("/api/evaluation-jobs", json=body).raise_for_status()
+
+                store.complete_job(old_job["job_id"], old, checklist, old_run.draft, old_run.model_info)
+
+                response = client.get("/api/submission/export", params=params)
+                self.assertEqual(response.status_code, 200, response.text)
+                first = next(r for r in response.json()["results"] if r["conversation_id"] == old.conversation_id)
+                self.assertEqual(first["status"], "ok", first)
+                self.assertEqual(first["score"]["final_score"], 90)
+                self.assertEqual(len(store.list_evaluations(group_id=old.group_id)), 4)
 
 
 if __name__ == "__main__":

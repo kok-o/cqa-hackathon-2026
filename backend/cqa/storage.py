@@ -319,6 +319,26 @@ class Store:
             evaluations = [self._evaluation(db, row["evaluation_id"]) for row in db.execute("SELECT evaluation_id FROM evaluations" + where + " ORDER BY created_at DESC,rowid DESC", params).fetchall()]
         return [evaluation for evaluation in evaluations if gross_error is None or bool(evaluation["score"].get("gross_error", False)) is gross_error]
 
+    def submission_snapshot(self, group_id: str) -> tuple[list[Conversation], list[dict]]:
+        """Read the source set and its evaluation history at the same point in time."""
+        with self.read() as db:
+            db.execute("BEGIN")
+            conversations = [
+                Conversation.model_validate_json(row["payload"])
+                for row in db.execute(
+                    "SELECT payload FROM conversations WHERE group_id=? ORDER BY conversation_id",
+                    (group_id,),
+                )
+            ]
+            evaluations = [
+                self._evaluation(db, row["evaluation_id"])
+                for row in db.execute(
+                    "SELECT evaluation_id FROM evaluations WHERE group_id=? ORDER BY created_at DESC,rowid DESC",
+                    (group_id,),
+                )
+            ]
+        return conversations, evaluations
+
     @staticmethod
     def _replay(db, scope, key, request_hash):
         if not key:

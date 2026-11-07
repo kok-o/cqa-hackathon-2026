@@ -275,18 +275,19 @@ def create_app(database_path: str | Path | None = None, evaluator=None, evaluato
         team = (team_name if team_name is not None else os.getenv("CQA_TEAM_NAME", "")).strip()
         if not team:
             raise HTTPException(status_code=422, detail="Укажите team_name или CQA_TEAM_NAME.")
-        conversations = [Conversation.model_validate(store.conversation(group_id, item["conversation_id"]))
-                         for item in store.list_conversations(group_id=group_id)]
-        current_sources = {conversation.conversation_id: conversation.model_dump() for conversation in conversations}
+        conversations, evaluations = store.submission_snapshot(group_id)
+        source_snapshots = {conversation.conversation_id: conversation.model_dump() for conversation in conversations}
         approved = load_approved_checklist()
         approved_fingerprint = checklist_criteria_fingerprint(approved)
         selected = {}
-        for item in store.list_evaluations(group_id=group_id):
+        for item in evaluations:
             info = item.get("model_info", {})
+            snapshot = item["conversation"]
+            conversation_id = snapshot["conversation_id"]
             if ((info.get("requested_model") or info.get("model")) == model_name
-                    and item["conversation"] == current_sources.get(item["conversation"]["conversation_id"])
+                    and snapshot == source_snapshots.get(conversation_id)
                     and checklist_criteria_fingerprint(item["checklist"]) == approved_fingerprint):
-                selected.setdefault(item["conversation"]["conversation_id"], item)
+                selected.setdefault(conversation_id, item)
         known_modes = {"local" if item.get("model_info", {}).get("provider") == "local" else "external_api"
                        for item in selected.values()
                        if item.get("model_info", {}).get("provider") in {"local", "openai", "openai_compatible"}}

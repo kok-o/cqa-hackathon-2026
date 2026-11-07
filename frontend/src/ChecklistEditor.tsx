@@ -669,9 +669,9 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
         </div>
       </div>
       <footer className="editor-save-bar">
-        <div className="editor-save-status">
-          {dirty ? "Изменения не сохранены" : `Версия ${checklist.version}`}
-        </div>
+        {dirty && (
+          <div className="editor-save-status">Изменения не сохранены</div>
+        )}
         <div className="editor-save-actions">
           <button
             className="button secondary"

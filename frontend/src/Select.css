@@ -13,7 +13,6 @@
 .select-option[data-state=checked] { color:#216447; font-weight:500; }
 .select-option[data-disabled] { opacity:.4; pointer-events:none; }
 .select-check { position:absolute; right:12px; display:flex; }
-.checklist-select { max-width:440px; }
 .checklist-select .select-trigger { min-height:42px; font-size:13px; }
 .history-select .select-trigger { min-height:36px; padding:7px 9px; font-size:12px; background:transparent; }
 @media(max-width:700px) { .select-trigger,.select-option { min-height:44px; font-size:15px; } .select-menu { width:var(--radix-select-trigger-width); min-width:min(280px,calc(100vw - 24px)); } .checklist-select .select-trigger { font-size:12px; } }

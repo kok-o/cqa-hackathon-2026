@@ -346,7 +346,7 @@ main {
   align-items: center;
   gap: 7px;
   color: var(--muted);
-  max-width: 360px;
+  width: min(780px, 75%);
   min-width: 0;
 }
 .checklist-select > svg {

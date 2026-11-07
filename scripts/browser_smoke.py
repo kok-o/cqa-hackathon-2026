@@ -5,6 +5,7 @@ real dataset/model server. This verifies application wiring, not AI accuracy.
 """
 from __future__ import annotations
 
+from select_control import choose_select
 import argparse
 from copy import deepcopy
 import json
@@ -65,7 +66,7 @@ def main() -> None:
 
             imported = import_dataset(dataset)
             assert imported["imported"] == 3
-            page.get_by_label(re.compile("^Версия чек-листа")).select_option(json.dumps(["synthetic-checklist", 1], separators=(",", ":")))
+            choose_select(page.get_by_label(re.compile("^Версия чек-листа")), json.dumps(["synthetic-checklist", 1], separators=(",", ":")))
             page.get_by_role("button").filter(has_text=conversation_id).click()
             expect(page.locator(".conversation-context strong")).to_have_text(conversation_id)
             expect(page.locator(f'[id="message-{conversation_id}:0001"]')).to_be_visible()
@@ -107,11 +108,11 @@ def main() -> None:
                 page.get_by_role("button", name="Отправить апелляцию", exact=True).click()
             assert response.value.status == 201
             page.get_by_role("button", name="Решение проверяющего", exact=True).click()
-            page.get_by_label(re.compile("^Решение")).select_option("replace")
-            page.get_by_label(re.compile("^Новый ответ")).select_option("true")
+            choose_select(page.get_by_label(re.compile("^Решение")), "replace")
+            choose_select(page.get_by_label(re.compile("^Новый ответ")), "true")
             page.get_by_label(re.compile("^Объяснение нового результата")).fill("Оператор произнёс приветствие, подтверждённое цитатой.")
-            page.get_by_label(re.compile("^Доказательство")).select_option("quote")
-            page.get_by_label(re.compile("^Реплика")).select_option(f"{conversation_id}:0001")
+            choose_select(page.get_by_label(re.compile("^Доказательство")), "quote")
+            choose_select(page.get_by_label(re.compile("^Реплика")), f"{conversation_id}:0001")
             page.get_by_placeholder("Обязательно для истории пересмотра").fill("Исправлен тестовый ответ; сохранена исходная оценка.")
             with page.expect_response(lambda r: r.request.method == "POST" and r.url.endswith("/decision")) as response:
                 page.get_by_role("button", name="Сохранить решение и пересчитать", exact=True).click()

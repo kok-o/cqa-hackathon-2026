@@ -24,7 +24,7 @@ const Select = forwardRef<HTMLButtonElement, Props>(function Select({ children, 
     <Menu.Trigger ref={node => { trigger.current = node; if (typeof forwardedRef === 'function') forwardedRef(node); else if (forwardedRef) forwardedRef.current = node; }} id={id} className={`select-trigger ${className ?? ''}`} aria-label={ariaLabel} aria-labelledby={labelledBy} aria-describedby={describedBy} title={title}>
       <Menu.Value /><Menu.Icon className="select-chevron"><ChevronDown size={16} /></Menu.Icon>
     </Menu.Trigger>
-    <Menu.Portal container={container}><Menu.Content className="select-menu" position="popper" sideOffset={6} collisionPadding={12} align="start"><Menu.Viewport className="select-options">{options.map(option => <Menu.Item className="select-option" key={option.value || EMPTY} value={option.value || EMPTY} disabled={option.disabled}><Menu.ItemText>{option.label}</Menu.ItemText><Menu.ItemIndicator className="select-check"><Check size={16} /></Menu.ItemIndicator></Menu.Item>)}</Menu.Viewport></Menu.Content></Menu.Portal>
+    <Menu.Portal container={container}><Menu.Content className="select-menu" position="popper" sideOffset={6} collisionPadding={12} align="start"><Menu.Viewport className="select-options">{options.map(option => <Menu.Item className="select-option" data-select-value={option.value} key={option.value || EMPTY} value={option.value || EMPTY} disabled={option.disabled}><Menu.ItemText>{option.label}</Menu.ItemText><Menu.ItemIndicator className="select-check"><Check size={16} /></Menu.ItemIndicator></Menu.Item>)}</Menu.Viewport></Menu.Content></Menu.Portal>
   </Menu.Root>;
 });
 export default Select;

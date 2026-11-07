@@ -6,6 +6,7 @@ docs/FRONTEND_QA.md before running this script.
 """
 from __future__ import annotations
 
+from select_control import choose_select
 import argparse
 from copy import deepcopy
 import json
@@ -102,7 +103,7 @@ def main() -> None:
             expect(page.get_by_role('heading', level=1, name=re.compile(r'^Диалоги'))).to_be_visible()
             if not page.get_by_label('Набор', exact=True).count():
                 page.get_by_role('button', name=re.compile('^Фильтры')).click()
-            page.get_by_label('Набор', exact=True).select_option(group)
+            choose_select(page.get_by_label('Набор', exact=True), group)
             page.get_by_role('button').filter(has_text=conversation_id).click()
             expect(page.locator('.conversation-context strong')).to_have_text(conversation_id)
             expect(page.locator('.aq-run-details').last).to_contain_text(evaluation['evaluation_id'])
@@ -210,15 +211,15 @@ def main() -> None:
             page.get_by_label('Поиск диалога', exact=True).fill('no-such-' + token)
             expect(page.get_by_text('Ничего не найдено', exact=True)).to_be_visible()
             page.locator('.conversation-list .small-empty').get_by_role('button', name='Сбросить фильтры', exact=True).click()
-            page.get_by_label('Набор', exact=True).select_option(group)
-            page.get_by_label('Язык', exact=True).select_option('KZ')
+            choose_select(page.get_by_label('Набор', exact=True), group)
+            choose_select(page.get_by_label('Язык', exact=True), 'KZ')
             page.get_by_role('button').filter(has_text=f'frontend-{token}-kz').click()
             select_tab('Диалог')
             expect(page.locator('#transcript-panel')).to_contain_text('Сәлеметсіз бе!')
             checks.append('empty_search_reset_and_kazakh_text')
 
             select_tab('Очередь')
-            page.get_by_label('Язык', exact=True).select_option('EN')
+            choose_select(page.get_by_label('Язык', exact=True), 'EN')
             page.get_by_role('button').filter(has_text=f'frontend-{token}-en').click()
             select_tab('Диалог')
             expect(page.locator('.no-audio-banner')).to_be_visible()

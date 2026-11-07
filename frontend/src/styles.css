@@ -1613,3 +1613,6 @@ main {
 .notice.warning { background:#fff5df; color:#875313; }
 .audio-error { color:var(--danger); padding:0 22px 10px; font-size:12px; }
 .audio-note { color:var(--muted); padding:0 22px 15px; font-size:12px; }
+.conversation-sidebar { position:relative; }
+.filters { position:absolute; top:116px; left:12px; right:12px; z-index:12; max-height:calc(100% - 130px); overflow-y:auto; background:#fff; border:1px solid #d7e1d2; border-radius:12px; padding:16px; box-shadow:0 14px 35px #173f2526; }
+@media(max-width:700px) { .filters { top:112px; max-height:calc(100% - 125px); } }

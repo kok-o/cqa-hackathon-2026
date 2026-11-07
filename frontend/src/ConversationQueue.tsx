@@ -155,6 +155,7 @@ export default function ConversationQueue(p: Props) {
               Сбросить фильтры
             </button>
           )}
+          <button className="button primary full-width" onClick={p.onFilters}>Показать диалоги ({p.items.length})</button>
         </div>
       )}
       {p.group && (

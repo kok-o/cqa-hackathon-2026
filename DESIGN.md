@@ -19,3 +19,8 @@ Desktop keeps queue, conversation and assessment together. Tablet opens the queu
 The editor keeps a criterion list beside one form. Its sections cover instructions, scoring and applicability. The mobile list scrolls horizontally. Draft values survive selection changes. The save bar distinguishes a new version from a separate checklist; official scales, N/A and critical-answer mappings stay editable.
 
 Keep explanatory text only where it affects a decision, such as discrete scales or an audio limitation. Validation stays explicit. Status changes come from the API; animations use short CSS transitions and disappear under reduced motion.
+
+
+## Design review
+
+Applied [frontend-design](https://github.com/anthropics/skills/blob/main/skills/frontend-design/SKILL.md). The conversation is the main document; criterion scores and evidence act as adjacent review notes. The distinguishing treatment is the source gutter and the inline criterion ledger. Keep the surrounding shell quiet: no hero, decorative queue numbers, repeated section captions, avatars or promotional empty-state copy. Criterion details open only on request so all eight scores can be scanned first.

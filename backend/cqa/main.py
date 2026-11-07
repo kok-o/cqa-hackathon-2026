@@ -224,13 +224,16 @@ def create_app(database_path: str | Path | None = None, evaluator=None, evaluato
                 run = await result if inspect.isawaitable(result) else result
                 store.complete_job(job_id, conversation, checklist, run.draft, run.model_info)
             except Exception as error:
+                error_code = model_info = None
                 try:
                     from .evaluator.service import EvaluatorError
                     message = str(error) if isinstance(error, EvaluatorError) else "Оценка не завершена. Проверьте настройки модели и повторите запуск."
+                    if isinstance(error, EvaluatorError):
+                        error_code, model_info = error.code, error.model_info
                 except ImportError:
                     message = "Модуль оценки недоступен. Проверьте установку приложения."
                 logger.warning("Evaluation job %s failed (%s)", job_id, type(error).__name__)
-                store.fail_job(job_id, message)
+                store.fail_job(job_id, message, error_code=error_code, model_info=model_info)
 
     @application.post("/api/evaluation-jobs", status_code=202)
     async def create_job(body: JobRequest, background: BackgroundTasks):

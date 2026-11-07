@@ -97,6 +97,8 @@
   .notice.error { background: #fff0ef; color: #942d2d; }
   .notice.success { background: #e4f2e8; color: #22533a; }
   .notice.warning { background: #fff6df; color: var(--warning); }
+  .queue-recovery { flex-wrap: wrap; justify-content: space-between; }
+  .queue-recovery > div { min-width: 0; }
   .notice.compact { margin: 12px 18px; padding: 10px; font-size: 11px; }
   .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 20px; min-height: 83px; border-bottom: 1px solid var(--line); }
   .panel-heading h2 { font-size: 15px; overflow-wrap: anywhere; }

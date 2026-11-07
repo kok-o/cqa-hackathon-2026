@@ -1,0 +1,44 @@
+{
+  "recorded_at": "2026-11-07T16:29:43.637766+00:00",
+  "backend_tests": {
+    "command": ".venv/Scripts/python.exe -X utf8 -m unittest discover -s backend/tests",
+    "passed": 166,
+    "elapsed_seconds": 13.564,
+    "official_scoring_combinations_inside_one_test": 5184
+  },
+  "frontend_build": {
+    "command": "npm --prefix frontend run build",
+    "status": "passed"
+  },
+  "source_sha256": {
+    "backend/cqa/evaluator/service.py": "202d134403a400cf635ed622b489d55e53d20aa23355850417ceb4775a498173",
+    "backend/cqa/main.py": "557a7d6ede5678f16234cea5c40e8367152277260799dc06c825c8a8b590e567",
+    "backend/cqa/storage.py": "0e62bb980bc4fcc209fc69d497eebfe8b1d488acb36d425093fcac9b5bcd3305",
+    "evaluation/benchmark.py": "952f5561be6cd575cb24cf6b4d7ad27c0567e4086099ae9a194b5dc5ec66f4f4",
+    "frontend/src/App.tsx": "0023c06aecfcb7c97241aa5a1a1eda35cbfedd70419c02168ade09fcbe715bd3",
+    "frontend/src/api.ts": "380893be0ff42e862a897817980dad115208d59235bb0ae4b5c32e0b4b9a2a71",
+    "frontend/src/evaluationProtocol.ts": "fc43527fd8d4a06e4ff3d5dca6ff2de6da94ffff95c7bd63b5fa59dc20d47139",
+    "frontend/src/evaluationQueue.ts": "c31a1f440681fbf476c327625713e3c12df9eb457517d1e9844f4b1ee1c8887f",
+    "frontend/src/contracts.ts": "6f8d7149b2e89e9efde04a0e019822f82fb4dcff81685ebd915968ab227e89f9",
+    "frontend/src/styles.css": "6b791db3d5fa043d71e499b8854e2f2255041899cd3668d17b71e1e4c62ad2fd",
+    "scripts/browser_faults.py": "f3e85a5e6f6eeea80e472a4861c6837848715d620c37356a59c548fd7d25fb76",
+    "scripts/fault_http_rehearsal.py": "daae35afbf2ee8d014d69e87d3b825ef78bdb4a95515bca69b4782831594ddb5",
+    "scripts/adversarial_rehearsal.py": "cbf2cd69f6b7c06c92d5db658b32d7f9be3fc96b63e9eaeabe4f56dd3b132dbc"
+  },
+  "production_preserved": {
+    "conversations": 65,
+    "evaluations": 137,
+    "evaluation_jobs": 137,
+    "pending_before_restart": 0,
+    "backup_created": true
+  },
+  "clean_checkout_tests": {
+    "passed": 166,
+    "elapsed_seconds": 13.667,
+    "method": "git archive HEAD plus current test-only patch into TemporaryDirectory; existing Python environment",
+    "env_file_present": false,
+    "data_evaluations_present_before_run": false,
+    "network_model_calls": 0,
+    "initial_ci_failure": "New test assumed ignored output parent existed; test now creates it."
+  }
+}

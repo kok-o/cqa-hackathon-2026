@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 from hashlib import sha256
 import json
 import os
@@ -293,8 +295,26 @@ def build_request(settings: Settings, messages: list[dict[str, str]]) -> dict[st
     return payload
 
 
-def _safe_identifier(value: Any) -> str | None:
-    return value if isinstance(value, str) and re.fullmatch(r"[A-Za-z0-9_.:/-]{1,180}", value) else None
+def _safe_identifier(value: Any, api_key: str = "") -> str | None:
+    if not isinstance(value, str) or api_key and api_key in value:
+        return None
+    return value if re.fullmatch(r"[A-Za-z0-9_.:/-]{1,180}", value) else None
+
+
+def _retry_after_seconds(value: str | None) -> int | float | None:
+    """Parse only standard delay-seconds/HTTP-date, never echo the header text."""
+    if not value or len(value) > 200:
+        return None
+    value = value.strip()
+    if re.fullmatch(r"[0-9]+", value):
+        return int(value)
+    try:
+        target = parsedate_to_datetime(value)
+        if target.tzinfo is None:
+            target = target.replace(tzinfo=timezone.utc)
+        return max(0.0, (target - datetime.now(timezone.utc)).total_seconds())
+    except (ValueError, TypeError, OverflowError):
+        return None
 
 
 def _attempt_cost(settings: Settings, usage: TokenUsage, response_service_tier: str | None = None) -> float | None:
@@ -389,10 +409,13 @@ async def evaluate(conversation: Conversation, checklist: ChecklistVersion, *,
                 "status": "pending", "http_status": None}
             attempts.append(detail)
             try:
-                response = await http.post(settings.endpoint, json=build_request(settings, messages), headers=headers,
-                                           timeout=settings.timeout_seconds, follow_redirects=False)
-            except httpx.RequestError as exc:
-                last_code = "timeout" if isinstance(exc, httpx.TimeoutException) else "network"
+                # HTTPX's timeout is per network phase/inactivity. Bound the whole
+                # request as well so a slow trickle cannot hold a job indefinitely.
+                async with asyncio.timeout(settings.timeout_seconds):
+                    response = await http.post(settings.endpoint, json=build_request(settings, messages), headers=headers,
+                                               timeout=settings.timeout_seconds, follow_redirects=False)
+            except (httpx.RequestError, TimeoutError) as exc:
+                last_code = "timeout" if isinstance(exc, (httpx.TimeoutException, TimeoutError)) else "network"
                 last_error = "Модель не ответила вовремя." if last_code == "timeout" else "Не удалось соединиться с моделью."
                 detail.update(status=last_code, elapsed_ms=round((time.monotonic() - attempt_started) * 1000))
                 if attempt < 2:
@@ -413,8 +436,8 @@ async def evaluate(conversation: Conversation, checklist: ChecklistVersion, *,
                 response_tier = tier if isinstance(tier, str) and tier in {"auto", "default", "flex", "scale", "priority", "fast", "ultrafast"} else None
                 detail.update(estimated_cost=_attempt_cost(settings, usage, response_tier),
                               response_service_tier=response_tier,
-                              response_model=_safe_identifier(body.get("model")),
-                              response_id=_safe_identifier(body.get("id")))
+                              response_model=_safe_identifier(body.get("model"), settings.api_key),
+                              response_id=_safe_identifier(body.get("id"), settings.api_key))
             if response.status_code >= 300:
                 if response.status_code in {401, 403}:
                     detail["status"] = "auth"
@@ -425,7 +448,15 @@ async def evaluate(conversation: Conversation, checklist: ChecklistVersion, *,
                 detail["status"] = last_code = "http"
                 last_error = f"Модель временно недоступна (HTTP {response.status_code})."
                 if response.status_code in {408, 429, 500, 502, 503, 504} and attempt < 2:
-                    await asyncio.sleep(0.3)
+                    delay = _retry_after_seconds(response.headers.get("retry-after"))
+                    if delay is not None:
+                        detail["retry_after_seconds"] = delay
+                        if delay > min(settings.timeout_seconds, 30.0):
+                            # A long cooldown must not cause an early retry or an
+                            # unbounded wait. A later explicit run can retry it.
+                            detail["retry_skipped"] = "retry_after_exceeds_limit"
+                            break
+                    await asyncio.sleep(delay if delay is not None else 0.3)
                     continue
                 break
             try:

@@ -1,4 +1,7 @@
 from copy import deepcopy
+from contextlib import redirect_stdout
+import asyncio
+import io
 import json
 from pathlib import Path
 import tempfile
@@ -11,7 +14,7 @@ from backend.cqa.models import ChecklistVersion, DatasetExport, EvaluationDraft
 from evaluation.benchmark import (
     aggregate_report, checkpoint_for, execute_plan, fingerprint, load_independent_labels,
     make_plan, parser, request_payload, reserve_cost, select_conversations,
-    validate_label_snapshots, write_json, write_reports,
+    safe_print, validate_label_snapshots, write_json, write_reports,
 )
 
 FIXTURES = Path(__file__).resolve().parents[2] / "fixtures"
@@ -22,6 +25,20 @@ def fixture(name):
 
 
 class SelectionAndFingerprintTests(unittest.TestCase):
+    def test_console_fallback_preserves_utf8_and_escapes_only_unencodable_text(self):
+        text = "Русский / Қазақ / 😀"
+        for encoding in ("cp1251", "utf-8"):
+            with self.subTest(encoding=encoding):
+                buffer = io.BytesIO()
+                stream = io.TextIOWrapper(buffer, encoding=encoding, errors="strict")
+                safe_print(text, file=stream, flush=True)
+                emitted = buffer.getvalue().decode(encoding)
+                expected = text.encode(encoding, errors="backslashreplace").decode(encoding) + "\n"
+                self.assertEqual(emitted.replace("\r\n", "\n"), expected)
+                if encoding == "cp1251":
+                    self.assertIn("\\u049a", emitted)
+                    self.assertIn("Русский", emitted)
+
     def test_sampling_is_stable_balanced_and_group_aware(self):
         source = normalize(DatasetExport.model_validate(fixture("synthetic_dev.json")))
         expanded = []
@@ -118,6 +135,47 @@ class BenchmarkExecutionTests(unittest.IsolatedAsyncioTestCase):
                 "input_tokens": 200, "output_tokens": 100, "reasoning_tokens": 80}
         info.update(overrides)
         return EvaluationRun(self.draft, info)
+
+    async def test_cp1251_unicode_progress_does_not_cancel_concurrent_jobs_or_resume_them(self):
+        # The ASCII probe succeeds first; both subsequent workers contain IDs
+        # cp1251 cannot encode. This reproduces the live failure after save().
+        third = deepcopy(self.tasks[1])
+        third.update(task_id="2", conversation=deepcopy(third["conversation"]))
+        self.tasks.append(third)
+        for index, task in enumerate(self.tasks[1:], 1):
+            task["conversation"]["conversation_id"] = f"диалог-Қазақ-{index}/?%"
+            task["conversation"]["group_id"] = "топ/қ"
+            task["request_sha256"] = fingerprint(task["conversation"])
+        active = peak = 0
+
+        async def evaluated(conversation, checklist, **kwargs):
+            nonlocal active, peak
+            active += 1
+            peak = max(peak, active)
+            await asyncio.sleep(0.01)
+            active -= 1
+            result = self.result(attempts=1)
+            return EvaluationRun(result.draft.model_copy(update={"conversation_id": conversation.conversation_id,
+                "group_id": conversation.group_id}), result.model_info)
+
+        buffer = io.BytesIO()
+        stream = io.TextIOWrapper(buffer, encoding="cp1251", errors="strict")
+        with tempfile.TemporaryDirectory() as temporary, redirect_stdout(stream), \
+                patch("evaluation.benchmark.evaluate", new=AsyncMock(side_effect=evaluated)) as evaluate:
+            checkpoint = await self.execute(temporary, budget=3, concurrency=2)
+            self.assertEqual(peak, 2)
+            self.assertEqual(evaluate.await_count, 3)
+            self.assertTrue(all(r["status"] == "completed" for r in checkpoint["records"].values()))
+            persisted = json.loads((Path(temporary) / "checkpoint.json").read_text(encoding="utf-8"))
+            self.assertEqual(persisted, checkpoint)
+            self.assertIn("топ/қ", {r["conversation"]["group_id"] for r in persisted["records"].values()})
+            self.assertAlmostEqual(checkpoint["charged_or_reserved_usd"], 0.6)
+            await self.execute(temporary, budget=3, concurrency=2)
+            self.assertEqual(evaluate.await_count, 3)
+        stream.flush()
+        output = buffer.getvalue().decode("cp1251")
+        self.assertIn("\\u049a", output)
+        self.assertEqual(output.count("completed"), 3)
 
     async def test_retries_counted_and_resume_skips_completed_requests(self):
         with tempfile.TemporaryDirectory() as temporary, patch("evaluation.benchmark.evaluate", new=AsyncMock(return_value=self.result())) as evaluate:

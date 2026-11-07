@@ -4,32 +4,32 @@
 
 ## До выдачи контроля
 
-1. Откройте [отчёт проверенной версии](SETW_RELEASE.md). Запустите приложение на копии DEV, откройте три примера из сценария защиты. Перед контролем поднимите отдельный сервер с пустой базой и официальным чек-листом.
-2. Дайте двум участникам независимо разметить локальный пакет `blind-review.md`. Файл ключа и предыдущие выводы откройте после фиксации ответов. Спорные случаи сверяйте с PDF и репликами.
+1. Откройте [отчёт объединённой версии](SETW_INTEGRATED.md). Запустите приложение на копии DEV и откройте три примера из локального `data/evaluations/setw-stage2-20261108/defense.md`. Перед контролем поднимите отдельный сервер с пустой базой и официальным чек-листом.
+2. Дайте двум участникам независимо разметить 15 чатов из локального `data/evaluations/setw-night-20261108/blind-review.md`. Файл ключа и предыдущие выводы откройте после фиксации ответов. Спорные случаи сверяйте с PDF и репликами.
 3. Сверьте требования к публичному GitHub. В основном дереве должны быть код, README с запуском, описание подхода и `results/dev/results.json`. Второй обязательный файл `results/prod/results.json` появится после работы на реальном контроле. Проверьте публикуемые файлы и историю на ключи, подписанные URL, исходные клиентские диалоги и SQLite.
 4. Назначьте ответственных за получение набора, запуск, проверку JSON и GitHub. Изменение видимости, push и передачу ссылки выполняет команда.
 
 ## Запуск на проверенной ветке
 
-На чистом checkout ветки `codex/setw-verified` выполните `git rev-parse HEAD` и сверьте SHA с передачей. Скопируйте настройки подключения в локальный `.env` по [README](../README.md). Первый запуск — `./scripts/start.ps1 -Setup`. Следующий — `./scripts/start.ps1`. Приложение по умолчанию доступно на `http://127.0.0.1:8000`.
+На чистом checkout ветки `codex/setw-integrated` выполните `git rev-parse HEAD` и сверьте SHA с передачей. Скопируйте настройки подключения в локальный `.env` по [README](../README.md). Первый запуск — `./scripts/start.ps1 -Setup`. Следующий — `./scripts/start.ps1`. Приложение по умолчанию доступно на `http://127.0.0.1:8000`.
 
-На машине подготовки корень проекта содержит исходный `.env` и `.venv`, а проверенная ветка открыта в `scratch/setw-release`. Из корня проекта выполните `./data/evaluations/setw-night-20261108/start-demo.ps1`. Он запускает копию базы для демонстрации на порту 8036. Эквивалентная команда с явными путями приведена ниже.
+На машине подготовки корень проекта содержит исходный `.env` и `.venv`, а объединённая ветка открыта в `scratch/setw-integrated`. Из корня проекта выполните `./data/evaluations/setw-stage2-20261108/start-integrated.ps1`. Скрипт запускает копию базы DEV на порту 8060. Для контроля укажите `-ControlDatabase control-20261108.sqlite3` и убедитесь, что имя свободно. Скрипт создаст базу в `data/runtime/` на порту 8061. Эквивалентная команда запуска демо приведена ниже.
 
 ```powershell
 $project = (Get-Location).Path
-$release = Join-Path $project 'scratch/setw-release'
+$release = Join-Path $project 'scratch/setw-integrated'
 $python = Join-Path $project '.venv/Scripts/python.exe'
 $config = Join-Path $project '.env'
-$session = Join-Path $project 'data/evaluations/setw-night-20261108'
+$session = Join-Path $project 'data/evaluations/setw-stage2-20261108'
 $env:CQA_DATABASE_PATH = Join-Path $session 'demo.sqlite3'
 $env:CQA_DATA_DIR = Join-Path $project 'data/raw'
 Push-Location -LiteralPath $release
 try {
-    & $python -m dotenv -f $config run --no-override -- $python scripts/run.py --port 8036
+    & $python -m dotenv -f $config run --no-override -- $python scripts/run.py --port 8060
 } finally { Pop-Location }
 ```
 
-В браузере откройте `http://127.0.0.1:8036`. `GET /health` проверяет сервер, `GET /api/config` показывает профиль модели. Перезапускать сервер следует после изменения `.env`. Для контроля повторите команду с новым `CQA_DATABASE_PATH` в локальном `data/runtime/`, например `control-20261108.sqlite3`, и свободным портом 8037. Для воспроизведения проверок из корня проверенного checkout используйте Python с зависимостями из `backend/requirements.txt`.
+В браузере откройте `http://127.0.0.1:8060` для демо или `http://127.0.0.1:8061` для контроля. `GET /health` проверяет сервер, `GET /api/config` показывает профиль модели. После изменения `.env` перезапустите сервер. Для воспроизведения проверок из корня проверенного checkout используйте Python с зависимостями из `backend/requirements.txt`.
 
 ```powershell
 python -X utf8 -m pip check
@@ -45,6 +45,7 @@ python -X utf8 scripts/fault_http_rehearsal.py
 python -X utf8 scripts/browser_smoke.py --url http://127.0.0.1:8021
 python -X utf8 scripts/browser_readiness.py --url http://127.0.0.1:8021
 python -X utf8 scripts/browser_faults.py --url http://127.0.0.1:8021
+python -X utf8 scripts/frontend_review_smoke.py --url http://127.0.0.1:8021
 ```
 
 ## Когда получены десять чатов
@@ -56,7 +57,7 @@ python -X utf8 scripts/browser_faults.py --url http://127.0.0.1:8021
 ```powershell
 # Из корня основного проекта на машине подготовки.
 $project = (Get-Location).Path
-$release = Join-Path $project 'scratch/setw-release'
+$release = Join-Path $project 'scratch/setw-integrated'
 $python = Join-Path $project '.venv/Scripts/python.exe'
 $controlDataset = (Resolve-Path -LiteralPath (Join-Path $project 'data/raw/PROD.json')).Path
 $source = Get-Content -LiteralPath $controlDataset -Raw -Encoding UTF8 | ConvertFrom-Json
@@ -68,7 +69,7 @@ $controlGroup = [Uri]::EscapeDataString($source.data.dataset_group_id)
 $runtime = Join-Path $project 'data/runtime'
 $staged = Join-Path $runtime 'control-export-validated.json'
 New-Item -ItemType Directory -Force -Path $runtime | Out-Null
-Invoke-WebRequest "http://127.0.0.1:8037/api/submission/export?group_id=$controlGroup&split=prod&team_name=SetW&model_name=gpt-6-luna&model_mode=external_api" -OutFile $staged
+Invoke-WebRequest "http://127.0.0.1:8061/api/submission/export?group_id=$controlGroup&split=prod&team_name=SetW&model_name=gpt-6-luna&model_mode=external_api" -OutFile $staged
 Push-Location -LiteralPath $release
 try {
     & $python -X utf8 -m evaluation.submission validate --dataset $controlDataset --split prod --input $staged
@@ -78,7 +79,7 @@ $candidate = Get-Content -LiteralPath $staged -Raw -Encoding UTF8 | ConvertFrom-
 $candidate.results | Group-Object status | Select-Object Name,Count
 ```
 
-4. Проверьте количество `ok` и каждую строку `error`. Валидный файл может содержать ошибки обработки. `null` в успешном ответе означает применимое по правилам исключение N/A. Экспорт для организаторов берёт исходные решения модели по утверждённому чек-листу и совпадающему снимку диалога. История оценок с пересмотром скачивается отдельно. При повторном экспорте проверьте результаты снова.
+4. Проверьте количество `ok` и каждую строку `error`. Валидный файл может содержать ошибки обработки. `null` в успешном ответе означает неприменимость критерия. Экспорт для организаторов берёт исходные решения модели по утверждённому чек-листу и совпадающему снимку диалога. История оценок с пересмотром скачивается отдельно. В сохранённом DEV проверены и добавлены ссылки на реплики для десяти N/A. Обычный экспорт из демо выдаёт исходный снимок до этой сверки. Для сдачи DEV возьмите проверенный файл из ветки.
 5. Перенесите проверенный контрольный файл в `results/prod/results.json`. Сверьте DEV по локальному исходнику. Подготовьте коммит из проверенной ветки. Обновите ту ветку публичного репозитория, на которую указывает переданная ссылка, по правилам команды. Откройте обе ссылки без входа до стоп-кода. Подтвердите передачу ссылки по объявленному каналу.
 
 ```powershell
@@ -97,12 +98,12 @@ try {
 
 ## Откат
 
-Остановите изолированный сервер. Исходная версия — `68a350c8960d96ca1a3b7d06d893a2f13a281044`. Чтобы сохранить обе версии рядом, из корня проекта создайте новый checkout этой точки.
+Остановите изолированный сервер. Проверенная резервная ветка `codex/setw-verified` закреплена на `acbbf065f63a7481774ee56f5d9444b294ecfcd8` и уже открыта в `scratch/setw-release`. Из корня основного проекта запустите `./data/evaluations/setw-night-20261108/start-demo.ps1` и откройте `http://127.0.0.1:8036`. На другой машине соберите резервный checkout отдельно.
 
 ```powershell
-git worktree add --detach scratch/setw-rollback 68a350c8960d96ca1a3b7d06d893a2f13a281044
+git worktree add --detach scratch/setw-rollback acbbf065f63a7481774ee56f5d9444b294ecfcd8
 npm --prefix scratch/setw-rollback/frontend ci
 npm --prefix scratch/setw-rollback/frontend run build
 ```
 
-В команде запуска подставьте `scratch/setw-rollback` и путь к рабочей копии исходной `preflight.sqlite3` в локальном каталоге сессии. Исходную резервную копию сохраните отдельно. Копируйте её в новый файл до запуска сервера. История оценок и исходный DEV восстановимы из снимка и начального коммита.
+В команде запуска подставьте `scratch/setw-rollback` и путь к рабочей копии `preflight.sqlite3` из локального каталога первого этапа. Скопируйте резервную базу в новый файл до запуска сервера. История оценок и исходный DEV восстановимы из снимка и резервного коммита.

@@ -1,0 +1,58 @@
+{
+  "mode": "local_http_and_owned_process_only",
+  "paid_provider_calls": 0,
+  "checks": [
+    "same_id_different_group_isolated",
+    "concurrent_and_lost_response_idempotency",
+    "late_old_snapshot_does_not_hide_current_result",
+    "official_export_selects_current_snapshot_after_late_completion",
+    "stale_appeal_conflict_preserves_original",
+    "kill_restart_preserves_history_and_fails_pending_without_replay",
+    "real_http_faults_have_bounded_attempts_and_no_public_secret"
+  ],
+  "findings": [],
+  "provider_faults": {
+    "corrupt": {
+      "status": "failed",
+      "attempts": 2,
+      "estimated_cost": null,
+      "usage_complete": false
+    },
+    "schema": {
+      "status": "failed",
+      "attempts": 2,
+      "estimated_cost": 0.000262,
+      "usage_complete": true
+    },
+    "refusal": {
+      "status": "failed",
+      "attempts": 1,
+      "estimated_cost": 0.000131,
+      "usage_complete": true
+    },
+    "http429": {
+      "status": "failed",
+      "attempts": 2,
+      "estimated_cost": 0.000262,
+      "usage_complete": true
+    },
+    "http503": {
+      "status": "failed",
+      "attempts": 2,
+      "estimated_cost": 0.000262,
+      "usage_complete": true
+    },
+    "timeout": {
+      "status": "failed",
+      "attempts": 2,
+      "estimated_cost": null,
+      "usage_complete": false
+    },
+    "repair": {
+      "status": "completed",
+      "attempts": 2,
+      "estimated_cost": 0.000262,
+      "usage_complete": true
+    }
+  }
+}

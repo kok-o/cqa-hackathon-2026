@@ -1,0 +1,12 @@
+{
+  "commit": "7a886803f3c53182a8322eb106e4754377bbbde4",
+  "backend_tests": 168,
+  "backend_seconds": 18.847,
+  "backend_status": "passed",
+  "http_checks": 7,
+  "http_findings": 0,
+  "paid_provider_calls": 0,
+  "backend_log": "scratch/final-backend-suite.log",
+  "http_report": "scratch/final-fault-http.json",
+  "http_log": "scratch/final-fault-http.log"
+}

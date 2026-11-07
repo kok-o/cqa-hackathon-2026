@@ -1,0 +1,33 @@
+{
+  "status": "passed",
+  "mode": "isolated_test_double_not_AI_quality",
+  "checks": [
+    "synthetic_long_transcript_and_saved_run",
+    "layout_1440",
+    "layout_1024",
+    "mobile_single_panel_tabs_390",
+    "layout_390",
+    "mobile_single_panel_tabs_320",
+    "layout_320",
+    "keyboard_mobile_tabs_and_escape_filter_focus_return",
+    "mobile_quote_source_focus_and_return_to_same_criterion",
+    "checked_span_all_messages_and_boundary_highlight",
+    "appeal_draft_survives_criterion_switch_collapse_and_mobile_tabs",
+    "escape_appeal_focus_return_and_draft_preserved",
+    "decision_action_reason_answer_explanation_and_quote_survive_navigation_and_escape",
+    "conflict_409_refresh_preserves_reason_and_recovers",
+    "empty_search_reset_and_kazakh_text",
+    "voice_transcript_available_without_unprovided_audio_control",
+    "invalid_json_keeps_current_conversation",
+    "reduced_motion_effective_css_durations"
+  ],
+  "page_errors": [],
+  "group_id": "FRONTEND_39240294",
+  "screenshots": [
+    "mobile-evidence-return.png",
+    "review-1024.png",
+    "review-1440.png",
+    "review-320.png",
+    "review-390.png"
+  ]
+}

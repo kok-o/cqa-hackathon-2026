@@ -4,12 +4,12 @@ import * as Menu from '@radix-ui/react-select';
 import { Check, ChevronDown } from 'lucide-react';
 import './Select.css';
 
-type Props = SelectHTMLAttributes<HTMLSelectElement>;
+type Props = SelectHTMLAttributes<HTMLSelectElement> & { selectedLabel?: ReactNode };
 type Option = { value: string; label: ReactNode; disabled?: boolean };
 const EMPTY = '__cqa_empty_option__';
 
 /** Shared keyboard-accessible select; menu stays inside a modal when needed. */
-const Select = forwardRef<HTMLButtonElement, Props>(function Select({ children, value, defaultValue, onChange, disabled, name, id, className, title, required, 'aria-label': ariaLabel, 'aria-labelledby': labelledBy, 'aria-describedby': describedBy }, forwardedRef) {
+const Select = forwardRef<HTMLButtonElement, Props>(function Select({ children, value, defaultValue, onChange, disabled, name, id, className, title, required, selectedLabel, 'aria-label': ariaLabel, 'aria-labelledby': labelledBy, 'aria-describedby': describedBy }, forwardedRef) {
   const trigger = useRef<HTMLButtonElement | null>(null);
   const [container, setContainer] = useState<HTMLElement | undefined>();
   const options: Option[] = Children.toArray(children).flatMap(child => {
@@ -22,7 +22,7 @@ const Select = forwardRef<HTMLButtonElement, Props>(function Select({ children, 
     onChange?.({ target: { value: selected }, currentTarget: { value: selected } } as React.ChangeEvent<HTMLSelectElement>);
   }}>
     <Menu.Trigger ref={node => { trigger.current = node; if (typeof forwardedRef === 'function') forwardedRef(node); else if (forwardedRef) forwardedRef.current = node; }} id={id} className={`select-trigger ${className ?? ''}`} aria-label={ariaLabel} aria-labelledby={labelledBy} aria-describedby={describedBy} title={title}>
-      <Menu.Value /><Menu.Icon className="select-chevron"><ChevronDown size={16} /></Menu.Icon>
+      <Menu.Value>{selectedLabel}</Menu.Value><Menu.Icon className="select-chevron"><ChevronDown size={16} aria-hidden="true" /></Menu.Icon>
     </Menu.Trigger>
     <Menu.Portal container={container}><Menu.Content className="select-menu" position="popper" sideOffset={6} collisionPadding={12} align="start"><Menu.Viewport className="select-options">{options.map(option => <Menu.Item className="select-option" data-select-value={option.value} key={option.value || EMPTY} value={option.value || EMPTY} disabled={option.disabled}><Menu.ItemText>{option.label}</Menu.ItemText><Menu.ItemIndicator className="select-check"><Check size={16} /></Menu.ItemIndicator></Menu.Item>)}</Menu.Viewport></Menu.Content></Menu.Portal>
   </Menu.Root>;

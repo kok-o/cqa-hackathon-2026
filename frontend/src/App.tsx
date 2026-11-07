@@ -1,13 +1,13 @@
 import Select from "./Select";
 import QueueResize, { savedQueueWidth } from "./QueueResize";
 import type { CSSProperties } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import {
   AlertCircle,
+  ArrowDownToLine,
   CheckCheck,
   ClipboardList,
-  Download,
-  FileJson,
+  Headphones,
   List,
   LoaderCircle,
   MessageSquare,
@@ -24,25 +24,29 @@ import type {
   Evaluation,
   EvaluationJob,
   ProviderInfo,
-  SubmissionFile,
 } from "./contracts";
-import { ApiError, downloadJson, errorText, isTransientError, post, q, request, uid } from "./api";
+import { ApiError, errorText, isTransientError, post, q, request, uid } from "./api";
 import { readQueue, saveQueue, type SavedQueue } from "./evaluationQueue";
 import { assertEvaluation, assertEvaluationHistory, assertJob, assertProviderInfo } from "./evaluationProtocol";
 import { date, number } from "./format";
-import Assessment from "./Assessment";
+import Assessment, { AssessmentDraftsProvider } from "./Assessment";
 import ChecklistEditor from "./ChecklistEditor";
-import ConversationQueue from "./ConversationQueue";
-import Transcript from "./Transcript";
+import ConversationQueue, { conversationKey, matchesView, type QueueView } from "./ConversationQueue";
+import Transcript, { type EvidenceTarget } from "./Transcript";
 import Modal from "./Modal";
+import SubmissionDialog from "./SubmissionDialog";
 import QualitySummary, { type SummaryFinding } from "./QualitySummary";
+import freedomShield from "./freedom-shield.svg";
 
-const conversationKey = (value: {
-  group_id: string;
-  conversation_id: string;
-}) => JSON.stringify([value.group_id, value.conversation_id]);
 const checklistKey = (value: ChecklistVersion) =>
   JSON.stringify([value.checklist_id, value.version]);
+const mobileViewport = "(max-width: 700px)";
+const isMobileViewport = () => window.matchMedia(mobileViewport).matches;
+function subscribeToMobileViewport(callback: () => void) {
+  const viewport = window.matchMedia(mobileViewport);
+  viewport.addEventListener("change", callback);
+  return () => viewport.removeEventListener("change", callback);
+}
 const matchingEvaluation = (history: Evaluation[], source: Conversation) => history.find(item => {
   const saved = item.conversation;
   return conversationKey(saved) === conversationKey(source) && saved.language === source.language && saved.channel === source.channel && saved.audio_url === source.audio_url && saved.transcript.length === source.transcript.length && saved.transcript.every((message, index) => {
@@ -71,21 +75,14 @@ type Batch = {
   label: string;
   stopped: boolean;
 };
-type SubmissionForm = {
-  team: string;
-  group: string;
-  split: "dev" | "prod";
-  model: string;
-  mode: SubmissionFile["model"]["mode"];
-};
-
 export default function App() {
+  const isMobile = useSyncExternalStore(subscribeToMobileViewport, isMobileViewport);
   const [tab, setTab] = useState<"review" | "checklist" | "summary">("review");
   const [config, setConfig] = useState<ProviderInfo | null>(null);
   const [showSetup, setShowSetup] = useState(false);
-  const [submission, setSubmission] = useState<SubmissionForm | null>(null);
-  const [submissionError, setSubmissionError] = useState("");
-  const [exportingSubmission, setExportingSubmission] = useState(false);
+  const [setupLoading, setSetupLoading] = useState(false);
+  const [setupError, setSetupError] = useState("");
+  const [submissionGroup, setSubmissionGroup] = useState<string | null>(null);
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [checklists, setChecklists] = useState<ChecklistVersion[]>([]);
   const [selectedKey, setSelectedKey] = useState("");
@@ -94,15 +91,12 @@ export default function App() {
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
   const [evaluationId, setEvaluationId] = useState("");
-  const [highlight, setHighlight] = useState<{
-    start: string;
-    end?: string;
-    criterion?: string;
-  } | null>(null);
+  const [highlight, setHighlight] = useState<EvidenceTarget | null>(null);
   const [mobilePanel, setMobilePanel] = useState<
     "queue" | "transcript" | "assessment"
   >("queue");
   const [queueOpen, setQueueOpen] = useState(false);
+  const [drawerMotion, setDrawerMotion] = useState(false);
   const [queueWidth, setQueueWidth] = useState(savedQueueWidth);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [jobStatus, setJobStatus] = useState<EvaluationJob["status"] | null>(
@@ -113,9 +107,12 @@ export default function App() {
   const [language, setLanguage] = useState("");
   const [channel, setChannel] = useState("");
   const [group, setGroup] = useState("");
-  const [grossError, setGrossError] = useState("");
+  const [queueView, setQueueView] = useState<QueueView>("all");
   const [initialLoading, setInitialLoading] = useState(true);
+  const [overviewFailed, setOverviewFailed] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState("");
+  const [detailAttempt, setDetailAttempt] = useState(0);
   const [importing, setImporting] = useState(false);
   const [running, setRunning] = useState(false);
   const [pendingQueue, setPendingQueue] = useState<SavedQueue | null>(readQueue);
@@ -143,92 +140,74 @@ export default function App() {
   const evaluation =
     evaluations.find((item) => item.evaluation_id === evaluationId) ?? null;
   const source = evaluation?.conversation ?? conversation;
-  const groups = useMemo(
-    () => [...new Set(conversations.map((item) => item.group_id))],
-    [conversations],
-  );
-  const filtered = useMemo(
-    () =>
-      conversations.filter(
-        (item) =>
-          (!language || item.language === language) &&
-          (!channel || item.channel === channel) &&
-          (!group || item.group_id === group) &&
-          (!grossError ||
-            item.latest_gross_error === (grossError === "true")) &&
-          (!query ||
-            `${item.conversation_id} ${item.preview}`
-              .toLocaleLowerCase()
-              .includes(query.toLocaleLowerCase())),
-      ),
-    [conversations, language, channel, group, grossError, query],
-  );
-  const submissionCount = submission
-    ? conversations.filter((item) => item.group_id === submission.group).length
-    : 0;
+  const groupSizes = useMemo(() => {
+    const sizes = new Map<string, number>();
+    for (const item of conversations) sizes.set(item.group_id, (sizes.get(item.group_id) ?? 0) + 1);
+    return sizes;
+  }, [conversations]);
+  const groups = useMemo(() => [...groupSizes.keys()], [groupSizes]);
+  const scopedItems = useMemo(() => {
+    const search = query.trim().toLocaleLowerCase();
+    return conversations.filter((item) =>
+      (!language || item.language === language) &&
+      (!channel || item.channel === channel) &&
+      (!group || item.group_id === group) &&
+      (!search || `${item.conversation_id} ${item.preview}`.toLocaleLowerCase().includes(search)),
+    );
+  }, [conversations, language, channel, group, query]);
+  const filtered = useMemo(() => scopedItems.filter((item) => matchesView(item, queueView)), [scopedItems, queueView]);
+  const selectionOutsideQueue = selectedSummary && !filtered.some((item) => conversationKey(item) === selectedKey);
 
-  function openSubmission() {
-    const chosenGroup = group || selectedSummary?.group_id || groups[0] || "";
-    setSubmission({
-      team: config?.team_name ?? "",
-      group: chosenGroup,
-      split: chosenGroup.toUpperCase() === "DEV" ? "dev" : "prod",
-      model: config?.model ?? "",
-      mode: config?.provider === "local" ? "local" : "external_api",
-    });
-    setSubmissionError("");
-  }
-
-  async function exportSubmission() {
-    if (
-      !submission ||
-      !submission.team.trim() ||
-      !submission.group ||
-      !submission.model.trim()
-    )
-      return;
-    setExportingSubmission(true);
-    setSubmissionError("");
-    setNotice("");
+  async function refreshProvider() {
+    setSetupLoading(true);
+    setSetupError("");
     try {
-      const params = new URLSearchParams({
-        group_id: submission.group,
-        model_name: submission.model.trim(),
-        split: submission.split,
-        team_name: submission.team.trim(),
-        model_mode: submission.mode,
-      });
-      const document = await request<SubmissionFile>(
-        `/submission/export?${params}`,
-      );
-      downloadJson(document, "results.json");
-      const ok = document.results.filter((item) => item.status === "ok").length;
-      const errors = document.results.filter(
-        (item) => item.status === "error",
-      ).length;
-      setNoticeKind(errors ? 'warning' : 'success');
-      setNotice(
-        `results.json сформирован: ${submission.group} / ${submission.split.toUpperCase()} — ${document.results.length} записей, успешных оценок: ${ok}, записей с ошибкой: ${errors}. Сохраните файл в results/${submission.split}/.`,
-      );
-      setSubmission(null);
+      const provider = await request<ProviderInfo>("/config");
+      assertProviderInfo(provider);
+      setConfig(provider);
     } catch (error) {
-      setSubmissionError(errorText(error));
+      setSetupError(errorText(error));
     } finally {
-      setExportingSubmission(false);
+      setSetupLoading(false);
     }
   }
 
-  async function loadOverview() {
+  function openSubmission() {
+    setSubmissionGroup(group || selectedSummary?.group_id || groups[0] || "");
+  }
+
+  function onSubmissionDownload(message: string, hasErrors: boolean) {
+    setSubmissionGroup(null);
+    setNoticeKind(hasErrors ? "warning" : "success");
+    setNotice(message);
+  }
+
+  async function loadOverview(signal?: AbortSignal) {
     const [list, rules, provider] = await Promise.all([
-      request<ConversationSummary[]>("/conversations"),
-      request<ChecklistVersion[]>("/checklists"),
-      request<ProviderInfo>("/config"),
+      request<ConversationSummary[]>("/conversations", { signal }),
+      request<ChecklistVersion[]>("/checklists", { signal }),
+      request<ProviderInfo>("/config", { signal }),
     ]);
-    if (!mountedRef.current) return;
+    if (!mountedRef.current || signal?.aborted) return;
     assertProviderInfo(provider);
     setConversations(list); setChecklists(rules); setConfig(provider);
     setSelectedKey(current => list.some(item => conversationKey(item) === current) ? current : list[0] ? conversationKey(list[0]) : '');
     setSelectedChecklistKey(current => rules.some(item => checklistKey(item) === current) ? current : rules[0] ? checklistKey(rules[0]) : '');
+  }
+
+  async function reloadOverview(signal?: AbortSignal) {
+    setInitialLoading(true);
+    setOverviewFailed(false);
+    setError("");
+    try {
+      await loadOverview(signal);
+    } catch (error) {
+      if (signal?.aborted) return;
+      setOverviewFailed(true);
+      setError(errorText(error));
+    } finally {
+      if (!signal?.aborted) setInitialLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -244,17 +223,18 @@ export default function App() {
   }
 
   useEffect(() => {
+    const controller = new AbortController();
     mountedRef.current = true;
-    void loadOverview()
-      .catch((error) => setError(errorText(error)))
-      .finally(() => setInitialLoading(false));
+    void reloadOverview(controller.signal);
     return () => {
+      controller.abort();
       mountedRef.current = false;
       stopRef.current = true;
     };
   }, []);
 
   useEffect(() => {
+    setDetailError("");
     if (!selectedKey) {
       setConversation(null);
       setEvaluations([]);
@@ -287,20 +267,9 @@ export default function App() {
         setEvaluations(current => mergeHistory(history, current, value));
         setEvaluationId(current => fromSummary || current || matchingEvaluation(history, value));
       }
-    }).catch(error => { if (!controller.signal.aborted) setError(errorText(error)); }).finally(() => { if (!controller.signal.aborted) setDetailLoading(false); });
+    }).catch(error => { if (!controller.signal.aborted) setDetailError(errorText(error)); }).finally(() => { if (!controller.signal.aborted) setDetailLoading(false); });
     return () => controller.abort();
-  }, [selectedKey, summaryTarget]);
-
-  function openSummaryFinding(groupId: string, finding: SummaryFinding) {
-    const target = { ...finding, group_id: groupId };
-    setSummaryTarget(target);
-    setSelectedKey(conversationKey(target));
-    resetFilters();
-    setGroup(groupId);
-    setQueueOpen(false);
-    setMobilePanel("assessment");
-    setTab("review");
-  }
+  }, [selectedKey, detailAttempt, summaryTarget]);
 
   async function importDataset(value: unknown) {
     setImporting(true);
@@ -321,7 +290,7 @@ export default function App() {
       setGroup(result.group_id);
       setLanguage("");
       setChannel("");
-      setGrossError("");
+      setQueueView("all");
       setQuery("");
       const first = list.find((item) => item.group_id === result.group_id);
       if (first) {
@@ -366,7 +335,7 @@ export default function App() {
   }
 
   async function run(targets: ConversationSummary[]) {
-    if (!selectedChecklist || !targets.length || pendingQueue || executingRef.current) return;
+    if (!selectedChecklist || !targets.length || pendingQueue || importing || executingRef.current) return;
     if (!config?.provider_configured) { setShowSetup(true); return; }
     const queue: SavedQueue = { version: 1, checklist_id: selectedChecklist.checklist_id, checklist_version: selectedChecklist.version, model: config.model ?? '', prompt_version: config.prompt_version ?? '', items: targets.map(target => ({ group_id: target.group_id, conversation_id: target.conversation_id, key: uid(), done: false, failed: false })) };
     await executeQueue(queue);
@@ -375,14 +344,17 @@ export default function App() {
   async function executeQueue(queue: SavedQueue) {
     if (executingRef.current) return;
     executingRef.current = true;
+    setRunning(true);
+    setError("");
     let currentConfig: ProviderInfo;
     try { currentConfig = await request<ProviderInfo>('/config'); assertProviderInfo(currentConfig); setConfig(currentConfig); }
-    catch (error) { executingRef.current = false; setError(errorText(error)); return; }
+    catch (error) { executingRef.current = false; setRunning(false); setError(errorText(error)); return; }
     if (!currentConfig.provider_configured || currentConfig.model !== queue.model || (currentConfig.prompt_version ?? '') !== queue.prompt_version) {
       executingRef.current = false;
+      setRunning(false);
       setError('Настройки модели изменились. Проверьте сохранённые результаты и уберите старую очередь перед новым запуском.'); return;
     }
-    setRunning(true); setError(''); setNotice(''); setJobErrors([]); stopRef.current = false;
+    setNotice(''); setJobErrors([]); stopRef.current = false;
     setSelectedChecklistKey(JSON.stringify([queue.checklist_id, queue.checklist_version]));
     setPendingQueue(queue);
     if (!saveQueue(queue)) setError('Браузер не сохранил очередь. Не обновляйте вкладку до завершения обработки.');
@@ -391,6 +363,7 @@ export default function App() {
     for (const target of queue.items) {
       if (target.done) continue;
       if (stopRef.current || !mountedRef.current) break;
+      setJobStatus(null);
       setBatch({ total: queue.items.length, done, failed, label: target.conversation_id, stopped: false });
       try {
         let job = target.job_id ? await request<EvaluationJob>(`/evaluation-jobs/${q(target.job_id)}`)
@@ -450,7 +423,7 @@ export default function App() {
     executingRef.current = false;
     const remaining = queue.items.some(item => !item.done) ? queue : null;
     saveQueue(remaining);
-    if (mountedRef.current) { setPendingQueue(remaining); setRunning(false); setBatch({ total: queue.items.length, done, failed, label: '', stopped: stopRef.current }); }
+    if (mountedRef.current) { setPendingQueue(remaining); setRunning(false); setBatch({ total: queue.items.length, done, failed, label: '', stopped: !!remaining && stopRef.current }); }
   }
 
   function onEvaluationUpdated(value: Evaluation) {
@@ -467,46 +440,41 @@ export default function App() {
     void refreshConversations().catch(error => setError(errorText(error)));
   }
 
-  function focusElement(id: string) {
+  function focusElement(id: string, animate = false) {
     requestAnimationFrame(() =>
       requestAnimationFrame(() => {
         const element = document.getElementById(id);
-        element?.scrollIntoView({
-          behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
-            .matches
-            ? "instant"
-            : "smooth",
+        if (!element) return;
+        const panel = element.closest(".transcript-content, .assessment-pane");
+        const nearby = panel && Math.abs(element.getBoundingClientRect().top - panel.getBoundingClientRect().top) < panel.clientHeight;
+        const smooth = animate && nearby && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        element.scrollIntoView({
+          behavior: smooth ? "smooth" : "instant",
           block: "center",
         });
-        element?.focus({ preventScroll: true });
+        element.focus({ preventScroll: true });
       }),
     );
   }
-  function openEvidence(
-    messageId: string,
-    endMessageId?: string,
-    criterionId?: string,
-  ) {
-    setHighlight({
-      start: messageId,
-      end: endMessageId,
-      criterion: criterionId,
-    });
+  function openEvidence(target: EvidenceTarget, animate: boolean) {
+    setHighlight(target);
     setMobilePanel("transcript");
-    focusElement(`message-${messageId}`);
+    focusElement(`message-${target.start}`, animate);
   }
-  function returnToCriterion() {
-    if (!highlight?.criterion) return;
+  function returnToCriterion(animate: boolean) {
+    if (!highlight) return;
     setMobilePanel("assessment");
-    focusElement(`criterion-${highlight.criterion}`);
+    focusElement(`criterion-${highlight.criterion}`, animate);
   }
   function closeQueue() {
     setQueueOpen(false);
+    setFiltersOpen(false);
     queueButton.current?.focus();
   }
   useEffect(() => {
     if (!queueOpen && !filtersOpen) return;
     const escape = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || document.querySelector("dialog[open], .select-menu[data-state=open]")) return;
       if (event.key === "Tab" && queueOpen) {
         const controls = [
           ...document.querySelectorAll<HTMLElement>(
@@ -524,14 +492,10 @@ export default function App() {
         }
       }
       if (event.key !== "Escape") return;
-      if (queueOpen) {
-        setQueueOpen(false);
-        queueButton.current?.focus();
-      }
       if (filtersOpen) {
         setFiltersOpen(false);
         document.querySelector<HTMLButtonElement>(".filter-toggle")?.focus();
-      }
+      } else if (queueOpen) closeQueue();
     };
     const adjacent = [
       document.getElementById("transcript-panel"),
@@ -561,21 +525,38 @@ export default function App() {
     setLanguage("");
     setChannel("");
     setGroup("");
-    setGrossError("");
+    setQueueView("all");
   }
 
-  async function savedChecklist(value: ChecklistVersion) {
+  function openTab(value: typeof tab) {
+    setQueueOpen(false);
+    setFiltersOpen(false);
+    setTab(value);
+  }
+
+  function openSummaryFinding(groupId: string, finding: SummaryFinding) {
+    const target = { ...finding, group_id: groupId };
+    setSummaryTarget(target);
+    setSelectedKey(conversationKey(target));
+    resetFilters();
+    setGroup(groupId);
+    setMobilePanel("assessment");
+    openTab("review");
+  }
+
+  function savedChecklist(value: ChecklistVersion, baseKey: string) {
     setChecklists((current) => [
       value,
       ...current.filter((item) => checklistKey(item) !== checklistKey(value)),
     ]);
-    setSelectedChecklistKey(checklistKey(value));
+    setSelectedChecklistKey(current => current === baseKey ? checklistKey(value) : current);
+    setNoticeKind("success");
     setNotice(
-      `Чек-лист сохранён: версия ${value.version}. Выберите диалог, чтобы применить новые правила.`,
+      `Чек-лист «${value.title}» v${value.version} сохранён. Выберите эту версию для следующей оценки.`,
     );
   }
 
-  return (
+  const workspace = (
     <div className="app-shell">
       <a className="skip-link" href="#main-content">
         Перейти к рабочей области
@@ -586,41 +567,41 @@ export default function App() {
           href="#"
           onClick={(event) => {
             event.preventDefault();
-            setTab("review");
+            openTab("review");
           }}
           aria-label="CQA — рабочая область"
         >
-          <span className="brand-word">
-            cqa
-            <span aria-hidden="true" className="brand-signal" />
-          </span>
+          <span className="brand-mark"><img src={freedomShield} alt="" width={23} height={27} /></span>
+          <span className="brand-copy" translate="no"><strong>CQA</strong><span>Freedom Broker</span></span>
         </a>
         <nav className="main-nav" aria-label="Разделы приложения">
           <button
             className={tab === "review" ? "active" : ""}
-            onClick={() => setTab("review")}
+            onClick={() => openTab("review")}
             aria-current={tab === "review" ? "page" : undefined}
           >
             Диалоги
           </button>
           <button
             className={tab === "checklist" ? "active" : ""}
-            onClick={() => setTab("checklist")}
+            onClick={() => openTab("checklist")}
             aria-current={tab === "checklist" ? "page" : undefined}
           >
             Чек-листы
           </button>
           <button
             className={tab === "summary" ? "active" : ""}
-            onClick={() => setTab("summary")}
+            onClick={() => openTab("summary")}
             aria-current={tab === "summary" ? "page" : undefined}
           >
             Сводка
           </button>
         </nav>
         <div className="header-actions">
+          <span className="team-name" translate="no">SetW</span>
           <button
             className={`provider-button ${config?.provider_configured ? "connected" : ""}`}
+            data-mode={config?.mode}
             onClick={() => setShowSetup(true)}
             aria-haspopup="dialog"
             aria-label={
@@ -631,7 +612,7 @@ export default function App() {
                   : "Модель не подключена — настройки модели"
             }
           >
-            <span className="status-dot" />
+            <span className="status-dot" aria-hidden="true" />
             <span>
               {config?.mode === "test"
                 ? "Тест"
@@ -639,7 +620,7 @@ export default function App() {
                   ? "Модель"
                   : "Нет модели"}
             </span>
-            <Settings2 size={15} />
+            <Settings2 size={15} aria-hidden="true" />
           </button>
         </div>
       </header>
@@ -650,7 +631,10 @@ export default function App() {
               ? "Тестовый режим интерфейса"
               : "Подключение модели"
           }
-          onClose={() => setShowSetup(false)}
+          onClose={() => {
+            setSetupError("");
+            setShowSetup(false);
+          }}
         >
           <div className="setup-content">
             <div
@@ -677,13 +661,14 @@ export default function App() {
                 <code>LLM_API_KEY</code>. Затем перезапустите сервер.
               </p>
             )}
+            {setupError && <p className="notice error" role="alert">{setupError}</p>}
             <button
               className="button secondary"
-              onClick={() =>
-                void loadOverview().catch((error) => setError(errorText(error)))
-              }
+              onClick={() => void refreshProvider()}
+              disabled={setupLoading}
             >
-              <RefreshCw size={15} /> Обновить настройки
+              {setupLoading ? <span className="spin" aria-hidden="true"><LoaderCircle size={15} /></span> : <RefreshCw size={15} aria-hidden="true" />}
+              {setupLoading ? "Проверяем подключение…" : "Обновить настройки"}
             </button>
           </div>
         </Modal>
@@ -704,7 +689,7 @@ export default function App() {
         )}
         {notice && (
           <div className={`notice ${noticeKind}`} role="status">
-            <CheckCheck size={17} />
+            {noticeKind === "warning" ? <AlertCircle size={17} aria-hidden="true" /> : <CheckCheck size={17} aria-hidden="true" />}
             <span>{notice}</span>
             <button
               className="icon-button"
@@ -715,28 +700,42 @@ export default function App() {
             </button>
           </div>
         )}
+        {importWarning && <div className="notice warning" role="status"><AlertCircle size={17} aria-hidden="true" /><span>{importWarning}</span><button className="icon-button" aria-label="Закрыть предупреждение о составе набора" onClick={() => setImportWarning('')}><X size={16} aria-hidden="true" /></button></div>}
       </div>
-      {importWarning && <div className="notice warning" role="status"><AlertCircle size={17}/><span>{importWarning}</span><button className="icon-button" aria-label="Закрыть предупреждение о составе набора" onClick={() => setImportWarning('')}><X size={16}/></button></div>}
-      <main id="main-content">
+      <main id="main-content" tabIndex={-1}>
         <div className="workspace-toolbar">
-          <h1 key={tab} className="page-title">
+          <h1 className="page-title">
             {tab === "review" ? "Диалоги" : tab === "summary" ? "Сводка" : "Чек-листы"}
           </h1>
-          <label className="checklist-select">
-            <ClipboardList size={17} />
-            <span className="sr-only">Версия чек-листа</span>
-            <Select
-              value={selectedChecklist ? checklistKey(selectedChecklist) : ""}
-              onChange={(event) => setSelectedChecklistKey(event.target.value)}
-              disabled={!checklists.length}
-            >
-              {checklists.map((item) => (
-                <option value={checklistKey(item)} key={checklistKey(item)}>
-                  {item.title} — v{item.version}
-                </option>
-              ))}
-            </Select>
-          </label>
+          <div className="toolbar-actions">
+            <label className="checklist-select">
+              <span className="checklist-label">{tab === "review" ? "Чек-лист для запуска" : tab === "summary" ? "Чек-лист для сводки" : "Версия для редактирования"}</span>
+              <Select
+                aria-label="Версия чек-листа"
+                value={selectedChecklist ? checklistKey(selectedChecklist) : ""}
+                onChange={(event) => setSelectedChecklistKey(event.target.value)}
+                disabled={!checklists.length}
+                selectedLabel={selectedChecklist ? (
+                  <span className="version-selection">
+                    <ClipboardList size={15} aria-hidden="true" />
+                    <span title={selectedChecklist.title}>{selectedChecklist.title}</span>
+                    <strong>v{selectedChecklist.version}</strong>
+                  </span>
+                ) : initialLoading ? "Загружаем…" : "Чек-лист недоступен"}
+              >
+                {checklists.map((item) => (
+                  <option value={checklistKey(item)} key={checklistKey(item)}>
+                    {item.title} — v{item.version}
+                  </option>
+                ))}
+              </Select>
+            </label>
+            {tab === "review" && conversations.length > 0 && (
+              <button className="button secondary submission-button" onClick={openSubmission} aria-haspopup="dialog">
+                <ArrowDownToLine size={16} aria-hidden="true" /> <span>Файл для сдачи</span>
+              </button>
+            )}
+          </div>
         </div>
         <input
           type="file"
@@ -747,157 +746,34 @@ export default function App() {
           aria-label="Выбрать JSON с диалогами"
           tabIndex={-1}
         />
-        {submission ? (
-          <Modal title="Файл для сдачи" onClose={() => setSubmission(null)}>
-            <form
-              id="submission-form"
-              className="checklist-meta form-grid"
-              aria-labelledby="submission-heading"
-              onSubmit={(event) => {
-                event.preventDefault();
-                void exportSubmission();
-              }}
-            >
-              <div className="span-3">
-                <h3 id="submission-heading">Официальный формат JSON 1.0</h3>
-                <p className="form-help">
-                  JSON 1.0 организаторов. Весь выбранный набор:{" "}
-                  {submissionCount} диалогов; фильтры списка не применяются.
-                  Используются исходные оценки модели по официальному чек-листу.
-                </p>
-              </div>
-              <label className="field">
-                Команда
-                <input
-                  value={submission.team}
-                  required
-                  disabled={exportingSubmission}
-                  onChange={(event) =>
-                    setSubmission({ ...submission, team: event.target.value })
-                  }
-                />
-              </label>
-              <label className="field">
-                Набор для сдачи
-                <Select
-                  value={submission.group}
-                  required
-                  disabled={exportingSubmission}
-                  onChange={(event) =>
-                    setSubmission({
-                      ...submission,
-                      group: event.target.value,
-                      split:
-                        event.target.value.toUpperCase() === "DEV"
-                          ? "dev"
-                          : "prod",
-                    })
-                  }
-                >
-                  {groups.map((value) => (
-                    <option key={value}>{value}</option>
-                  ))}
-                </Select>
-              </label>
-              <label className="field">
-                Раздел сдачи
-                <Select
-                  value={submission.split}
-                  disabled={exportingSubmission}
-                  onChange={(event) =>
-                    setSubmission({
-                      ...submission,
-                      split: event.target.value as SubmissionForm["split"],
-                    })
-                  }
-                >
-                  <option value="dev">DEV — 65 диалогов</option>
-                  <option value="prod">PROD — 10 чатов</option>
-                </Select>
-              </label>
-              <label className="field span-2">
-                Модель для сдачи
-                <input
-                  value={submission.model}
-                  required
-                  disabled={exportingSubmission}
-                  onChange={(event) =>
-                    setSubmission({ ...submission, model: event.target.value })
-                  }
-                />
-              </label>
-              <label className="field">
-                Режим модели
-                <Select
-                  value={submission.mode}
-                  disabled={exportingSubmission}
-                  onChange={(event) =>
-                    setSubmission({
-                      ...submission,
-                      mode: event.target.value as SubmissionForm["mode"],
-                    })
-                  }
-                >
-                  <option value="external_api">Внешний API</option>
-                  <option value="local">Локальная модель</option>
-                  <option value="hybrid">Гибридный</option>
-                </Select>
-              </label>
-              {submissionError ? (
-                <p className="notice error span-3" role="alert">
-                  {submissionError}
-                </p>
-              ) : null}
-              <p className="form-help span-3">
-                Назначение: results/{submission.split}/results.json. Проверка
-                формата файла не подтверждает точность оценок относительно
-                Ground Truth.
-              </p>
-              <div className="button-row span-3">
-                <button
-                  className="button primary small"
-                  type="submit"
-                  disabled={
-                    exportingSubmission ||
-                    !submission.team.trim() ||
-                    !submission.group ||
-                    !submission.model.trim()
-                  }
-                >
-                  {exportingSubmission ? (
-                    <LoaderCircle size={15} className="spin" />
-                  ) : (
-                    <Download size={15} />
-                  )}
-                  {exportingSubmission ? "Формируем…" : "Скачать results.json"}
-                </button>
-                <button
-                  className="button ghost small"
-                  type="button"
-                  disabled={exportingSubmission}
-                  onClick={() => setSubmission(null)}
-                >
-                  Закрыть
-                </button>
-              </div>
-            </form>
-          </Modal>
-        ) : null}
+        {submissionGroup !== null && (
+          <SubmissionDialog
+            config={config}
+            group={submissionGroup}
+            groupSizes={groupSizes}
+            onClose={() => setSubmissionGroup(null)}
+            onDownload={onSubmissionDownload}
+          />
+        )}
 
         {batch && (
-          <div className="batch-banner" role="status">
-            <LoaderCircle size={18} className={running ? "spin" : ""} />
+          <div className={`batch-banner${!running && batch.failed ? " batch-warning" : ""}`} role="status">
+            <span className={running ? "spin" : undefined} aria-hidden="true">
+              {running ? <LoaderCircle size={18} /> : batch.failed ? <AlertCircle size={18} /> : <CheckCheck size={18} />}
+            </span>
             <div>
               <strong>
                 {running
-                  ? `${jobStatus === "queued" ? "В очереди" : "Анализ"}: ${batch.label}`
+                  ? batch.label
+                    ? `${jobStatus === "queued" ? "В очереди" : jobStatus === "running" ? "Анализ" : "Обработка"}: ${batch.label}`
+                    : "Обновляем очередь…"
                   : batch.stopped
                     ? "Очередь остановлена"
                     : "Обработка завершена"}
               </strong>
               <span>
                 Обработано {batch.done} из {batch.total}
-                {batch.failed ? ` · ошибок ${batch.failed}` : ""}
+                {batch.failed ? ` · успешно ${batch.done - batch.failed}, ошибок ${batch.failed}` : ""}
               </span>
             </div>
             <progress
@@ -974,9 +850,16 @@ export default function App() {
           </details>
         )}
         {initialLoading ? (
+          <div className="large-empty" role="status">
+            <span className="spin" aria-hidden="true"><LoaderCircle size={26} /></span>
+            <h2>Открываем рабочую область…</h2>
+          </div>
+        ) : overviewFailed ? (
           <div className="large-empty">
-            <LoaderCircle className="spin" size={30} />
-            <h2>Открываем рабочую область</h2>
+            <AlertCircle size={26} aria-hidden="true" />
+            <h2>Рабочая область недоступна</h2>
+            <p>Проверьте, запущен ли сервер, и повторите загрузку.</p>
+            <button className="button primary" onClick={() => void reloadOverview()}><RefreshCw size={16} aria-hidden="true" /> Повторить загрузку</button>
           </div>
         ) : tab === "summary" ? (
           selectedChecklist ? (
@@ -989,23 +872,13 @@ export default function App() {
             />
           ) : <p className="quality-summary">Сначала выберите чек-лист.</p>
         ) : tab === "checklist" ? (
-          selectedChecklist ? (
-            <ChecklistEditor
-              key={checklistKey(selectedChecklist)}
-              checklist={selectedChecklist}
-              onSaved={(value) => void savedChecklist(value)}
-            />
-          ) : (
+          !selectedChecklist && (
             <div className="large-empty">
               <h2>Чек-лист не найден</h2>
               <p>Проверьте доступность API и повторите загрузку.</p>
               <button
                 className="button secondary"
-                onClick={() =>
-                  void loadOverview().catch((error) =>
-                    setError(errorText(error)),
-                  )
-                }
+                onClick={() => void reloadOverview()}
               >
                 Обновить
               </button>
@@ -1013,42 +886,56 @@ export default function App() {
           )
         ) : conversations.length === 0 ? (
           <section className="onboarding">
-            <h2>Загрузите диалоги</h2>
-            <p>JSON с транскриптами на русском, казахском или английском.</p>
-            <div className="button-row">
+            <div className="onboarding-import">
+              <span className="onboarding-icon"><Upload size={24} aria-hidden="true" /></span>
+              <h2>Загрузите диалоги</h2>
+              <p>Импортируйте JSON с транскриптами чатов или звонков на русском, казахском или английском. Один файл до 25&nbsp;МБ.</p>
+              <div className="button-row">
+                <button
+                  className="button primary"
+                  onClick={() => inputRef.current?.click()}
+                  disabled={importing}
+                >
+                  {importing ? <span className="spin" aria-hidden="true"><LoaderCircle size={17} /></span> : <Upload size={17} aria-hidden="true" />}
+                  {importing ? "Импортируем…" : "Импорт JSON"}
+                </button>
+                <button
+                  className="button secondary"
+                  onClick={() => void importDataset({ source: "dev" })}
+                  disabled={importing}
+                >
+                  Открыть DEV
+                </button>
+              </div>
               <button
-                className="button primary"
-                onClick={() => inputRef.current?.click()}
+                className="text-button"
+                onClick={() => void importDataset({ source: "demo" })}
                 disabled={importing}
               >
-                <Upload size={17} /> Импорт JSON
-              </button>
-              <button
-                className="button secondary"
-                onClick={() => void importDataset({ source: "dev" })}
-                disabled={importing}
-              >
-                Открыть DEV
+                Открыть пример диалогов
               </button>
             </div>
-            <button
-              className="text-button"
-              onClick={() => void importDataset({ source: "demo" })}
-              disabled={importing}
-            >
-              Открыть пример диалогов
-            </button>
+            <div className="onboarding-steps">
+              <h3>Как проходит проверка</h3>
+              <ol>
+                <li><strong>Выберите правила</strong><span>Укажите версию чек-листа для запуска.</span></li>
+                <li><strong>Запустите оценку</strong><span>Оцените один диалог или всю выборку.</span></li>
+                <li><strong>Проверьте выводы</strong><span>Откройте цитаты из диалога и при необходимости подайте апелляцию.</span></li>
+              </ol>
+            </div>
           </section>
         ) : (
           <div
             className={`review-workspace mobile-${mobilePanel} ${queueOpen ? "queue-open" : ""}`}
+            data-drawer-motion={drawerMotion}
             style={{ "--queue-width": `${queueWidth}px` } as CSSProperties}
           >
             <div className="review-context">
               <button
                 ref={queueButton}
                 className="button secondary small tablet-queue-button"
-                onClick={() => {
+                onClick={(event) => {
+                  setDrawerMotion(event.detail > 0);
                   setQueueOpen(true);
                   requestAnimationFrame(() =>
                     document
@@ -1061,22 +948,22 @@ export default function App() {
               >
                 <List size={16} /> Очередь
               </button>
-              <div className="conversation-context">
-                <strong>
-                  {selectedSummary?.conversation_id || "Выберите диалог"}
-                </strong>
-                <span>{selectedSummary?.group_id}</span>
-                <span>{selectedSummary?.language}</span>
-                <span>
-                  {selectedSummary?.channel === "voice call" ? "Звонок" : "Чат"}
-                </span>
-              </div>
-              <button
-                className="button secondary small submission-button"
-                onClick={openSubmission}
-              >
-                <FileJson size={15} /> Файл для сдачи
-              </button>
+              {selectedSummary && (
+                <div className="conversation-context">
+                  <span className="context-icon" aria-hidden="true">
+                    {selectedSummary.channel === "voice call" ? <Headphones size={19} /> : <MessageSquare size={19} />}
+                  </span>
+                  <div className="context-copy">
+                    <h2 id="conversation-title" tabIndex={-1} translate="no">{selectedSummary.conversation_id}</h2>
+                    <div className="context-tags">
+                      <span>{selectedSummary.channel === "voice call" ? "Звонок" : "Чат"}</span>
+                      <span translate="no">{selectedSummary.group_id}</span>
+                      <span translate="no">{selectedSummary.language}</span>
+                      {selectionOutsideQueue && <span className="outside-queue">Вне текущей выборки</span>}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             <nav
               className="mobile-panel-tabs"
@@ -1128,7 +1015,7 @@ export default function App() {
                     )}
                     {["Очередь", "Диалог", "Оценка"][index]}
                     {panel === "assessment" && evaluation && (
-                      <span className="tab-result-dot" />
+                      <span className="tab-result-dot" aria-hidden="true" />
                     )}
                   </button>
                 ),
@@ -1138,12 +1025,14 @@ export default function App() {
                 <button
                   className="queue-backdrop"
                   aria-label="Закрыть список диалогов"
+                tabIndex={-1}
                   onClick={closeQueue}
                 />
               )}
               <ConversationQueue
                 resizeHandle={<QueueResize onChange={setQueueWidth} />}
                 items={filtered}
+                scopedItems={scopedItems}
                 total={conversations.length}
                 selectedKey={selectedKey}
                 groups={groups}
@@ -1151,41 +1040,55 @@ export default function App() {
                 language={language}
                 channel={channel}
                 group={group}
-                grossError={grossError}
+                view={queueView}
                 filtersOpen={filtersOpen}
+                drawerOpen={queueOpen}
+                isMobile={isMobile}
                 running={running}
                 pending={!!pendingQueue}
                 importing={importing}
                 configured={!!config?.provider_configured}
+                canRun={!!selectedChecklist}
                 onQuery={setQuery}
                 onLanguage={setLanguage}
                 onChannel={setChannel}
                 onGroup={setGroup}
-                onGrossError={setGrossError}
-                onFilters={() => setFiltersOpen((value) => !value)}
+                onView={setQueueView}
+                onFilters={() => {
+                  setFiltersOpen(!filtersOpen);
+                  if (filtersOpen) document.querySelector<HTMLButtonElement>(".filter-toggle")?.focus();
+                }}
                 onSelect={(item) => {
                   if (selectedKey !== conversationKey(item)) setSummaryTarget(null);
                   setSelectedKey(conversationKey(item));
                   setMobilePanel("transcript");
                   setQueueOpen(false);
+                  setFiltersOpen(false);
+                  if (queueOpen || isMobile)
+                    requestAnimationFrame(() => document.getElementById("conversation-title")?.focus({ preventScroll: true }));
                 }}
                 onReset={resetFilters}
                 onImport={() => inputRef.current?.click()}
                 onRun={() => void run(filtered)}
-                onSubmission={openSubmission}
                 onClose={closeQueue}
               />
               <Transcript
+                key={JSON.stringify([selectedKey, evaluationId])}
                 source={source}
                 evaluation={evaluation}
                 highlight={highlight}
                 loading={detailLoading}
+                error={detailError}
+                isMobile={isMobile}
+                onRetry={() => setDetailAttempt((current) => current + 1)}
                 onReturn={returnToCriterion}
               />
               <aside
                 id="assessment-panel"
                 className="assessment-pane"
-                aria-label="Результаты оценки"
+                role={isMobile ? "tabpanel" : undefined}
+                aria-labelledby={isMobile ? "tab-assessment" : undefined}
+                aria-label={isMobile ? undefined : "Результаты оценки"}
               >
                 <div className="assessment-actions">
                   <h2>Оценка</h2>
@@ -1194,8 +1097,10 @@ export default function App() {
                     disabled={
                       !selectedSummary ||
                       running ||
+                      importing ||
                       !!pendingQueue ||
                       detailLoading ||
+                      !!detailError ||
                       !selectedChecklist
                     }
                     onClick={() =>
@@ -1203,12 +1108,16 @@ export default function App() {
                     }
                   >
                     {running ? (
-                      <LoaderCircle size={14} className="spin" />
+                      <span className="spin" aria-hidden="true"><LoaderCircle size={14} /></span>
+                    ) : !config?.provider_configured ? (
+                      <Settings2 size={14} aria-hidden="true" />
                     ) : (
-                      <Play size={14} />
+                      <Play size={14} aria-hidden="true" />
                     )}
                     {running
-                      ? "Анализируем…"
+                      ? "Обрабатываем…"
+                      : !config?.provider_configured
+                        ? "Подключить модель"
                       : evaluation
                         ? "Оценить снова"
                         : "Оценить диалог"}
@@ -1216,7 +1125,7 @@ export default function App() {
                 </div>
                 {evaluations.length > 0 && (
                   <label className="history-select">
-                    Запуск
+                    <span>История запусков</span>
                     <Select
                       aria-label="История оценок"
                       value={evaluationId}
@@ -1243,24 +1152,28 @@ export default function App() {
                     onUpdated={onEvaluationUpdated}
                     onEvidence={openEvidence}
                   />
+                ) : detailLoading ? (
+                  <div className="assessment-empty" role="status">
+                    <span className="spin" aria-hidden="true"><LoaderCircle size={22} /></span>
+                    <p>Загружаем оценки…</p>
+                  </div>
+                ) : detailError ? (
+                  <div className="assessment-empty">
+                    <h3>Оценки недоступны</h3>
+                    <button className="text-button" onClick={() => setDetailAttempt((current) => current + 1)}>Повторить загрузку</button>
+                  </div>
                 ) : (
                   <div className="assessment-empty">
-                    <h2>Диалог ещё не оценён</h2>
+                    <span className="assessment-empty-icon"><ClipboardList size={22} aria-hidden="true" /></span>
+                    <h3>{evaluations.length ? "Открыт текущий диалог" : "Диалог ещё не оценён"}</h3>
                     <p>
-                      {selectedChecklist?.criteria.length ?? 0} критериев,
-                      версия {selectedChecklist?.version}.
+                      {selectedChecklist
+                        ? `Для следующего запуска выбрана версия v${selectedChecklist.version} (${selectedChecklist.criteria.length} критериев).`
+                        : "Выберите чек-лист для оценки."}
                     </p>
-                    {!config?.provider_configured && (
-                      <button
-                        className="connection-hint"
-                        onClick={() => setShowSetup(true)}
-                      >
-                        <AlertCircle size={16} /> Подключить модель
-                      </button>
-                    )}
                     <button
                       className="text-button"
-                      onClick={() => setTab("checklist")}
+                      onClick={() => openTab("checklist")}
                     >
                       Изменить чек-лист
                     </button>
@@ -1269,7 +1182,16 @@ export default function App() {
               </aside>
           </div>
         )}
+        {selectedChecklist && (
+          <ChecklistEditor
+            visible={tab === "checklist" && !initialLoading && !overviewFailed}
+            checklist={selectedChecklist}
+            versionKey={checklistKey(selectedChecklist)}
+            onSaved={savedChecklist}
+          />
+        )}
       </main>
     </div>
   );
+  return <AssessmentDraftsProvider>{workspace}</AssessmentDraftsProvider>;
 }

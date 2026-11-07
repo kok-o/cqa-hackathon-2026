@@ -100,6 +100,17 @@ class ApiTests(unittest.TestCase):
         self.assertIn("attachment", exported.headers["content-disposition"])
         self.assertEqual(len(exported.json()), 2)
 
+    def test_voice_preview_skips_phone_menu_digits(self):
+        dataset = deepcopy(self.dataset)
+        call = next(record for record in dataset["data"]["records"] if record["channel"] == "voice call")
+        call["transcript"] = [
+            {"speaker": "client", "timestamp": "00:01", "text": "2"},
+            {"speaker": "operator", "timestamp": "00:02", "text": "Сәлеметсіз бе!"},
+        ]
+        self.client.post("/api/datasets/import", json={"dataset": dataset}).raise_for_status()
+        summaries = self.client.get("/api/conversations", params={"channel": "voice call"}).raise_for_status().json()
+        self.assertEqual(summaries[0]["preview"], "Сәлеметсіз бе!")
+
     def test_gross_error_filters_latest_result_and_each_history_entry(self):
         version = self.gross_error_checklist_version()
         summaries = self.client.get("/api/conversations").json()

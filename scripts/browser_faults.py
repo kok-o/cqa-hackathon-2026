@@ -47,7 +47,7 @@ def main():
             for i,row in enumerate(dataset['data']['records']):row['conversation_id']=group+'-'+str(i)
             page.get_by_label('Выбрать JSON с диалогами').set_input_files({'name':'fault.json','mimeType':'application/json','buffer':json.dumps(dataset,ensure_ascii=False).encode()})
             expect(page.locator('.conversation-item')).to_have_count(count)
-            expect(page.locator('.conversation-context strong')).to_have_text(dataset['data']['records'][0]['conversation_id'])
+            expect(page.locator('#conversation-title')).to_have_text(dataset['data']['records'][0]['conversation_id'])
             return group
 
         def finished():

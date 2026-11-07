@@ -30,6 +30,7 @@ def seed(api: httpx.Client, token: str) -> tuple[str, str, dict]:
     for record in dataset['data']['records']:
         record['conversation_id'] = f'frontend-{token}-{record["language"].lower()}'
     ru = dataset['data']['records'][0]
+    ru['transcript'].insert(1, {'timestamp': '00:01', 'speaker': 'bot', 'text': 'Выберите тему обращения.'})
     # Long transcript exercises independent pane scrolling and source anchors.
     for index in range(20):
         ru['transcript'].insert(-1, {
@@ -133,8 +134,9 @@ def main() -> None:
             choose_select(select_control(page, 'Набор'), group)
             set_filters_open(page, False)
             page.get_by_role('button').filter(has_text=conversation_id).click()
-            expect(page.locator('.conversation-context strong')).to_have_text(conversation_id)
+            expect(page.locator('#conversation-title')).to_have_text(conversation_id)
             expect(page.locator('.aq-run-details').last).to_contain_text(evaluation['evaluation_id'])
+            expect(page.locator('.transcript-intro-toggle')).to_have_attribute('aria-expanded', 'false')
             checks.append('synthetic_long_transcript_and_saved_run')
 
             for width, height in VIEWPORTS:
@@ -179,6 +181,7 @@ def main() -> None:
             quote = page.locator(f'[id="message-{quote_message}"]')
             expect(quote).to_have_class(re.compile('highlighted'))
             expect(quote).to_be_focused()
+            expect(quote.locator('mark')).to_have_text(evaluation['results'][1]['evidence'][0]['quote'])
             page.get_by_role('button', name='К критерию', exact=True).click()
             expect(page.get_by_role('tab', name='Оценка', exact=True)).to_have_attribute('aria-selected', 'true')
             expect(criterion_button(quote_id)).to_be_focused()
@@ -190,6 +193,7 @@ def main() -> None:
             expect(page.locator(f'[id="message-{first_message}"]')).to_have_class(re.compile('range-start'))
             expect(page.locator(f'[id="message-{last_message}"]')).to_have_class(re.compile('range-end'))
             expect(page.locator('.message.highlighted')).to_have_count(len(evaluation['conversation']['transcript']))
+            expect(page.locator('.transcript-intro-toggle')).to_have_attribute('aria-expanded', 'true')
             page.get_by_role('button', name='К критерию', exact=True).click()
             expect(criterion_button(greeting_id)).to_be_focused()
             checks.append('checked_span_all_messages_and_boundary_highlight')
@@ -213,6 +217,16 @@ def main() -> None:
             select_tab('Оценка')
             expect(appeal_comment).to_have_value('Учебный параллельный пересмотр.')
             checks.append('appeal_draft_survives_criterion_switch_collapse_and_mobile_tabs')
+            history = select_control(page, 'История оценок')
+            choose_select(history, '')
+            choose_select(history, evaluation['evaluation_id'])
+            criterion_button(greeting_id).click()
+            expect(appeal_comment).to_have_value('Учебный параллельный пересмотр.')
+            page.get_by_role('button', name='Чек-листы', exact=True).click()
+            page.get_by_role('button', name='Диалоги', exact=True).click()
+            criterion_button(greeting_id).click()
+            expect(appeal_comment).to_have_value('Учебный параллельный пересмотр.')
+            checks.append('appeal_draft_survives_history_and_workspace_navigation')
             appeal_comment.press('Escape')
             expect(page.get_by_role('button', name='Оспорить оценку', exact=True)).to_be_focused()
             page.get_by_role('button', name='Оспорить оценку', exact=True).click()
@@ -315,7 +329,7 @@ def main() -> None:
                 'name': 'invalid.json', 'mimeType': 'application/json', 'buffer': b'{broken json',
             })
             expect(page.get_by_role('alert')).to_contain_text('JSON')
-            expect(page.locator('.conversation-context strong')).to_have_text(f'frontend-{token}-en')
+            expect(page.locator('#conversation-title')).to_have_text(f'frontend-{token}-en')
             checks.append('invalid_json_keeps_current_conversation')
 
             page.emulate_media(reduced_motion='reduce')

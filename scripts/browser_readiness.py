@@ -17,6 +17,7 @@ import wave
 
 import httpx
 from playwright.sync_api import Error as PlaywrightError, sync_playwright, expect
+from select_control import choose_select, select_control
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -77,7 +78,8 @@ def main():
     if urlsplit(base).hostname not in {'127.0.0.1', 'localhost', '::1'}:
         raise SystemExit('Only a local isolated test server is supported')
     with httpx.Client(base_url=base, timeout=15) as client:
-        if client.get('/api/config').raise_for_status().json().get('mode') != 'test':
+        config = client.get('/api/config').raise_for_status().json()
+        if config.get('mode') != 'test':
             raise SystemExit('Refusing mutations outside explicit test mode')
     out = ROOT / 'scratch'
     out.mkdir(exist_ok=True)
@@ -105,7 +107,7 @@ def main():
             assert upload(dataset)['imported'] == 10
             cid = dataset['data']['records'][0]['conversation_id']
             page.locator('.conversation-item').filter(has_text=cid).click()
-            expect(page.locator('.conversation-context strong')).to_have_text(cid)
+            expect(page.locator('#conversation-title')).to_have_text(cid)
             expect(page.locator('.transcript-content .message')).to_have_count(5)
             checks.append('unicode_and_reserved_character_id_opens_in_ui')
             partial = deepcopy(dataset)
@@ -121,11 +123,43 @@ def main():
             page.get_by_role('button', name='Закрыть сообщение об ошибке').click()
             checks.extend(['upsert_residual_group_warning','invalid_empty_transcript_error_visible'])
 
+            choose_select(select_control(page, 'Версия чек-листа'), json.dumps(['synthetic-checklist', 1], separators=(',', ':')))
             page.get_by_role('button',name=re.compile(r'^Оценить выборку\s*10$')).click()
             expect(page.locator('.batch-banner')).to_contain_text('Обработка завершена',timeout=60000)
             expect(page.locator('.batch-banner')).to_contain_text('Обработано 10 из 10')
             expect(page.locator('.job-errors')).to_have_count(0)
             checks.append('ui_batch_of_ten_new_chats_completes_with_test_double')
+
+            official = json.loads((ROOT/'fixtures/checklist.official.json').read_text(encoding='utf-8'))
+            with httpx.Client(base_url=base, timeout=15) as client:
+                existing = client.get('/api/checklists').raise_for_status().json()
+                if not any(item['checklist_id'] == official['checklist_id'] for item in existing):
+                    client.post('/api/checklists', json=official).raise_for_status()
+            page.reload(wait_until='networkidle')
+            page.get_by_role('searchbox', name='Поиск диалога').fill(cid)
+            page.locator('.conversation-item').filter(has_text=cid).click()
+            official_key = json.dumps([official['checklist_id'], official['version']], separators=(',', ':'))
+            choose_select(select_control(page, 'Версия чек-листа'), official_key)
+            with page.expect_response(lambda r: r.request.method == 'POST' and r.url.endswith('/api/evaluation-jobs')) as pending:
+                page.get_by_role('button', name='Оценить снова', exact=True).click()
+            assert pending.value.status == 202
+            expect(page.locator('.batch-banner')).to_contain_text('Обработка завершена')
+            page.get_by_role('button', name='Файл для сдачи', exact=True).click()
+            dialog = page.get_by_role('dialog', name='Файл для сдачи')
+            expect(dialog.get_by_role('textbox', name='Команда')).to_have_value(config.get('team_name') or 'SetW')
+            with page.expect_response(lambda r: r.url.startswith(base + '/api/submission/export?')) as preview_response:
+                dialog.get_by_role('button', name='Подготовить файл').click()
+            assert preview_response.value.status == 200, preview_response.value.text()
+            preview = preview_response.value.json()
+            expect(dialog.locator('.submission-totals dd')).to_have_text(['10', '1', '9'])
+            with page.expect_download() as pending_download:
+                dialog.get_by_role('button', name='Скачать results.json').click()
+            downloaded = json.loads(Path(pending_download.value.path()).read_text(encoding='utf-8'))
+            assert downloaded == preview and downloaded['schema_version'] == '1.0'
+            assert {row['conversation_id'] for row in downloaded['results']} == {
+                row['conversation_id'] for row in dataset['data']['records']
+            }
+            checks.append('submission_preview_and_download_use_the_same_complete_snapshot')
 
             voices = json.loads((ROOT/'fixtures/readiness/voice-dataset.json').read_text(encoding='utf-8'))
             voices['data']['dataset_group_id'] = group + '-VOICE'

@@ -5,28 +5,13 @@
   color: #25312a;
 }
 
-.editor-heading-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.editor-heading-row h2 {
-  margin: 0;
-  font-size: 18px;
-  line-height: 1.4;
-  font-weight: 600;
-}
-
 .editor-feedback {
   margin-bottom: 16px;
 }
 
 .editor-meta {
   display: grid;
-  grid-template-columns: minmax(200px, 1fr) 230px 85px;
+  grid-template-columns: minmax(200px, 1fr) 230px auto;
   align-items: end;
   gap: 20px;
   padding: 0 0 22px;
@@ -35,19 +20,7 @@
 .editor-meta .field {
   margin: 0;
 }
-.editor-version {
-  display: grid;
-  gap: 7px;
-  padding-bottom: 9px;
-}
-.editor-version > span {
-  font-size: 12px;
-  color: #667169;
-}
-.editor-version > strong {
-  font-size: 14px;
-  font-weight: 500;
-}
+.editor-download { align-self: end; }
 
 .editor-body {
   display: grid;
@@ -306,24 +279,16 @@
   .editor-workspace.editor-v2 {
     padding-top: 0;
   }
-  .editor-heading-row {
-    margin-bottom: 18px;
-  }
-  .editor-heading-row > .button {
-    min-height: 44px;
-    font-size: 12px;
-  }
   .editor-meta {
-    grid-template-columns: minmax(0, 1fr) 65px;
+    grid-template-columns: minmax(0, 1fr) 44px;
     gap: 16px;
     padding-bottom: 20px;
   }
   .editor-name {
     grid-column: 1 / -1;
   }
-  .editor-version {
-    padding-bottom: 12px;
-  }
+  .editor-download { width: 44px; min-height: 44px; padding: 8px; }
+  .editor-download-label { display: none; }
   .editor-body {
     display: block;
   }

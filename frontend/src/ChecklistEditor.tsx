@@ -269,27 +269,7 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
       aria-labelledby="editor-heading"
       aria-busy={busy}
     >
-      <header className="editor-heading-row">
-        <div>
-          <h2 id="editor-heading">Чек-лист</h2>
-        </div>
-        <button
-          className="button secondary"
-          disabled={busy}
-          onClick={() => {
-            try {
-              downloadJson(
-                { ...draft, criteria: preparedCriteria() },
-                "cqa-checklist.json",
-              );
-            } catch (err) {
-              setError(errorText(err));
-            }
-          }}
-        >
-          <FileDown size={16} /> Скачать
-        </button>
-      </header>
+      <h2 id="editor-heading" className="sr-only">Чек-лист</h2>
       {error ? (
         <div className="notice error editor-feedback" role="alert">
           <AlertCircle size={18} />
@@ -333,10 +313,24 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
             <option value="organizer">Правила организаторов</option>
           </select>
         </label>
-        <div className="editor-version">
-          <span>Версия</span>
-          <strong>v{checklist.version}</strong>
-        </div>
+        <button
+          className="button secondary editor-download"
+          aria-label="Скачать чек-лист"
+          disabled={busy}
+          onClick={() => {
+            try {
+              downloadJson(
+                { ...draft, criteria: preparedCriteria() },
+                "cqa-checklist.json",
+              );
+            } catch (err) {
+              setError(errorText(err));
+            }
+          }}
+        >
+          <FileDown size={16} /><span className="editor-download-label">Скачать</span>
+        </button>
+
       </div>
       <div className="editor-body">
         <aside className="editor-index" aria-label="Критерии чек-листа">

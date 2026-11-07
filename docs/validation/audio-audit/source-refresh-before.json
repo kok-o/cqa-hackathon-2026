@@ -1,0 +1,11 @@
+{
+  "mode": "synthetic_audio_only",
+  "paid_model_calls": 0,
+  "checks": {
+    "loaded_audio_cleared_on_source_change": false,
+    "new_source_can_be_opened": false,
+    "pending_source_change_resets_loading": false,
+    "obsolete_resolution_does_not_attach_audio": false
+  },
+  "status": "failed"
+}

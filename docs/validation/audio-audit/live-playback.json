@@ -1,0 +1,393 @@
+{
+  "started_utc": "2026-11-07T17:12:10.352904+00:00",
+  "base": "http://127.0.0.1:8015",
+  "mode": "read_only_live_audio_plus_isolated_browser_response_simulations",
+  "live_calls": [
+    {
+      "conversation_id": "p4-ru-001",
+      "message_count": 45,
+      "current_source": {
+        "http_status": 200,
+        "latency_ms": 1705,
+        "cache_control": "no-store",
+        "resolved_from": "html"
+      },
+      "ui_source": {
+        "http_status": 200,
+        "latency_ms": 2208,
+        "saved_evaluation_snapshot": true,
+        "cache_control": "no-store",
+        "resolved_from": "html"
+      },
+      "playback": {
+        "metadata_wait_ms": 540,
+        "ready_state": 3,
+        "duration_seconds": 312.26,
+        "media_error_code": null,
+        "initial_play": {
+          "ok": true,
+          "latency_ms": 1,
+          "start_seconds": 0,
+          "end_seconds": 0.574008,
+          "delta_seconds": 0.574008
+        },
+        "seek": {
+          "ok": true,
+          "target_seconds": 156.13,
+          "actual_seconds": 156.13,
+          "latency_ms": 187
+        },
+        "after_seek_play": {
+          "ok": true,
+          "latency_ms": 0,
+          "start_seconds": 156.13,
+          "end_seconds": 156.74543,
+          "delta_seconds": 0.6154300000000035
+        },
+        "ready_state_after": 4,
+        "passed": true
+      },
+      "media_responses": [
+        {
+          "status": 206,
+          "content_type": "audio/mpeg",
+          "range_response": true
+        },
+        {
+          "status": 206,
+          "content_type": "audio/mpeg",
+          "range_response": true
+        }
+      ],
+      "passed": true,
+      "total_ms": 7769
+    },
+    {
+      "conversation_id": "p4-ru-002",
+      "message_count": 73,
+      "current_source": {
+        "http_status": 200,
+        "latency_ms": 1151,
+        "cache_control": "no-store",
+        "resolved_from": "html"
+      },
+      "ui_source": {
+        "http_status": 200,
+        "latency_ms": 1436,
+        "saved_evaluation_snapshot": true,
+        "cache_control": "no-store",
+        "resolved_from": "html"
+      },
+      "playback": {
+        "metadata_wait_ms": 180,
+        "ready_state": 4,
+        "duration_seconds": 620.38,
+        "media_error_code": null,
+        "initial_play": {
+          "ok": true,
+          "latency_ms": 1,
+          "start_seconds": 0,
+          "end_seconds": 0.616036,
+          "delta_seconds": 0.616036
+        },
+        "seek": {
+          "ok": true,
+          "target_seconds": 310.19,
+          "actual_seconds": 310.19,
+          "latency_ms": 234
+        },
+        "after_seek_play": {
+          "ok": true,
+          "latency_ms": 1,
+          "start_seconds": 310.19,
+          "end_seconds": 310.805356,
+          "delta_seconds": 0.6153560000000198
+        },
+        "ready_state_after": 4,
+        "passed": true
+      },
+      "media_responses": [
+        {
+          "status": 206,
+          "content_type": "audio/mpeg",
+          "range_response": true
+        },
+        {
+          "status": 206,
+          "content_type": "audio/mpeg",
+          "range_response": true
+        }
+      ],
+      "passed": true,
+      "total_ms": 6076
+    },
+    {
+      "conversation_id": "p4-ru-003",
+      "message_count": 78,
+      "current_source": {
+        "http_status": 200,
+        "latency_ms": 1156,
+        "cache_control": "no-store",
+        "resolved_from": "html"
+      },
+      "ui_source": {
+        "http_status": 200,
+        "latency_ms": 1552,
+        "saved_evaluation_snapshot": true,
+        "cache_control": "no-store",
+        "resolved_from": "html"
+      },
+      "playback": {
+        "metadata_wait_ms": 366,
+        "ready_state": 3,
+        "duration_seconds": 393.22,
+        "media_error_code": null,
+        "initial_play": {
+          "ok": true,
+          "latency_ms": 1,
+          "start_seconds": 0,
+          "end_seconds": 0.615663,
+          "delta_seconds": 0.615663
+        },
+        "seek": {
+          "ok": true,
+          "target_seconds": 196.61,
+          "actual_seconds": 196.61,
+          "latency_ms": 1652
+        },
+        "after_seek_play": {
+          "ok": true,
+          "latency_ms": 0,
+          "start_seconds": 196.61,
+          "end_seconds": 197.225693,
+          "delta_seconds": 0.6156929999999932
+        },
+        "ready_state_after": 4,
+        "passed": true
+      },
+      "media_responses": [
+        {
+          "status": 206,
+          "content_type": "audio/mpeg",
+          "range_response": true
+        },
+        {
+          "status": 206,
+          "content_type": "audio/mpeg",
+          "range_response": true
+        }
+      ],
+      "passed": true,
+      "total_ms": 7694
+    },
+    {
+      "conversation_id": "p4-ru-004",
+      "message_count": 115,
+      "current_source": {
+        "http_status": 200,
+        "latency_ms": 1650,
+        "cache_control": "no-store",
+        "resolved_from": "html"
+      },
+      "ui_source": {
+        "http_status": 200,
+        "latency_ms": 1081,
+        "saved_evaluation_snapshot": true,
+        "cache_control": "no-store",
+        "resolved_from": "html"
+      },
+      "playback": {
+        "metadata_wait_ms": 484,
+        "ready_state": 3,
+        "duration_seconds": 424.02,
+        "media_error_code": null,
+        "initial_play": {
+          "ok": true,
+          "latency_ms": 1,
+          "start_seconds": 0,
+          "end_seconds": 0.600084,
+          "delta_seconds": 0.600084
+        },
+        "seek": {
+          "ok": true,
+          "target_seconds": 212.01,
+          "actual_seconds": 212.01,
+          "latency_ms": 2549
+        },
+        "after_seek_play": {
+          "ok": true,
+          "latency_ms": 0,
+          "start_seconds": 212.01,
+          "end_seconds": 212.625321,
+          "delta_seconds": 0.6153210000000229
+        },
+        "ready_state_after": 4,
+        "passed": true
+      },
+      "media_responses": [
+        {
+          "status": 206,
+          "content_type": "audio/mpeg",
+          "range_response": true
+        },
+        {
+          "status": 206,
+          "content_type": "audio/mpeg",
+          "range_response": true
+        }
+      ],
+      "passed": true,
+      "total_ms": 8707
+    },
+    {
+      "conversation_id": "p4-ru-005",
+      "message_count": 75,
+      "current_source": {
+        "http_status": 200,
+        "latency_ms": 1061,
+        "cache_control": "no-store",
+        "resolved_from": "html"
+      },
+      "ui_source": {
+        "http_status": 200,
+        "latency_ms": 1458,
+        "saved_evaluation_snapshot": true,
+        "cache_control": "no-store",
+        "resolved_from": "html"
+      },
+      "playback": {
+        "metadata_wait_ms": 372,
+        "ready_state": 3,
+        "duration_seconds": 345.34,
+        "media_error_code": null,
+        "initial_play": {
+          "ok": true,
+          "latency_ms": 1,
+          "start_seconds": 0,
+          "end_seconds": 0.600129,
+          "delta_seconds": 0.600129
+        },
+        "seek": {
+          "ok": true,
+          "target_seconds": 172.67,
+          "actual_seconds": 172.67,
+          "latency_ms": 2103
+        },
+        "after_seek_play": {
+          "ok": true,
+          "latency_ms": 1,
+          "start_seconds": 172.67,
+          "end_seconds": 173.270057,
+          "delta_seconds": 0.6000570000000209
+        },
+        "ready_state_after": 4,
+        "passed": true
+      },
+      "media_responses": [
+        {
+          "status": 206,
+          "content_type": "audio/mpeg",
+          "range_response": true
+        },
+        {
+          "status": 206,
+          "content_type": "audio/mpeg",
+          "range_response": true
+        }
+      ],
+      "passed": true,
+      "total_ms": 8022
+    }
+  ],
+  "simulated_recovery": [
+    {
+      "scenario": "source_resolve_502",
+      "mode": "mocked_audio_GETs_in_separate_browser_context",
+      "error_visible": true,
+      "playback_after_retry": {
+        "metadata_wait_ms": 0,
+        "ready_state": 4,
+        "duration_seconds": 2,
+        "media_error_code": null,
+        "initial_play": {
+          "ok": true,
+          "latency_ms": 7,
+          "start_seconds": 0,
+          "end_seconds": 0.333588,
+          "delta_seconds": 0.333588
+        },
+        "seek": {
+          "ok": true,
+          "target_seconds": 1,
+          "actual_seconds": 1,
+          "latency_ms": 62
+        },
+        "after_seek_play": {
+          "ok": true,
+          "latency_ms": 1,
+          "start_seconds": 1,
+          "end_seconds": 1.377231,
+          "delta_seconds": 0.3772310000000001
+        },
+        "ready_state_after": 4,
+        "passed": true
+      },
+      "passed": true,
+      "resolve_requests": 4
+    },
+    {
+      "scenario": "expired_media_403",
+      "mode": "mocked_audio_GETs_in_separate_browser_context",
+      "error_visible": true,
+      "playback_after_retry": {
+        "metadata_wait_ms": 0,
+        "ready_state": 4,
+        "duration_seconds": 2,
+        "media_error_code": null,
+        "initial_play": {
+          "ok": true,
+          "latency_ms": 20,
+          "start_seconds": 0,
+          "end_seconds": 0.380735,
+          "delta_seconds": 0.380735
+        },
+        "seek": {
+          "ok": true,
+          "target_seconds": 1,
+          "actual_seconds": 1,
+          "latency_ms": 62
+        },
+        "after_seek_play": {
+          "ok": true,
+          "latency_ms": 1,
+          "start_seconds": 1,
+          "end_seconds": 1.364643,
+          "delta_seconds": 0.36464300000000005
+        },
+        "ready_state_after": 4,
+        "passed": true
+      },
+      "passed": true,
+      "resolve_requests": 2
+    }
+  ],
+  "blocked_mutations": [],
+  "page_errors": [],
+  "paid_model_calls": 0,
+  "limitations": [
+    "Muted headless Chrome decoded short playback windows before and after a middle seek; full recordings were not listened to.",
+    "Playback is not ASR accuracy, semantic evaluation, or a guarantee of future signed-link availability.",
+    "Expired-link and source-error recovery below are explicitly mocked browser scenarios, not observed live failures.",
+    "Resolver retry fetches the stored source again; permanently expired or inaccessible organizer sources still require organizer access."
+  ],
+  "finished_utc": "2026-11-07T17:14:01.540193+00:00",
+  "passed": true,
+  "recovery_fixture_note": "The first mock used one 502, which the GET client automatically retried successfully; the corrected mock exhausts all three GET attempts before testing manual refresh.",
+  "recovery_rerun_started_utc": "2026-11-07T17:13:50.999443+00:00",
+  "audio_unit_tests": {
+    "passed": 8,
+    "seconds": 0.324,
+    "log": "scratch/audio-unit-tests-20261107.log"
+  },
+  "live_app_baseline_commit": "28baeb3"
+}

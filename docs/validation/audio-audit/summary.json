@@ -1,0 +1,14 @@
+{
+  "base_commit": "28baeb332de142ec1ed05ccb89c127bc3c63a757",
+  "source_sha256": {
+    "frontend/src/Transcript.tsx": "b2aecee153387175e5ae3511b277fd21267414b30b07e5f5d407ddb9074e2ceb",
+    "frontend/src/CallAudio.tsx": "859cec325c30b309308cbc57f3171a7d6d80f74636965ed78a183758e6695b6b",
+    "scripts/browser_readiness.py": "6332b8dac57003e5916c8e0ecb5b272e224005b6cdad9bc5400d31dd349bf7b9"
+  },
+  "audio_unit_tests_passed": 8,
+  "readiness_browser_checks_passed": 8,
+  "real_audio_recordings_passed": 5,
+  "simulated_recovery_cases_passed": 2,
+  "paid_model_calls": 0,
+  "production_build": "passed"
+}

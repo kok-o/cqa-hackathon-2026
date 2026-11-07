@@ -16,9 +16,57 @@ from uuid import uuid4
 import wave
 
 import httpx
-from playwright.sync_api import sync_playwright, expect
+from playwright.sync_api import Error as PlaywrightError, sync_playwright, expect
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def check_audio_source_refresh(page, voices, upload, audio, out):
+    """Reimport the selected source while playback is loaded or resolution is pending."""
+    evidence = {'mode': 'synthetic_audio_only', 'paid_model_calls': 0, 'checks': {}}
+    changed = deepcopy(voices)
+    changed['data']['records'][0]['audio_url'] = 'https://example.invalid/source-version-two'
+    changed['data']['records'][0]['transcript'][0]['text'] = 'Synthetic audio source version two'
+    upload(changed)
+    expect(page.locator('.transcript-content')).to_contain_text('Synthetic audio source version two')
+    # Source and transcript have refreshed; the earlier media element must go.
+    evidence['checks']['loaded_audio_cleared_on_source_change'] = page.locator('audio').count() == 0
+    evidence['checks']['new_source_can_be_opened'] = page.get_by_role('button', name='Открыть запись звонка', exact=True).is_visible()
+
+    page.unroute('**/api/audio-source?*')
+    page.reload(wait_until='networkidle')
+    first = voices['data']['records'][0]['conversation_id']
+    page.locator('.conversation-item').filter(has_text=first).click()
+    pending = []
+    page.route('**/api/audio-source?*', lambda route: pending.append(route))
+    with page.expect_request('**/api/audio-source?*'):
+        page.get_by_role('button', name='Открыть запись звонка', exact=True).click()
+    expect(page.get_by_role('button', name='Подключаем запись…', exact=True)).to_be_visible()
+    assert len(pending) == 1
+    changed['data']['records'][0]['audio_url'] = 'https://example.invalid/source-version-three'
+    changed['data']['records'][0]['transcript'][0]['text'] = 'Synthetic audio source version three'
+    upload(changed)
+    expect(page.locator('.transcript-content')).to_contain_text('Synthetic audio source version three')
+    evidence['checks']['pending_source_change_resets_loading'] = page.get_by_role('button', name='Открыть запись звонка', exact=True).is_visible()
+    # Release the obsolete resolver response after the replacement source renders.
+    # An aborted request may already have been discarded by the browser.
+    try:
+        pending[0].fulfill(json={'audio_url': audio, 'resolved_from': 'direct'})
+    except PlaywrightError:
+        if not evidence['checks']['pending_source_change_resets_loading']:
+            raise
+    page.wait_for_load_state('networkidle')
+    evidence['checks']['obsolete_resolution_does_not_attach_audio'] = page.locator('audio').count() == 0
+    page.unroute('**/api/audio-source?*')
+    page.route('**/api/audio-source?*', lambda route: route.fulfill(json={'audio_url': audio, 'resolved_from': 'direct'}))
+    passed = all(evidence['checks'].values())
+    evidence['status'] = 'passed' if passed else 'failed'
+    (out / 'audio-source-refresh-result.json').write_text(json.dumps(evidence, indent=2), encoding='utf-8')
+    assert passed, 'Audio source refresh regressions: ' + ', '.join(name for name, ok in evidence['checks'].items() if not ok)
+    page.get_by_role('button', name='Открыть запись звонка', exact=True).click()
+    expect(page.locator('audio')).to_have_count(1)
+    page.wait_for_function('document.querySelector("audio")?.readyState >= 1')
+    assert page.locator('audio').evaluate('(element) => element.duration') == 2
 
 
 def main():
@@ -36,7 +84,7 @@ def main():
     dataset = json.loads((ROOT/'fixtures/readiness/chats-dataset.json').read_text(encoding='utf-8'))
     group = 'UI-READINESS-' + uuid4().hex[:8]
     dataset['data']['dataset_group_id'] = group
-    dataset['data']['records'][0]['conversation_id'] = 'unseen/номер?part#1%25'
+    dataset['data']['records'][0]['conversation_id'] = 'unseen/номер?part#1%25-' + group[-8:]
     checks, errors = [], []
     with sync_playwright() as p:
         browser = p.chromium.launch(channel='chrome', headless=True)
@@ -81,6 +129,8 @@ def main():
 
             voices = json.loads((ROOT/'fixtures/readiness/voice-dataset.json').read_text(encoding='utf-8'))
             voices['data']['dataset_group_id'] = group + '-VOICE'
+            # Keep this record selected when import selects the group's first ID.
+            voices['data']['records'][0]['conversation_id'] = '000-audio-' + uuid4().hex[:8]
             voices['data']['records'][0]['audio_url'] = 'https://example.invalid/synthetic-player'
             upload(voices)
             first = voices['data']['records'][0]['conversation_id']
@@ -102,6 +152,8 @@ def main():
             page.wait_for_function('document.querySelector("audio")?.readyState >= 1')
             assert page.locator('audio').evaluate('(a) => a.duration') == 2
             checks.append('audio_resolution_error_retry_and_success_decoding')
+            check_audio_source_refresh(page, voices, upload, audio, out)
+            checks.extend(['reimport_loaded_audio_source_resets_player', 'reimport_pending_audio_source_discards_obsolete_response'])
             page.screenshot(path=str(out/'readiness-ui-desktop.png'),full_page=True)
             for width,height in [(768,1024),(390,844)]:
                 page.set_viewport_size({'width':width,'height':height})

@@ -15,7 +15,7 @@ const motion = () => window.matchMedia("(prefers-reduced-motion: reduce)").match
 
 export default function Assessment({ evaluation, onUpdated, onEvidence }: Props) {
   const [showOriginal, setShowOriginal] = useState(false);
-  const [selectedId, setSelectedId] = useState(evaluation.checklist.criteria[0]?.criterion_id ?? "");
+  const [selectedId, setSelectedId] = useState("");
   const [saved, setSaved] = useState(false);
   const revisionRef = useRef(evaluation.revision);
   useEffect(() => {
@@ -29,13 +29,13 @@ export default function Assessment({ evaluation, onUpdated, onEvidence }: Props)
   const metadata = evaluation.model_info;
   const results = showOriginal ? evaluation.original_results : evaluation.results;
   const score = showOriginal ? evaluation.original_score : evaluation.score;
-  const criterion = evaluation.checklist.criteria.find(item => item.criterion_id === selectedId) ?? evaluation.checklist.criteria[0];
+  const criterion = evaluation.checklist.criteria.find(item => item.criterion_id === selectedId);
   const result = results.find(item => item.criterion_id === criterion?.criterion_id);
   const calculated = score.criteria.find(item => item.criterion_id === criterion?.criterion_id);
   const position = (id: string) => evaluation.conversation.transcript.findIndex(item => item.message_id === id) + 1;
   const tone = (value?: CriterionResult) => value?.gross_error ? "bad" : value?.status === "needs_review" || !value ? "warning" : value?.status === "not_applicable" ? "neutral" : score.criteria.find(item => item.criterion_id === value.criterion_id)?.normalized_score === 1 ? "good" : "neutral";
   function select(id: string) {
-    setSelectedId(id);
+    setSelectedId(current => current === id ? "" : id);
     window.requestAnimationFrame(() => document.getElementById(`criterion-${id}`)?.scrollIntoView({ behavior: motion(), block: "nearest" }));
   }
   const detail = criterion ? <div className="aq-detail" id="assessment-criterion-detail" aria-labelledby={`criterion-${criterion.criterion_id}`}>
@@ -63,7 +63,7 @@ export default function Assessment({ evaluation, onUpdated, onEvidence }: Props)
       const value = results.find(entry => entry.criterion_id === item.criterion_id);
       const row = score.criteria.find(entry => entry.criterion_id === item.criterion_id);
       const selected = criterion?.criterion_id === item.criterion_id;
-      return <div className={`aq-ledger-entry ${selected ? "aq-ledger-open" : ""}`} key={item.criterion_id}><button type="button" className={`aq-criterion ${selected ? "aq-selected" : ""}`} id={`criterion-${item.criterion_id}`} aria-expanded={selected} aria-controls="assessment-criterion-detail" onClick={() => select(item.criterion_id)}><span className="aq-criterion-name">{item.title}</span><span className={`aq-criterion-answer ${tone(value)}`}>{value?.status === "not_applicable" ? "N/A" : value?.status === "needs_review" ? "Проверка" : !value ? "Нет ответа" : item.weight > 0 && row?.normalized_score != null ? `${number(row.normalized_score * item.weight, 2)} / ${number(item.weight)}` : answerName(value)}</span><ChevronDown size={13} aria-hidden="true" /></button>{selected ? detail : null}</div>;
+      return <div className={`aq-ledger-entry ${selected ? "aq-ledger-open" : ""}`} key={item.criterion_id}><button type="button" className={`aq-criterion ${selected ? "aq-selected" : ""}`} id={`criterion-${item.criterion_id}`} aria-expanded={selected} aria-controls={selected ? "assessment-criterion-detail" : undefined} onClick={() => select(item.criterion_id)}><span className="aq-criterion-name">{item.title}</span><span className={`aq-criterion-answer ${tone(value)}`}>{value?.status === "not_applicable" ? "N/A" : value?.status === "needs_review" ? "Проверка" : !value ? "Нет ответа" : item.weight > 0 && row?.normalized_score != null ? `${number(row.normalized_score * item.weight, 2)} / ${number(item.weight)}` : answerName(value)}</span><ChevronDown size={13} aria-hidden="true" /></button>{selected ? detail : null}</div>;
     })}</div>
     {Object.keys(score.sections).length ? <details className="aq-run-details"><summary>По разделам<ChevronDown size={14} /></summary><dl>{Object.entries(score.sections).map(([section, total]) => <div key={section}><dt>{section}</dt><dd>{number(total, 2)}</dd></div>)}</dl></details> : null}
     <details className="aq-run-details"><summary>Данные запуска<ChevronDown size={14} /></summary><dl><div><dt>Модель</dt><dd>{String(metadata.model ?? "Не указана")}</dd></div><div><dt>Создано</dt><dd>{date(evaluation.created_at)}</dd></div><div><dt>Ревизия</dt><dd>{evaluation.revision}</dd></div>{metadata.elapsed_ms != null ? <div><dt>Длительность</dt><dd>{number(Number(metadata.elapsed_ms) / 1000)} с</dd></div> : null}{metadata.prompt_version != null ? <div><dt>Инструкция</dt><dd>{String(metadata.prompt_version)}</dd></div> : null}<div><dt>ID запуска</dt><dd>{evaluation.evaluation_id}</dd></div></dl></details>

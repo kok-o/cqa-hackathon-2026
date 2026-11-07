@@ -11,6 +11,9 @@ data/raw/
 data/runtime/
 data/evaluations/
 scratch/
+# Generated research extraction and page previews; source PDF is in docs/briefs.
+research_notes/**/brief_extracted.txt
+research_notes/**/brief_page-*.png
 *.sqlite*
 *.db
 *.log

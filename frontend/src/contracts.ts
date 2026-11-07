@@ -61,3 +61,65 @@ export interface EvaluationDraft {
   prompt_version: string;
   results: CriterionResult[];
 }
+
+export interface ConversationSummary {
+  conversation_id: string;
+  group_id: string;
+  channel: Conversation['channel'];
+  language: Language;
+  message_count: number;
+  preview: string;
+  latest_evaluation_id: string | null;
+  latest_score: number | null;
+  latest_status: string | null;
+}
+
+export interface ProviderInfo {
+  provider_configured: boolean;
+  provider: string;
+  model: string | null;
+  mode: string;
+  prompt_version: string;
+}
+
+export interface Score {
+  total: number | null;
+  status: 'complete' | 'incomplete' | 'not_applicable';
+  coverage: number;
+  earned_weight: number;
+  applicable_weight: number;
+  criteria: Array<{ criterion_id: string; status: string; normalized_score: number | null; weight: number; contribution: number | null }>;
+  sections: Record<string, number | null>;
+  gross_error: boolean;
+}
+
+export interface Appeal {
+  appeal_id: string;
+  evaluation_id: string;
+  criterion_id: string;
+  comment: string;
+  status: 'open' | 'resolved';
+  created_at: string;
+  decision: null | { action: 'uphold' | 'replace'; reason: string; replacement_result: CriterionResult | null; created_at: string };
+}
+
+export interface Evaluation {
+  evaluation_id: string;
+  conversation: Conversation;
+  checklist: ChecklistVersion;
+  original_results: CriterionResult[];
+  results: CriterionResult[];
+  original_score: Score;
+  score: Score;
+  model_info: Record<string, unknown>;
+  revision: number;
+  appeals: Appeal[];
+  created_at: string;
+}
+
+export interface EvaluationJob {
+  job_id: string;
+  status: 'queued' | 'running' | 'completed' | 'failed';
+  error: string | null;
+  evaluation_id: string | null;
+}

@@ -76,7 +76,7 @@ class ContractTests(unittest.TestCase):
 
     def test_normal_routes(self):
         client = TestClient(app)
-        self.assertEqual(client.get("/health").json()["phase"], "scaffold")
+        self.assertEqual(client.get("/health").json()["phase"], "ready")
         response = client.get("/api/demo/conversations")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()), 3)

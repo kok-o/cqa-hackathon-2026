@@ -19,6 +19,12 @@ def validate_draft(
     positions = {message.message_id: index for index, message in enumerate(conversation.transcript)}
     for result in draft.results:
         criterion = criteria[result.criterion_id]
+        if not result.explanation.strip():
+            raise ValueError("A result requires a non-empty explanation")
+        if result.gross_error and (not criterion.gross_error_rule or not criterion.gross_error_rule.strip()):
+            raise ValueError("Gross error requires a configured rule")
+        if result.gross_error and result.status != "applicable":
+            raise ValueError("Unresolved and N/A results cannot establish a gross error")
         if result.status == "not_applicable" and not criterion.na_allowed:
             raise ValueError(f"N/A is not allowed for {criterion.criterion_id}")
         if result.status == "applicable":
@@ -32,7 +38,7 @@ def validate_draft(
                 raise ValueError("Answer is not a configured choice")
         for evidence in result.evidence:
             message = messages.get(evidence.message_id)
-            if message is None or evidence.quote not in message.text:
+            if message is None or not evidence.quote.strip() or evidence.quote not in message.text:
                 raise ValueError("Evidence must point to an exact source quote")
         if result.checked_span:
             start = positions.get(result.checked_span.start_message_id)

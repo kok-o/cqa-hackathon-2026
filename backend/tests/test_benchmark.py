@@ -65,12 +65,21 @@ class SelectionAndFingerprintTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary, patch.dict("os.environ", {"LLM_API_KEY": "benchmark-test-private-key"}):
             args = parser().parse_args(["--dataset", str(FIXTURES / "synthetic_dev.json"),
                                        "--checklist", str(FIXTURES / "checklist.example.json"),
+                                       "--models", "gpt-6.1-sol", "gpt-6-astra", "gpt-6-luna", "--reasoning-effort", "max",
                                        "--out", temporary, "--channel", "all", "--per-language", "1", "--dry-run"])
             manifest, tasks, configs, _ = make_plan(args)
             self.assertEqual(manifest["language_counts"], {"RU": 1, "KZ": 1, "EN": 1})
             self.assertEqual(len(tasks), 9)
             self.assertNotIn("benchmark-test-private-key", json.dumps(manifest))
             self.assertTrue(all(s.reasoning_effort == "max" and s.max_tokens == 16384 for s in configs.values()))
+
+    def test_default_plan_only_selects_economical_luna_without_paid_dispatch(self):
+        args = parser().parse_args(["--dataset", str(FIXTURES / "synthetic_dev.json"),
+                                    "--out", "unused-dry-run", "--dry-run"])
+        self.assertEqual(args.models, ["gpt-6-luna"])
+        self.assertEqual(args.reasoning_effort, "high")
+        self.assertEqual(args.timeout_seconds, 180)
+        self.assertIsNone(args.budget_usd)
 
     def test_labels_need_independent_human_attestation(self):
         with tempfile.TemporaryDirectory() as temporary:

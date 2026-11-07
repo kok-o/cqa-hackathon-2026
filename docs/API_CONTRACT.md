@@ -5,7 +5,7 @@
 | Метод | Путь | Формат |
 |---|---|---|
 | GET | `/health` | `{status, phase, version}` |
-| GET | `/api/config` | `{provider_configured, provider, model, mode, prompt_version}` |
+| GET | `/api/config` | `{provider_configured, provider, model, mode, prompt_version, team_name}` |
 | POST | `/api/datasets/import` | `{dataset: DatasetExport}` либо `{source: "dev"}` / `{source: "demo"}`; результат `{group_id, imported, updated, unchanged, total}` |
 | GET | `/api/conversations` | Массив `{conversation_id,group_id,channel,language,message_count,preview,latest_evaluation_id,latest_score,latest_status,latest_gross_error}`; фильтры `group_id`, `language`, `channel`, `gross_error=true/false` |
 | GET | `/api/conversations/{id}?group_id=DEV` | Полный `Conversation` |

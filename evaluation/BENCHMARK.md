@@ -1,29 +1,31 @@
 # Reproducible model benchmark
 
-This runner compares the same checklist, original conversations, prompt and output
-schema across `gpt-6.1-sol`, `gpt-6-astra` and `gpt-6-luna`. It defaults to reasoning
-effort `max`, a stated 16,384-token output limit (including reasoning), one request
-at a time, and two conversations per RU/KZ/EN language. The provider adapter may
-retry once. It never silently reduces reasoning effort or output limits.
+The runner defaults to `gpt-6-luna` with reasoning effort `high`, a 16,384-token
+output limit (including reasoning), a 180-second timeout, one request at a time,
+and two conversations per RU/KZ/EN language. The provider adapter may retry once.
+It never silently reduces reasoning effort or output limits. Multiple explicitly
+selected models receive the same checklist, conversations, prompt and output schema.
 
 Specify the checklist explicitly. Use `fixtures/checklist.official.json` for the
 official rubric after checking its source documents. The example checklist is
-only a software fixture. No private transcript, result or key belongs in Git.
-Run outputs under `data/evaluations/` are ignored.
+only a software fixture. Private transcripts, raw provider outputs and keys stay
+out of Git. Run outputs under `data/evaluations/` are ignored. The reviewed
+official submission files under `results/` are tracked separately.
 
 ## Plan, run, resume
 
 From the repository root in PowerShell:
 
 ```powershell
-.venv/Scripts/python.exe -m evaluation.benchmark --dataset data/raw/DEV.json --checklist fixtures/checklist.official.json --channel all --per-language 2 --out data/evaluations/openai-dev-max-v1 --dry-run
-.venv/Scripts/python.exe -m evaluation.benchmark --dataset data/raw/DEV.json --checklist fixtures/checklist.official.json --channel all --per-language 2 --out data/evaluations/openai-dev-max-v1 --resume --budget-usd 15
+.venv/Scripts/python.exe -m evaluation.benchmark --dataset data/raw/DEV.json --checklist fixtures/checklist.official.json --models gpt-6-luna --reasoning-effort high --max-output-tokens 16384 --timeout-seconds 180 --channel all --per-language 2 --out data/evaluations/luna-dev-high-pilot --dry-run
+.venv/Scripts/python.exe -m evaluation.benchmark --dataset data/raw/DEV.json --checklist fixtures/checklist.official.json --models gpt-6-luna --reasoning-effort high --max-output-tokens 16384 --timeout-seconds 180 --channel all --per-language 2 --out data/evaluations/luna-dev-high-pilot --resume --budget-usd 1
 ```
 
 The dry run makes no provider requests. Credentials come from `LLM_API_KEY` or
 `OPENAI_API_KEY` in the environment or ignored `.env`. No API key or endpoint URL
 is written into run artifacts. Endpoint identity is hashed. Use `--models` to
-select explicit model IDs; the defaults preserve all three requested names.
+select explicit model IDs; only Luna is selected by default. The example budget
+is a maximum authorization for that run, not a predicted charge.
 
 `--channel all` includes all transcript channels in the official DEV dataset.
 The default `agent chat` selects chat only. For a chat control set use that
@@ -35,7 +37,8 @@ The manifest records actual language counts and whether all three are balanced;
 missing languages are never reported as a balanced sample.
 
 `--per-language` is a cap per language. The default produces at most six
-conversations and 18 model evaluations. Changing it is an explicit scope change.
+conversations and six model evaluations with the default single model. Changing
+the sample size or selected models is an explicit scope change.
 Do not expand from a pilot to the full dataset without reviewing its budget.
 
 Each dispatch first reserves the worst permitted output for both attempts plus
@@ -55,6 +58,17 @@ that model. Each model is initially probed serially before concurrent work.
 Use a new output directory after a deliberate change. Do not edit code or the
 prompt between a plan and its live run.
 
+For an optional comparison using the earlier three-model maximum-effort setup,
+select every model and setting explicitly in a new directory:
+
+```powershell
+.venv/Scripts/python.exe -m evaluation.benchmark --dataset data/raw/DEV.json --checklist fixtures/checklist.official.json --models gpt-6.1-sol gpt-6-astra gpt-6-luna --reasoning-effort max --max-output-tokens 16384 --timeout-seconds 300 --channel all --per-language 2 --out data/evaluations/three-model-max-comparison --dry-run
+```
+
+That plan has up to 18 model evaluations. Inspect its reservation before an
+authorized live run; repeat the same flags with `--resume` and an explicitly
+reviewed `--budget-usd` value. It is not the economy default or an automatic fallback.
+
 ## Artifacts and interpretation
 
 - `manifest.json`: source/configuration hashes, selected conversations, rubric,
@@ -62,7 +76,7 @@ prompt between a plan and its live run.
 - `prompt.snapshot.md`: the exact system prompt at planning time.
 - `checkpoint.json`: durable dispatch reservations, timestamps, statuses,
   original model predictions, all-attempt usage and safe error diagnostics.
-- `predictions/<model>.json`: the existing `evaluation.cli score` format, one
+- `predictions/<model>-<id-hash>.json`: the existing `evaluation.cli score` format, one
   model per file. `original_results` and `original_score` preserve predictions
   before any appeal edits.
 - `report.json`, `report.csv`, `report.md`: completion, failures, latency, retries,
@@ -82,11 +96,40 @@ Holdout reference labels must remain hidden during tuning.
 Regenerate reports without provider calls:
 
 ```powershell
-.venv/Scripts/python.exe -m evaluation.benchmark --out data/evaluations/openai-dev-max-v1 --report-only
+.venv/Scripts/python.exe -m evaluation.benchmark --out data/evaluations/luna-dev-high-pilot --report-only
 ```
 
 Assistant-authored synthetic regression expectations belong in a separate test
 comparator. They must not be relabelled as independent human ground truth.
+For a mixed run, use the comparator's explicit `--group` filter and a distinct
+output file per expectation set; unknown cases inside the selected group still
+fail validation. See [the regression fixture notes](../fixtures/regression/README.md).
+
+The targeted `cqa-evaluator-v6` development run on 2026-11-07 completed 19/19
+evaluations. Its authored checks passed: 48 original regression assertions,
+24 tuning assertions, 8 queue-responsibility assertions and 1 focused speculation
+assertion. These 81 matches are development checks, not independent accuracy,
+a model ranking, or evidence that every criterion in every completed evaluation
+is correct. The speculation fixture's hash metadata was corrected after the run
+from file-byte hashes to canonical JSON hashes; its text and expected decision
+were unchanged.
+
+## Manual profile selection
+
+```powershell
+python scripts/select_model.py luna-economy
+python scripts/select_model.py luna-economy --apply
+python scripts/select_model.py sol-reference --apply
+```
+
+The default is a dry run. Only explicit `--apply` writes the allowlisted model
+settings to the root `.env`; keys and unrelated settings are preserved. Restart
+the API after applying. `luna-economy` uses Luna/high/16384/180 seconds;
+`sol-reference` uses Sol/max/32768/600 seconds. These are selectable profiles,
+not automatic escalation or a claim that Sol is more accurate. The included
+standard prices were verified on 2026-11-07.
+This selector changes the working API configuration. Benchmark model, reasoning,
+token and timeout choices come from the runner's flags/defaults independently.
 
 ## Local models later
 
@@ -107,8 +150,8 @@ The initial `openai-dev-max-v1`, `full-dev-sol-v1` and `regression-max-v1`
 processes started before service-tier verification was added. They did not send
 `service_tier`, so project defaults applied. Their recorded costs are standard-rate
 estimates with an unverified tier, not provider invoices or a hard billing cap.
-The running Python processes retain the original imported adapter; later source
-changes do not alter their requests. Their frozen manifests and outputs are kept.
+Those processes retained the original imported adapter; later source changes
+did not alter their requests. Their frozen manifests and outputs are kept.
 
 The current adapter explicitly requests `service_tier="default"` for official
 OpenAI Responses and Chat Completions. It records the returned tier per attempt;

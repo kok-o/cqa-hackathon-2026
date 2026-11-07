@@ -40,6 +40,7 @@ def main() -> None:
     conversation_id = f"browser-{token}-ru"
     errors = []
     checks = []
+    (ROOT / "scratch").mkdir(exist_ok=True)
 
     with sync_playwright() as playwright:
         try:
@@ -52,7 +53,7 @@ def main() -> None:
         try:
             page.goto(base)
             page.wait_for_load_state("networkidle")
-            expect(page.get_by_role("heading", name="Рабочая область", exact=True)).to_be_visible()
+            expect(page.get_by_role("heading", name="Разбор диалогов", exact=True)).to_be_visible()
 
             def import_dataset(value):
                 with page.expect_response(lambda r: r.request.method == "POST" and r.url.endswith("/api/datasets/import")) as response:
@@ -66,13 +67,13 @@ def main() -> None:
             assert imported["imported"] == 3
             page.get_by_label(re.compile("^Версия чек-листа")).select_option(json.dumps(["synthetic-checklist", 1], separators=(",", ":")))
             page.get_by_role("button").filter(has_text=conversation_id).click()
-            expect(page.get_by_role("heading", name=conversation_id, exact=True)).to_be_visible()
+            expect(page.locator(".conversation-context strong")).to_have_text(conversation_id)
             expect(page.locator(f'[id="message-{conversation_id}:0001"]')).to_be_visible()
             checks.append("synthetic_json_import_and_transcript")
 
             def analyze():
                 with page.expect_response(lambda r: r.request.method == "POST" and r.url.endswith("/api/evaluation-jobs")) as response:
-                    page.get_by_role("button", name="Оценить", exact=True).click()
+                    page.get_by_role("button", name=re.compile("^Оценить (диалог|снова)$")).click()
                 assert response.value.status == 202, response.value.text()
                 job_id = response.value.json()["job_id"]
                 deadline = time.monotonic() + 12
@@ -83,7 +84,7 @@ def main() -> None:
                     page.wait_for_timeout(100)
                 assert job["status"] == "completed", job
                 value = api.get(f"/api/evaluations/{job['evaluation_id']}").raise_for_status().json()
-                expect(page.locator(".run-details")).to_contain_text(value["evaluation_id"])
+                expect(page.locator(".aq-run-details").last).to_contain_text(value["evaluation_id"])
                 return value
 
             original = analyze()
@@ -92,14 +93,16 @@ def main() -> None:
             assert original["score"]["total"] < 100
             checks.append("real_job_endpoint_with_explicit_test_double")
 
-            page.locator(".result-item").nth(1).locator("summary").click()
-            page.locator(".result-item").nth(1).get_by_role("button", name=re.compile("Открыть реплику")).click()
+            quote_criterion = original["checklist"]["criteria"][1]["criterion_id"]
+            page.locator(f'[id="criterion-{quote_criterion}"]').click()
+            page.locator(".aq-evidence").first.click()
             expect(page.locator(".message.highlighted")).to_have_attribute("id", f"message-{conversation_id}:0001")
             checks.append("evidence_navigation_and_highlight")
 
-            first = page.locator(".result-item").first
-            first.get_by_role("button", name="Подать апелляцию", exact=True).click()
-            page.get_by_placeholder("Укажите спорный вывод и основание для пересмотра").fill("Учебная проверка: оператор поздоровался в реплике2.")
+            first_criterion = original["checklist"]["criteria"][0]["criterion_id"]
+            page.locator(f'[id="criterion-{first_criterion}"]').click()
+            page.get_by_role("button", name="Оспорить оценку", exact=True).click()
+            page.get_by_placeholder("Сошлитесь на реплику или правило чек-листа").fill("Учебная проверка: оператор поздоровался в реплике2.")
             with page.expect_response(lambda r: r.request.method == "POST" and r.url.endswith("/appeals")) as response:
                 page.get_by_role("button", name="Отправить апелляцию", exact=True).click()
             assert response.value.status == 201
@@ -118,7 +121,7 @@ def main() -> None:
             assert revised["original_results"] == original["original_results"]
             assert revised["original_score"] == original["original_score"]
             assert revised["appeals"][0]["status"] == "resolved"
-            expect(page.get_by_text(re.compile("Чек-лист v1.*Ревизия 2"))).to_be_visible()
+            expect(page.locator(".aq-run-details").last).to_contain_text("Ревизия2")
             checks.append("appeal_replacement_recalculation_and_immutable_original")
             page.screenshot(path=str(ROOT / "scratch" / "ui-test-desktop.png"), full_page=True)
             page.set_viewport_size({"width": 390, "height": 844})
@@ -126,7 +129,7 @@ def main() -> None:
             page.screenshot(path=str(ROOT / "scratch" / "ui-test-mobile.png"), full_page=True)
             page.set_viewport_size({"width": 1440, "height": 1000})
 
-            page.get_by_role("button", name="Чек-лист", exact=True).click()
+            page.get_by_role("button", name="Чек-листы", exact=True).click()
             page.get_by_role("button", name="Добавить критерий", exact=True).click()
             title = "Новый критерий " + token
             page.get_by_label(re.compile("^Название критерия")).last.fill(title)

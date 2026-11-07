@@ -602,7 +602,10 @@ export default function App() {
           }}
           aria-label="CQA — рабочая область"
         >
-          <span className="brand-word">cqa<span aria-hidden="true" className="brand-signal" /></span>
+          <span className="brand-word">
+            cqa
+            <span aria-hidden="true" className="brand-signal" />
+          </span>
         </a>
         <nav className="main-nav" aria-label="Разделы приложения">
           <button
@@ -643,7 +646,6 @@ export default function App() {
             </span>
             <Settings2 size={15} />
           </button>
-
         </div>
       </header>
       {showSetup && (
@@ -721,7 +723,9 @@ export default function App() {
       </div>
       <main id="main-content">
         <div className="workspace-toolbar">
-          <h1 className="page-title">{tab === "review" ? "Диалоги" : "Чек-листы"}</h1>
+          <h1 className="page-title">
+            {tab === "review" ? "Диалоги" : "Чек-листы"}
+          </h1>
           <label className="checklist-select">
             <ClipboardList size={17} />
             <span className="sr-only">Версия чек-листа</span>
@@ -994,10 +998,28 @@ export default function App() {
             <h2>Загрузите диалоги</h2>
             <p>JSON с транскриптами на русском, казахском или английском.</p>
             <div className="button-row">
-              <button className="button primary" onClick={() => inputRef.current?.click()} disabled={importing}><Upload size={17} /> Импорт JSON</button>
-              <button className="button secondary" onClick={() => void importDataset({ source: "dev" })} disabled={importing}>Открыть DEV</button>
+              <button
+                className="button primary"
+                onClick={() => inputRef.current?.click()}
+                disabled={importing}
+              >
+                <Upload size={17} /> Импорт JSON
+              </button>
+              <button
+                className="button secondary"
+                onClick={() => void importDataset({ source: "dev" })}
+                disabled={importing}
+              >
+                Открыть DEV
+              </button>
             </div>
-            <button className="text-button" onClick={() => void importDataset({ source: "demo" })} disabled={importing}>Открыть 3 учебных диалога</button>
+            <button
+              className="text-button"
+              onClick={() => void importDataset({ source: "demo" })}
+              disabled={importing}
+            >
+              Открыть 3 учебных диалога
+            </button>
           </section>
         ) : (
           <>
@@ -1201,10 +1223,27 @@ export default function App() {
                 ) : (
                   <div className="assessment-empty">
                     <h2>Диалог ещё не оценён</h2>
-                    <p>{selectedChecklist?.criteria.length ?? 0} критериев, версия {selectedChecklist?.version}.</p>
-                    {selectedChecklist?.provenance === "synthetic_example" && <span className="badge warning">Учебный чек-лист</span>}
-                    {!config?.provider_configured && <button className="connection-hint" onClick={() => setShowSetup(true)}><AlertCircle size={16} /> Подключить модель</button>}
-                    <button className="text-button" onClick={() => setTab("checklist")}>Изменить чек-лист</button>
+                    <p>
+                      {selectedChecklist?.criteria.length ?? 0} критериев,
+                      версия {selectedChecklist?.version}.
+                    </p>
+                    {selectedChecklist?.provenance === "synthetic_example" && (
+                      <span className="badge warning">Учебный чек-лист</span>
+                    )}
+                    {!config?.provider_configured && (
+                      <button
+                        className="connection-hint"
+                        onClick={() => setShowSetup(true)}
+                      >
+                        <AlertCircle size={16} /> Подключить модель
+                      </button>
+                    )}
+                    <button
+                      className="text-button"
+                      onClick={() => setTab("checklist")}
+                    >
+                      Изменить чек-лист
+                    </button>
                   </div>
                 )}
               </aside>

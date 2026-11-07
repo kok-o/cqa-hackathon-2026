@@ -54,9 +54,24 @@ export default function ConversationQueue(p: Props) {
     >
       <div className="sidebar-heading">
         <div>
-          <h2>Очередь <span>{p.items.length === p.total ? p.total : `${p.items.length} / ${p.total}`}</span></h2>
+          <h2>
+            Очередь{" "}
+            <span>
+              {p.items.length === p.total
+                ? p.total
+                : `${p.items.length} / ${p.total}`}
+            </span>
+          </h2>
         </div>
-        <button className="icon-button queue-import" onClick={p.onImport} disabled={p.importing || p.running} aria-label="Импорт JSON" title="Импорт JSON"><Upload size={17} /></button>
+        <button
+          className="icon-button queue-import"
+          onClick={p.onImport}
+          disabled={p.importing || p.running}
+          aria-label="Импорт JSON"
+          title="Импорт JSON"
+        >
+          <Upload size={17} />
+        </button>
         <button
           className="icon-button queue-close"
           onClick={p.onClose}
@@ -141,7 +156,11 @@ export default function ConversationQueue(p: Props) {
           )}
         </div>
       )}
-      {p.group && <div className="queue-caption"><span>{p.group}</span></div>}
+      {p.group && (
+        <div className="queue-caption">
+          <span>{p.group}</span>
+        </div>
+      )}
       <div className="conversation-list">
         {p.items.map((item) => (
           <button
@@ -177,14 +196,11 @@ export default function ConversationQueue(p: Props) {
                   <span className="critical-dot" title="Грубая ошибка" />
                 ) : null}
                 {item.latest_score != null ? (
-                  <>
-                    {number(item.latest_score, 2)}
-                  </>
+                  <>{number(item.latest_score, 2)}</>
                 ) : (
                   statusName(item.latest_status)
                 )}
               </span>
-
             </span>
           </button>
         ))}

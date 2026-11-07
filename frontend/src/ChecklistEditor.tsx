@@ -179,9 +179,7 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
             body,
           );
       setDirty(false);
-      setNotice(
-        `Версия ${saved.version} сохранена.`,
-      );
+      setNotice(`Версия ${saved.version} сохранена.`);
       onSaved(saved);
     } catch (err) {
       setError(errorText(err));
@@ -415,9 +413,7 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
             </button>
           </header>
           <fieldset className="editor-fieldset" disabled={busy}>
-            <legend>
-              Инструкция
-            </legend>
+            <legend>Инструкция</legend>
             <div className="editor-field-grid">
               <label className="field editor-wide">
                 Название критерия
@@ -459,9 +455,7 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
             </div>
           </fieldset>
           <fieldset className="editor-fieldset" disabled={busy}>
-            <legend>
-              Вес и шкала
-            </legend>
+            <legend>Вес и шкала</legend>
             <div className="editor-field-grid">
               <label className="field">
                 Тип ответа
@@ -487,7 +481,9 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
                     change({ weight: Number(event.target.value) })
                   }
                 />
-                {criterion.weight === 0 ? <span className="form-help">Не влияет на итоговый балл.</span> : null}
+                {criterion.weight === 0 ? (
+                  <span className="form-help">Не влияет на итоговый балл.</span>
+                ) : null}
               </label>
               {criterion.answer_type === "boolean" ? (
                 <label className="field editor-wide">
@@ -559,7 +555,8 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
                       placeholder="Например: 0, 4, 7, 10"
                     />
                     <span className="form-help">
-                      Через запятую, дробные — с точкой. Пусто — любое значение в диапазоне.
+                      Через запятую, дробные — с точкой. Пусто — любое значение
+                      в диапазоне.
                     </span>
                   </label>
                 </>
@@ -592,9 +589,7 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
             </div>
           </fieldset>
           <fieldset className="editor-fieldset" disabled={busy}>
-            <legend>
-              Применимость
-            </legend>
+            <legend>Применимость</legend>
             <div className="editor-field-grid">
               <label className="editor-toggle">
                 <input
@@ -623,7 +618,8 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
               </label>
               {criterion.requires_audio ? (
                 <p className="editor-inline-note editor-wide">
-                  Текстовый оценщик не проверяет аудио. Критерий потребует ручной проверки.
+                  Текстовый оценщик не проверяет аудио. Критерий потребует
+                  ручной проверки.
                 </p>
               ) : null}
               <label className="field editor-wide">

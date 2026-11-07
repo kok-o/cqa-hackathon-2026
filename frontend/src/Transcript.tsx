@@ -1,8 +1,4 @@
-import {
-  ArrowLeft,
-  Headphones,
-  MessageSquare,
-} from "lucide-react";
+import { ArrowLeft, Headphones, MessageSquare } from "lucide-react";
 import type { Conversation, Evaluation, Speaker } from "./contracts";
 const names: Record<Speaker, string> = {
   operator: "Оператор",
@@ -39,8 +35,20 @@ export default function Transcript({
       aria-busy={loading}
     >
       <header className="panel-heading">
-        <h2>Разговор <span className="subtle">{source?.transcript.length ?? 0} реплик</span></h2>
-        {evaluation && <span className="source-version" title={`Сохранённый снимок диалога из оценки по чек-листу v${evaluation.checklist.version}`}>Снимок оценки</span>}
+        <h2>
+          Разговор{" "}
+          <span className="subtle">
+            {source?.transcript.length ?? 0} реплик
+          </span>
+        </h2>
+        {evaluation && (
+          <span
+            className="source-version"
+            title={`Сохранённый снимок диалога из оценки по чек-листу v${evaluation.checklist.version}`}
+          >
+            Снимок оценки
+          </span>
+        )}
       </header>
       {highlight && (
         <div className="evidence-return">

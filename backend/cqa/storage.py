@@ -123,6 +123,11 @@ class Store:
             self.keeper = None
 
     def import_conversations(self, conversations: list[Conversation], group_id: str) -> dict:
+        identities = {conversation.conversation_id for conversation in conversations}
+        if any(conversation.group_id != group_id for conversation in conversations):
+            raise ValueError("Imported conversations must belong to the selected group")
+        if len(identities) != len(conversations):
+            raise ValueError("Duplicate conversation_id inside the imported group")
         counts = {"group_id": group_id, "imported": 0, "updated": 0, "unchanged": 0, "total": len(conversations)}
         with self.transaction() as db:
             for conversation in conversations:
@@ -137,6 +142,10 @@ class Store:
                     ON CONFLICT(group_id,conversation_id) DO UPDATE SET language=excluded.language,
                     channel=excluded.channel,content_hash=excluded.content_hash,payload=excluded.payload,imported_at=excluded.imported_at""",
                     (conversation.group_id, conversation.conversation_id, conversation.language, conversation.channel, content_hash, dumps(payload), now()))
+            counts["current_group_total"] = db.execute(
+                "SELECT COUNT(*) FROM conversations WHERE group_id=?", (group_id,)
+            ).fetchone()[0]
+            counts["retained_from_previous_import"] = counts["current_group_total"] - len(identities)
         return counts
 
     def list_conversations(self, group_id=None, language=None, channel=None, gross_error=None):

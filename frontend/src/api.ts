@@ -11,11 +11,13 @@ export async function request<T>(path: string, options?: RequestInit): Promise<T
   let data: unknown;
   try { data = text ? JSON.parse(text) : null; } catch { throw new ApiError('Сервер вернул неожиданный ответ. Проверьте, что API запущен.', response.status); }
   if (!response.ok) {
-    const detail = (data as { detail?: unknown })?.detail;
+    const body = data as { detail?: unknown; errors?: Array<{ field?: string; message?: string }> } | null;
+    const detail = body?.detail;
     const message = typeof detail === 'string' ? detail : Array.isArray(detail)
       ? detail.map((item: { loc?: string[]; msg?: string }) => `${item.loc?.slice(1).join('.') ?? ''}: ${item.msg ?? 'Некорректное значение'}`).join('; ')
       : 'Не удалось выполнить запрос. Повторите попытку.';
-    throw new ApiError(message, response.status);
+    const fields = Array.isArray(body?.errors) ? body.errors.slice(0, 5).map(item => `${item.field ?? ''}: ${item.message ?? 'Некорректное значение'}`).join('; ') : '';
+    throw new ApiError(fields ? `${message}. ${fields}` : message, response.status);
   }
   return data as T;
 }

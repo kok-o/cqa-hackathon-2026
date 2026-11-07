@@ -6,9 +6,10 @@
 |---|---|---|
 | GET | `/health` | `{status, phase, version}` |
 | GET | `/api/config` | `{provider_configured, provider, model, mode, prompt_version, team_name}` |
-| POST | `/api/datasets/import` | `{dataset: DatasetExport}` либо `{source: "dev"}` / `{source: "demo"}`; результат `{group_id, imported, updated, unchanged, total}` |
+| POST | `/api/datasets/import` | `{dataset: DatasetExport}` либо `{source: "dev"}` / `{source: "demo"}`; результат `{group_id, imported, updated, unchanged, total, current_group_total, retained_from_previous_import}` |
 | GET | `/api/conversations` | Массив `{conversation_id,group_id,channel,language,message_count,preview,latest_evaluation_id,latest_score,latest_status,latest_gross_error}`; фильтры `group_id`, `language`, `channel`, `gross_error=true/false` |
 | GET | `/api/conversations/{id}?group_id=DEV` | Полный `Conversation` |
+| GET | `/api/audio-source?group_id=DEV&conversation_id=...&evaluation_id=...` | `{audio_url, resolved_from:"html"|"direct"}`; `evaluation_id` необязателен, выбирает запись из исторического снимка |
 | GET | `/api/checklists` | Массив всех `ChecklistVersion`, новые версии первыми |
 | POST | `/api/checklists` | `ChecklistVersion`; сервер устанавливает `version=1` |
 | POST | `/api/checklists/{id}/versions` | `{title,provenance,criteria}`; сервер увеличивает версию |
@@ -36,6 +37,26 @@
 `Appeal`: `{appeal_id,evaluation_id,criterion_id,comment,status:"open"|"resolved",created_at,decision:null|{action,reason,replacement_result,created_at}}`. Начальная revision оценки — 1; решение повышает её на 1. Снимки исходных диалога, чек-листа, результатов и итогов неизменяемы. Новая версия чек-листа не изменяет прежнюю оценку.
 
 Повтор с тем же idempotency_key возвращает прежнюю операцию. Другое содержимое с уже использованным ключом возвращает 409. Ключи необязательны, но рекомендуются при повторной отправке UI. После сбоя сервера незавершённые задачи становятся `failed`; повторная оценка создаётся новым ключом.
+
+Импорт дополняет группу и обновляет совпавшие ID; он не удаляет старые диалоги,
+отсутствующие в новом файле. `total` — число строк файла, `current_group_total` —
+число сохранённых диалогов группы, `retained_from_previous_import` — число
+оставшихся ID, которых нет в текущем файле. UI предупреждает о таком составе.
+Исходные ID сохраняются, в том числе Unicode и `/`, `?`, `#`, `%`; путь к диалогу
+нужно URL-кодировать. Пустые/пробельные ID и полностью пустой транскрипт
+отклоняются до записи и вызова модели. Отдельные пустые реплики сохраняются,
+чтобы номера исходных сообщений не сдвигались.
+
+Аудио открывается по запросу пользователя. Резолвер читает ограниченную по
+размеру HTML-страницу официального плеера и извлекает единственный аудиоисточник;
+скрипты не выполняются. Разрешены два проверенных HTTPS-хоста организаторов,
+перечисленных в `backend/cqa/audio.py`, включая проверку перенаправлений.
+Произвольный URL в запросе не принимается. Подписанные ссылки возвращаются
+только для воспроизведения с `Cache-Control: no-store`; ответы об ошибках их не
+содержат. Нет записи — 404, неподдерживаемый источник/формат — 422, сбой
+источника — 502, тайм-аут — 504. Историческая оценка использует свой снимок URL.
+AI работает по транскрипту; прослушивание и точная временная привязка реплик
+не заявляются как выполненная моделью обработка.
 
 ## Официальная сдача JSON 1.0
 

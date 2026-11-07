@@ -5,6 +5,7 @@ import { downloadJson, errorText, post, q, request, uid } from './api';
 import { date, number, statusName } from './format';
 import Assessment from './Assessment';
 import ChecklistEditor from './ChecklistEditor';
+import CallAudio from './CallAudio';
 
 const conversationKey = (value: { group_id: string; conversation_id: string }) => JSON.stringify([value.group_id, value.conversation_id]);
 const checklistKey = (value: ChecklistVersion) => JSON.stringify([value.checklist_id, value.version]);
@@ -39,6 +40,8 @@ export default function App() {
   const [batch, setBatch] = useState<Batch | null>(null);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [noticeKind, setNoticeKind] = useState<'success' | 'warning'>('success');
+  const [importWarning, setImportWarning] = useState('');
   const [jobErrors, setJobErrors] = useState<Array<{ label: string; error: string }>>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const selectedRef = useRef(selectedKey);
@@ -73,6 +76,7 @@ export default function App() {
       downloadJson(document, 'results.json');
       const ok = document.results.filter(item => item.status === 'ok').length;
       const errors = document.results.filter(item => item.status === 'error').length;
+      setNoticeKind(errors ? 'warning' : 'success');
       setNotice(`results.json сформирован: ${submission.group} / ${submission.split.toUpperCase()} — ${document.results.length} записей, успешных оценок: ${ok}, записей с ошибкой: ${errors}. Сохраните файл в results/${submission.split}/.`);
     } catch (error) { setSubmissionError(errorText(error)); } finally { setExportingSubmission(false); }
   }
@@ -97,6 +101,13 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (!running) return;
+    const warnBeforeLeaving = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ''; };
+    window.addEventListener('beforeunload', warnBeforeLeaving);
+    return () => window.removeEventListener('beforeunload', warnBeforeLeaving);
+  }, [running]);
+
+  useEffect(() => {
     if (!selectedKey) { setConversation(null); setEvaluations([]); setEvaluationId(''); return; }
     const controller = new AbortController();
     const [groupId, conversationId] = JSON.parse(selectedKey) as [string, string];
@@ -111,9 +122,9 @@ export default function App() {
   }, [selectedKey]);
 
   async function importDataset(value: unknown) {
-    setImporting(true); setError(''); setNotice('');
+    setImporting(true); setError(''); setNotice(''); setImportWarning('');
     try {
-      const result = await post<{ group_id: string; imported: number; updated: number; unchanged: number; total: number }>('/datasets/import', value);
+      const result = await post<{ group_id: string; imported: number; updated: number; unchanged: number; total: number; current_group_total?: number; retained_from_previous_import?: number }>('/datasets/import', value);
       const list = await request<ConversationSummary[]>('/conversations');
       setConversations(list); setGroup(result.group_id); setLanguage(''); setChannel(''); setGrossError(''); setQuery('');
       const first = list.find(item => item.group_id === result.group_id);
@@ -124,7 +135,8 @@ export default function App() {
           if (selectedRef.current === nextKey) { setConversation(current); setEvaluations(history); setEvaluationId(''); }
         } else setSelectedKey(nextKey);
       }
-      setTab('review'); setNotice(`Набор ${result.group_id}: добавлено ${result.imported}, обновлено ${result.updated}, без изменений ${result.unchanged}.`);
+      setTab('review'); setNoticeKind('success'); setNotice(`Набор ${result.group_id}: добавлено ${result.imported}, обновлено ${result.updated}, без изменений ${result.unchanged}.`);
+      if (result.retained_from_previous_import) setImportWarning(`В наборе ${result.group_id} сохранены также ${result.retained_from_previous_import} диалогов из прошлых импортов; всего ${result.current_group_total}. Проверьте состав набора перед сдачей: новый файл дополняет группу, а не удаляет прежние записи.`);
     } catch (error) { setError(errorText(error)); } finally { setImporting(false); }
   }
 
@@ -141,7 +153,7 @@ export default function App() {
   async function run(targets: ConversationSummary[]) {
     if (!selectedChecklist || !targets.length) return;
     if (!config?.provider_configured) { setShowSetup(true); return; }
-    setRunning(true); setError(''); setJobErrors([]); stopRef.current = false;
+    setRunning(true); setError(''); setNotice(''); setJobErrors([]); stopRef.current = false;
     const rules = selectedChecklist;
     let done = 0, failed = 0;
     setBatch({ total: targets.length, done, failed, label: '', stopped: false });
@@ -195,6 +207,7 @@ export default function App() {
   async function savedChecklist(value: ChecklistVersion) {
     setChecklists(current => [value, ...current.filter(item => checklistKey(item) !== checklistKey(value))]);
     setSelectedChecklistKey(checklistKey(value));
+    setNoticeKind('success');
     setNotice(`Чек-лист сохранён: версия ${value.version}. Выберите диалог, чтобы применить новые правила.`);
   }
 
@@ -213,7 +226,8 @@ export default function App() {
 
     <div className="global-messages" aria-live="polite">
       {error ? <div className="notice error" role="alert"><AlertCircle size={18} /><span>{error}</span><button className="icon-button" aria-label="Закрыть сообщение об ошибке" onClick={() => setError('')}><X size={16} /></button></div> : null}
-      {notice ? <div className="notice success" role="status"><CheckCheck size={17} /><span>{notice}</span><button className="icon-button" aria-label="Закрыть уведомление" onClick={() => setNotice('')}><X size={16} /></button></div> : null}
+      {notice ? <div className={`notice ${noticeKind}`} role="status">{noticeKind === 'warning' ? <AlertCircle size={17} /> : <CheckCheck size={17} />}<span>{notice}</span><button className="icon-button" aria-label="Закрыть уведомление" onClick={() => setNotice('')}><X size={16} /></button></div> : null}
+      {importWarning ? <div className="notice warning" role="status"><AlertCircle size={17} /><span>{importWarning}</span><button className="icon-button" aria-label="Закрыть предупреждение о составе набора" onClick={() => setImportWarning('')}><X size={16} /></button></div> : null}
     </div>
 
     <main id="main-content">
@@ -254,11 +268,11 @@ export default function App() {
           {!config?.provider_configured ? <button className="connection-hint" onClick={() => setShowSetup(true)}><AlertCircle size={16} /><span>Подключите модель, чтобы запустить оценку</span><ArrowUpRight size={15} /></button> : null}
           {evaluations.length ? <label className="history-select">История<select value={evaluationId} onChange={event => { setEvaluationId(event.target.value); setHighlight(''); }}><option value="">Текущий диалог без оценки</option>{evaluations.map(item => <option key={item.evaluation_id} value={item.evaluation_id}>{String(item.model_info.model ?? 'Модель')} — {date(item.created_at)} — v{item.checklist.version} — {number(item.score.total)} баллов{item.revision > 1 ? `, пересмотр ${item.revision - 1}` : ''}</option>)}</select></label> : null}
           {evaluation ? <div className="snapshot-label">Снимок диалога на момент этой оценки</div> : null}
-          {source?.audio_url ? <div className="audio-player"><Headphones size={16} /><audio controls preload="none" src={source.audio_url} aria-label="Запись звонка" /><span className="sr-only">Аудио воспроизводится с начала; точные смещения реплик не предоставлены.</span></div> : source?.channel === 'voice call' ? <div className="no-audio-banner"><Headphones size={15} /><span>Аудиозапись звонка не предоставлена (аудиофайл отсутствует в данных).</span></div> : null}
+          {source?.channel === 'voice call' ? <CallAudio key={`${conversationKey(source)}:${evaluationId}:${source.audio_url ?? ''}`} groupId={source.group_id} conversationId={source.conversation_id} evaluationId={evaluation?.evaluation_id} hasAudio={Boolean(source.audio_url)} /> : null}
           <div className="transcript-content">{detailLoading ? <div className="small-empty"><LoaderCircle size={24} className="spin" /><p>Загружаем диалог…</p></div> : source ? source.transcript.map((message, index) => <article className={`message ${message.speaker} ${highlight === message.message_id ? 'highlighted' : ''}`} id={`message-${message.message_id}`} key={message.message_id} tabIndex={-1}><div className="message-meta"><span className="speaker-avatar">{message.speaker === 'operator' ? <Headphones size={14} /> : message.speaker === 'client' ? <MessageSquare size={14} /> : <Settings2 size={14} />}</span><strong>{speakerNames[message.speaker]}</strong><span className="message-position">#{index + 1}</span><time title={message.timestamp}>{message.timestamp.includes('T') ? message.timestamp.split('T')[1]?.slice(0, 8) : message.timestamp}</time></div><p>{message.text}</p></article>) : <div className="small-empty"><MessageSquare size={28} /><p>Выберите диалог в списке слева.</p></div>}</div>
         </section>
 
-        <aside className="assessment-pane" aria-label="Результаты оценки">{evaluation ? <Assessment key={evaluation.evaluation_id} evaluation={evaluation} onUpdated={onEvaluationUpdated} onEvidence={openEvidence} /> : <div className="assessment-empty"><ClipboardList size={32} strokeWidth={1.4} /><h2>Оценка с доказательствами</h2><p>Здесь появятся ответы по каждому критерию, обоснования и ссылки на исходные реплики.</p><div className="selected-rules"><strong>Выбранный чек-лист</strong><span>{selectedChecklist?.title ?? 'Не выбран'}</span>{selectedChecklist ? <span className="badge neutral">Версия {selectedChecklist.version} • {selectedChecklist.criteria.length} критерия</span> : null}</div>{selectedChecklist?.provenance === 'synthetic_example' ? <p className="provenance-note">Это демонстрационные правила. Официальный чек-лист ещё не предоставлен.</p> : null}<button className="text-button" onClick={() => setTab('checklist')}>Настроить критерии<ArrowUpRight size={15} /></button></div>}</aside>
+        <aside className="assessment-pane" aria-label="Результаты оценки">{evaluation ? <Assessment key={evaluation.evaluation_id} evaluation={evaluation} onUpdated={onEvaluationUpdated} onEvidence={openEvidence} /> : <div className="assessment-empty"><ClipboardList size={32} strokeWidth={1.4} /><h2>Оценка с доказательствами</h2><p>Здесь появятся ответы по каждому критерию, обоснования и ссылки на исходные реплики.</p><div className="selected-rules"><strong>Выбранный чек-лист</strong><span>{selectedChecklist?.title ?? 'Не выбран'}</span>{selectedChecklist ? <span className="badge neutral">Версия {selectedChecklist.version} • {selectedChecklist.criteria.length} критерия</span> : null}</div>{selectedChecklist?.provenance === 'synthetic_example' ? <p className="provenance-note">Выбраны демонстрационные правила. Для сдачи выберите официальный чек-лист.</p> : null}<button className="text-button" onClick={() => setTab('checklist')}>Настроить критерии<ArrowUpRight size={15} /></button></div>}</aside>
       </div>}
     </main>
     <footer className="app-footer"><span>CQA • Freedom Broker Hackathon</span><span>Транскрипт → оценка → доказательство → пересмотр</span></footer>

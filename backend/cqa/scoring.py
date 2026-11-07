@@ -1,7 +1,7 @@
-"""Deterministic provisional scoring, separate from model judgement.
+"""Deterministic scoring, separate from judgement.
 
-The organizer's eight-criterion rubric has not been supplied. This implements
-the documented global weighted normalized mean, without inventing penalties.
+The official CQA checklist uses normalized weighted scores, proportional N/A
+redistribution, HALF_UP rounding and a separate, non-penalizing critical flag.
 """
 
 from decimal import Decimal, ROUND_HALF_UP
@@ -29,6 +29,8 @@ def normalize_answer(criterion: Criterion, answer: bool | float | str | None) ->
         minimum, maximum = _decimal(criterion.scale_min), _decimal(criterion.scale_max)
         if not value.is_finite() or not minimum <= value <= maximum:
             raise ValueError("Ответ вне заданной шкалы")
+        if criterion.allowed_values is not None and answer not in criterion.allowed_values:
+            raise ValueError("Ответ не совпадает с разрешённой ступенью шкалы")
         normalized = (value - minimum) / (maximum - minimum)
         return normalized if criterion.higher_is_better else Decimal(1) - normalized
     if not isinstance(answer, str) or answer not in criterion.choices:

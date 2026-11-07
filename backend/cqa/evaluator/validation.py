@@ -34,8 +34,12 @@ def validate_draft(
             if criterion.answer_type == "scale":
                 if type(answer) not in (float, int) or not criterion.scale_min <= answer <= criterion.scale_max:
                     raise ValueError("Answer outside the configured scale")
+                if criterion.allowed_values is not None and answer not in criterion.allowed_values:
+                    raise ValueError(f"Answer must be one of {criterion.allowed_values}")
             if criterion.answer_type == "choice" and answer not in criterion.choices:
                 raise ValueError("Answer is not a configured choice")
+            if criterion.critical_answer is not None and result.gross_error != (answer == criterion.critical_answer):
+                raise ValueError("Gross-error flag must match the configured critical answer")
         for evidence in result.evidence:
             message = messages.get(evidence.message_id)
             if message is None or not evidence.quote.strip() or evidence.quote not in message.text:

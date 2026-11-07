@@ -5,6 +5,7 @@ The evaluator below checks UI plumbing, not model quality.
 """
 
 import os
+from pathlib import Path
 
 from backend.cqa.evaluator.service import EvaluationRun
 from backend.cqa.models import CriterionResult, EvaluationDraft
@@ -50,6 +51,7 @@ def create_browser_app():
     from backend.cqa.main import create_app
 
     return create_app(
+        checklist_path=Path(__file__).resolve().parents[2] / "fixtures/checklist.example.json",
         database_path=os.environ["CQA_BROWSER_TEST_DB"], evaluator=evaluate_fixture,
         evaluator_info={
             "provider_configured": True, "provider": "isolated-test-double",

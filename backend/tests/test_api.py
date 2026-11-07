@@ -4,6 +4,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
@@ -19,7 +20,8 @@ class ApiTests(unittest.TestCase):
         self.temporary = TemporaryDirectory()
         self.database = Path(self.temporary.name) / "cqa.sqlite3"
         self.calls = []
-        self.app = create_app(self.database, evaluator=self.evaluate, evaluator_info={"provider_configured": True, "provider": "test", "model": "test", "mode": "test", "prompt_version": "test-v1"})
+        self.test_gross_error = False
+        self.app = create_app(self.database, evaluator=self.evaluate, evaluator_info={"provider_configured": True, "provider": "test", "model": "test", "mode": "test", "prompt_version": "test-v1"}, checklist_path=ROOT / "fixtures/checklist.example.json")
         self.client = TestClient(self.app)
         self.client.__enter__()
         self.dataset = json.loads((ROOT / "fixtures/synthetic_dev.json").read_text(encoding="utf-8"))
@@ -36,7 +38,7 @@ class ApiTests(unittest.TestCase):
         results = []
         for criterion in checklist.criteria:
             answer = criterion.positive_answer if criterion.answer_type == "boolean" else criterion.scale_max if criterion.answer_type == "scale" else max(criterion.choices, key=criterion.choices.get)
-            results.append({"criterion_id": criterion.criterion_id, "status": "applicable", "answer": answer, "explanation": "Изолированный тест API", "evidence": [{"message_id": message.message_id, "quote": message.text}]})
+            results.append({"criterion_id": criterion.criterion_id, "status": "applicable", "answer": answer, "explanation": "Изолированный тест API", "evidence": [{"message_id": message.message_id, "quote": message.text}], "gross_error": self.test_gross_error and bool(criterion.gross_error_rule)})
         return SimpleNamespace(draft=EvaluationDraft(conversation_id=conversation.conversation_id, group_id=conversation.group_id, checklist_id=checklist.checklist_id, checklist_version=checklist.version, prompt_version="test-v1", results=results), model_info={"provider": "test", "model": "test"})
 
     def job_body(self, **changes):
@@ -53,6 +55,13 @@ class ApiTests(unittest.TestCase):
         response = self.client.post(f"/api/evaluations/{evaluation['evaluation_id']}/appeals", json={"criterion_id": evaluation["results"][criterion]["criterion_id"], "comment": "Прошу проверить вывод", **extra})
         self.assertEqual(response.status_code, 201, response.text)
         return response.json()
+
+    def gross_error_checklist_version(self):
+        configuration = {key: deepcopy(self.checklist[key]) for key in ("title", "provenance", "criteria")}
+        configuration["criteria"][0]["gross_error_rule"] = "Изолированное тестовое нарушение"
+        response = self.client.post(f"/api/checklists/{self.checklist['checklist_id']}/versions", json=configuration)
+        self.assertEqual(response.status_code, 201, response.text)
+        return response.json()["version"]
 
     def test_import_repeated_group_identity_and_filters(self):
         imported = self.client.post("/api/datasets/import", json={"dataset": self.dataset}).json()
@@ -84,6 +93,90 @@ class ApiTests(unittest.TestCase):
         exported = self.client.get("/api/evaluations/export")
         self.assertIn("attachment", exported.headers["content-disposition"])
         self.assertEqual(len(exported.json()), 2)
+
+    def test_gross_error_filters_latest_result_and_each_history_entry(self):
+        version = self.gross_error_checklist_version()
+        summaries = self.client.get("/api/conversations").json()
+        self.assertTrue(all(row["latest_gross_error"] is None for row in summaries))
+        for flag in ("true", "false"):
+            self.assertEqual(self.client.get("/api/conversations", params={"gross_error": flag}).json(), [])
+
+        # Equal timestamps must still select the result inserted last.
+        with patch("backend.cqa.storage.now", return_value="2026-11-07T12:00:00+00:00"):
+            self.test_gross_error = True
+            flagged = self.evaluate_one(checklist_version=version)
+            matching = self.client.get("/api/conversations", params={
+                "gross_error": "true", "group_id": flagged["conversation"]["group_id"],
+                "language": flagged["conversation"]["language"], "channel": flagged["conversation"]["channel"],
+            }).json()
+            self.assertEqual([row["latest_evaluation_id"] for row in matching], [flagged["evaluation_id"]])
+            self.assertTrue(matching[0]["latest_gross_error"])
+            self.assertEqual(self.client.get("/api/conversations", params={"gross_error": "false"}).json(), [])
+            self.test_gross_error = False
+            other = self.evaluate_one(checklist_version=version, conversation_id=self.dataset["data"]["records"][1]["conversation_id"])
+            newer = self.evaluate_one(checklist_version=version)
+
+        self.assertEqual(self.client.get("/api/conversations", params={"gross_error": "true"}).json(), [])
+        clear = self.client.get("/api/conversations", params={"gross_error": "false"}).json()
+        self.assertEqual({row["latest_evaluation_id"] for row in clear}, {other["evaluation_id"], newer["evaluation_id"]})
+        self.assertEqual(self.client.get("/api/evaluations").json()[0]["evaluation_id"], newer["evaluation_id"])
+        for endpoint in ("/api/evaluations", "/api/evaluations/export"):
+            matching = self.client.get(endpoint, params={"gross_error": "true", "group_id": flagged["conversation"]["group_id"], "conversation_id": flagged["conversation"]["conversation_id"]})
+            self.assertEqual(matching.status_code, 200)
+            self.assertEqual([item["evaluation_id"] for item in matching.json()], [flagged["evaluation_id"]])
+            clear = self.client.get(endpoint, params={"gross_error": "false"}).json()
+            self.assertEqual({item["evaluation_id"] for item in clear}, {other["evaluation_id"], newer["evaluation_id"]})
+            self.assertEqual(self.client.get(endpoint, params={"gross_error": "true", "group_id": "missing"}).json(), [])
+        for endpoint in ("/api/conversations", "/api/evaluations", "/api/evaluations/export"):
+            self.assertEqual(self.client.get(endpoint, params={"gross_error": "invalid"}).status_code, 422)
+
+    def test_gross_error_filter_tracks_appeal_without_changing_model_original(self):
+        version = self.gross_error_checklist_version()
+        self.test_gross_error = True
+        evaluation = self.evaluate_one(checklist_version=version)
+        for expected_flag in (False, True):
+            appeal = self.appeal(evaluation)
+            replacement = deepcopy(evaluation["results"][0])
+            replacement["gross_error"] = expected_flag
+            replacement["explanation"] = "Признак нарушения пересмотрен по исходной реплике"
+            response = self.client.post(f"/api/appeals/{appeal['appeal_id']}/decision", json={
+                "action": "replace", "reason": "Проверено специалистом", "replacement_result": replacement,
+                "expected_revision": evaluation["revision"],
+            })
+            self.assertEqual(response.status_code, 200, response.text)
+            evaluation = response.json()
+            self.assertIs(evaluation["score"]["gross_error"], expected_flag)
+            self.assertTrue(evaluation["original_score"]["gross_error"])
+            self.assertTrue(evaluation["original_results"][0]["gross_error"])
+            positive, negative = str(expected_flag).lower(), str(not expected_flag).lower()
+            queue = self.client.get("/api/conversations", params={"gross_error": positive}).json()
+            self.assertEqual([row["latest_evaluation_id"] for row in queue], [evaluation["evaluation_id"]])
+            self.assertIs(queue[0]["latest_gross_error"], expected_flag)
+            self.assertEqual(self.client.get("/api/conversations", params={"gross_error": negative}).json(), [])
+            for endpoint in ("/api/evaluations", "/api/evaluations/export"):
+                history = self.client.get(endpoint, params={"gross_error": positive}).json()
+                self.assertEqual([item["evaluation_id"] for item in history], [evaluation["evaluation_id"]])
+                self.assertTrue(history[0]["original_score"]["gross_error"])
+                self.assertEqual(self.client.get(endpoint, params={"gross_error": negative}).json(), [])
+        self.assertEqual(evaluation["revision"], 3)
+        self.assertEqual(len(evaluation["appeals"]), 2)
+
+    def test_gross_error_filter_excludes_stale_source_but_keeps_snapshot_history(self):
+        version = self.gross_error_checklist_version()
+        self.test_gross_error = True
+        evaluation = self.evaluate_one(checklist_version=version)
+        changed = deepcopy(self.dataset)
+        changed["data"]["records"][0]["transcript"][0]["text"] = "Текст изменён после оценки"
+        self.client.post("/api/datasets/import", json={"dataset": changed}).raise_for_status()
+        summary = next(row for row in self.client.get("/api/conversations").json() if row["conversation_id"] == evaluation["conversation"]["conversation_id"])
+        self.assertIsNone(summary["latest_evaluation_id"])
+        self.assertIsNone(summary["latest_gross_error"])
+        for flag in ("true", "false"):
+            self.assertEqual(self.client.get("/api/conversations", params={"gross_error": flag}).json(), [])
+        for endpoint in ("/api/evaluations", "/api/evaluations/export"):
+            snapshot = self.client.get(endpoint, params={"gross_error": "true"}).json()[0]
+            self.assertEqual(snapshot["conversation"], evaluation["conversation"])
+            self.assertEqual(snapshot["evaluation_id"], evaluation["evaluation_id"])
 
     def test_new_criterion_and_immutable_checklist_version(self):
         first = self.evaluate_one()
@@ -149,7 +242,7 @@ class ApiTests(unittest.TestCase):
     def test_failure_is_visible_without_provider_secrets(self):
         async def failing(conversation, checklist):
             raise RuntimeError("SECRET_KEY and https://signed.example/?token=private")
-        with TestClient(create_app(Path(self.temporary.name) / "failed.sqlite3", evaluator=failing)) as client:
+        with TestClient(create_app(Path(self.temporary.name) / "failed.sqlite3", evaluator=failing, checklist_path=ROOT / "fixtures/checklist.example.json")) as client:
             client.post("/api/datasets/import", json={"dataset": self.dataset})
             job = client.post("/api/evaluation-jobs", json=self.job_body()).json()
             state = client.get("/api/evaluation-jobs/" + job["job_id"]).json()
@@ -166,7 +259,7 @@ class ApiTests(unittest.TestCase):
         job, _ = store.create_job(conversation, checklist, "interrupted")
         store.begin_job(job["job_id"])
         self.client.__exit__(None, None, None)
-        self.app = create_app(self.database, evaluator=self.evaluate)
+        self.app = create_app(self.database, evaluator=self.evaluate, checklist_path=ROOT / "fixtures/checklist.example.json")
         self.client = TestClient(self.app)
         self.client.__enter__()
         self.assertEqual(self.client.get("/api/evaluations/" + evaluation["evaluation_id"]).json()["score"]["total"], 100)

@@ -28,11 +28,13 @@ export interface Criterion {
   requires_audio: boolean;
   scale_min: number | null;
   scale_max: number | null;
+  allowed_values?: number[] | null;
   higher_is_better: boolean;
   positive_answer: boolean;
   choices: Record<string, number>;
   section_id: string | null;
   gross_error_rule: string | null;
+  critical_answer?: boolean | null;
 }
 
 export interface ChecklistVersion {
@@ -72,6 +74,7 @@ export interface ConversationSummary {
   latest_evaluation_id: string | null;
   latest_score: number | null;
   latest_status: string | null;
+  latest_gross_error?: boolean | null;
 }
 
 export interface ProviderInfo {
@@ -80,6 +83,14 @@ export interface ProviderInfo {
   model: string | null;
   mode: string;
   prompt_version: string;
+  team_name?: string;
+}
+
+export interface SubmissionFile {
+  schema_version: '1.0';
+  team_name: string;
+  model: { mode: 'local' | 'external_api' | 'hybrid'; name: string };
+  results: Array<{ conversation_id: string; status: 'ok' | 'error'; criteria: unknown[]; score: { final_score: number; critical_flag: boolean } | null; error?: string }>;
 }
 
 export interface Score {

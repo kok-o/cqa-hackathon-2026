@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "currency": "USD",
+  "billing_mode": "standard",
+  "verified_at": "2026-11-07",
+  "notes": "Official public standard API prices, per million tokens; excludes taxes. Cache writes and long-context premiums are included in reservation bounds. Reverify before future runs.",
+  "models": {
+    "gpt-6.1-sol": {
+      "input_per_million": 2.0,
+      "cached_input_per_million": 0.10,
+      "cache_write_input_per_million": 2.50,
+      "output_per_million": 10.0,
+      "long_context_threshold": 272000,
+      "long_context_input_multiplier": 2.0,
+      "long_context_output_multiplier": 1.5,
+      "source": "https://developers.openai.com/api/docs/models/gpt-6.1-sol"
+    },
+    "gpt-6-astra": {
+      "input_per_million": 10.0,
+      "cached_input_per_million": 1.0,
+      "cache_write_input_per_million": 12.50,
+      "output_per_million": 50.0,
+      "long_context_threshold": 272000,
+      "long_context_input_multiplier": 2.0,
+      "long_context_output_multiplier": 1.5,
+      "source": "https://developers.openai.com/api/docs/models/gpt-6-astra"
+    },
+    "gpt-6-luna": {
+      "input_per_million": 0.10,
+      "cached_input_per_million": 0.01,
+      "cache_write_input_per_million": 0.125,
+      "output_per_million": 0.50,
+      "source": "https://developers.openai.com/api/docs/models/gpt-6-luna"
+    }
+  }
+}

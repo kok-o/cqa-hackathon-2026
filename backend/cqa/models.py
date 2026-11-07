@@ -63,17 +63,30 @@ class Criterion(Contract):
     requires_audio: bool = False
     scale_min: float | None = None
     scale_max: float | None = None
+    allowed_values: list[float] | None = None
     higher_is_better: bool = True
     positive_answer: bool = True
     choices: dict[str, float] = Field(default_factory=dict)
     section_id: str | None = None
     gross_error_rule: str | None = None
+    critical_answer: bool | None = None
 
     @model_validator(mode="after")
     def validate_answer_type(self):
         if self.answer_type == "scale":
             if self.scale_min is None or self.scale_max is None or self.scale_min >= self.scale_max:
                 raise ValueError("A scale requires ordered finite bounds")
+        if self.allowed_values is not None:
+            if self.answer_type != "scale" or not self.allowed_values:
+                raise ValueError("Discrete values require a non-empty numeric scale")
+            if len(set(self.allowed_values)) != len(self.allowed_values) or any(
+                not self.scale_min <= value <= self.scale_max for value in self.allowed_values
+            ):
+                raise ValueError("Discrete scale values must be unique and within bounds")
+        if self.critical_answer is not None and (
+            self.answer_type != "boolean" or not self.gross_error_rule or not self.gross_error_rule.strip()
+        ):
+            raise ValueError("A critical answer requires a boolean criterion and a gross-error rule")
         if self.answer_type == "choice":
             if not self.choices or any(not 0 <= score <= 1 for score in self.choices.values()):
                 raise ValueError("Choices require normalized scores between 0 and 1")

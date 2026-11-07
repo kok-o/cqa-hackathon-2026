@@ -7,6 +7,7 @@ from hashlib import sha256
 import json
 import os
 from pathlib import Path
+import re
 import time
 from typing import Any
 from urllib.parse import urlsplit
@@ -16,15 +17,21 @@ from dotenv import load_dotenv
 from pydantic import ValidationError
 
 from ..models import ChecklistVersion, Conversation, CriterionResult, EvaluationDraft
+from .provider import ProviderOutputError, TokenUsage, estimate_cost, extract_content, read_usage
 from .validation import validate_draft
 
 ROOT = Path(__file__).resolve().parents[3]
-PROMPT_VERSION = "cqa-evaluator-v2"
+PROMPT_VERSION = "cqa-evaluator-v3"
 PROMPT_PATH = ROOT / "prompts" / "evaluator.md"
 
 
 class EvaluatorError(RuntimeError):
     """Safe error suitable for a public job status."""
+
+    def __init__(self, message: str, *, code: str = "configuration", model_info: dict[str, Any] | None = None):
+        super().__init__(message)
+        self.code = code
+        self.model_info = model_info or {}
 
 
 @dataclass(frozen=True)
@@ -43,6 +50,10 @@ class Settings:
     max_tokens: int = 6000
     input_cost_per_million: float | None = None
     output_cost_per_million: float | None = None
+    api_style: str = "chat_completions"
+    reasoning_effort: str | None = None
+    cached_input_cost_per_million: float | None = None
+    cache_write_input_cost_per_million: float | None = None
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -60,6 +71,10 @@ class Settings:
                 max_tokens=int(os.getenv("LLM_MAX_TOKENS", "6000")),
                 input_cost_per_million=cost("LLM_INPUT_COST_PER_MILLION"),
                 output_cost_per_million=cost("LLM_OUTPUT_COST_PER_MILLION"),
+                api_style=os.getenv("LLM_API_STYLE", "chat_completions").strip(),
+                reasoning_effort=os.getenv("LLM_REASONING_EFFORT", "").strip() or None,
+                cached_input_cost_per_million=cost("LLM_CACHED_INPUT_COST_PER_MILLION"),
+                cache_write_input_cost_per_million=cost("LLM_CACHE_WRITE_INPUT_COST_PER_MILLION"),
             )
         except (ValueError, TypeError) as exc:
             raise EvaluatorError("Проверьте числовые параметры LLM в .env.") from exc
@@ -75,32 +90,50 @@ class Settings:
             raise EvaluatorError("Некорректный адрес LLM_BASE_URL.") from exc
         if parsed.scheme not in {"http", "https"} or not parsed.hostname or parsed.username or parsed.password or parsed.query or parsed.fragment:
             raise EvaluatorError("LLM_BASE_URL должен быть HTTP(S)-адресом API без ключей и параметров URL.")
-        if not 1 <= self.timeout_seconds <= 600 or not 128 <= self.max_tokens <= 32768:
-            raise EvaluatorError("LLM_TIMEOUT_SECONDS: 1–600; LLM_MAX_TOKENS: 128–32768.")
+        if not 1 <= self.timeout_seconds <= 600 or type(self.max_tokens) is not int or not 128 <= self.max_tokens <= 128000:
+            raise EvaluatorError("LLM_TIMEOUT_SECONDS: 1–600; LLM_MAX_TOKENS: 128–128000.")
         if self.json_mode not in {"json_object", "json_schema", "none"}:
             raise EvaluatorError("LLM_JSON_MODE: json_object, json_schema или none.")
-        for price in (self.input_cost_per_million, self.output_cost_per_million):
+        if self.api_style not in {"responses", "chat_completions"}:
+            raise EvaluatorError("LLM_API_STYLE: responses или chat_completions.")
+        if self.reasoning_effort not in {None, "none", "minimal", "low", "medium", "high", "xhigh", "max"}:
+            raise EvaluatorError("Неверное LLM_REASONING_EFFORT. Укажите поддерживаемый моделью уровень рассуждения.")
+        if self.reasoning_effort in {"none", "minimal"} and self.model in {"gpt-6-astra", "gpt-6.1-sol"}:
+            raise EvaluatorError("Эта модель не поддерживает none/minimal. Укажите low, medium, high, xhigh или max.")
+        for price in (self.input_cost_per_million, self.output_cost_per_million,
+                      self.cached_input_cost_per_million, self.cache_write_input_cost_per_million):
             if price is not None and not 0 <= price < float("inf"):
                 raise EvaluatorError("Тариф модели должен быть конечным неотрицательным числом.")
 
     @property
     def provider(self) -> str:
-        return "local" if urlsplit(self.base_url).hostname in {"localhost", "127.0.0.1", "::1"} else "openai_compatible"
+        hostname = urlsplit(self.base_url).hostname
+        if hostname in {"localhost", "127.0.0.1", "::1"}:
+            return "local"
+        return "openai" if hostname == "api.openai.com" else "openai_compatible"
 
     @property
     def endpoint(self) -> str:
-        return self.base_url if self.base_url.endswith("/chat/completions") else self.base_url + "/chat/completions"
+        base = self.base_url.rstrip("/")
+        for suffix in ("/chat/completions", "/responses"):
+            if base.endswith(suffix):
+                base = base[:-len(suffix)]
+                break
+        return base + ("/responses" if self.api_style == "responses" else "/chat/completions")
 
 
-def get_evaluator_info() -> dict[str, Any]:
+def get_evaluator_info(settings: Settings | None = None) -> dict[str, Any]:
     """Read configuration without making calls or revealing credentials/URLs."""
     try:
-        settings = Settings.from_env()
+        settings = settings or Settings.from_env()
+        settings.validate()
     except EvaluatorError as exc:
         return {"provider_configured": False, "provider": "unconfigured", "model": None,
                 "mode": "unconfigured", "prompt_version": PROMPT_VERSION, "configuration_error": str(exc)}
     return {"provider_configured": True, "provider": settings.provider, "model": settings.model,
-            "mode": "live", "prompt_version": PROMPT_VERSION, "json_mode": settings.json_mode}
+            "mode": "live", "prompt_version": PROMPT_VERSION,
+            "json_mode": "json_schema" if settings.api_style == "responses" else settings.json_mode,
+            "api_style": settings.api_style, "reasoning_effort": settings.reasoning_effort}
 
 
 def output_schema() -> dict[str, Any]:
@@ -161,14 +194,54 @@ def _parse_draft(content: str, conversation: Conversation, checklist: ChecklistV
     return draft
 
 
-def _usage(response: dict[str, Any]) -> tuple[int, int, bool]:
-    usage = response.get("usage")
-    if not isinstance(usage, dict):
-        return 0, 0, False
-    inp, out = usage.get("prompt_tokens"), usage.get("completion_tokens")
-    if type(inp) is not int or type(out) is not int or inp < 0 or out < 0:
-        return 0, 0, False
-    return inp, out, True
+def build_request(settings: Settings, messages: list[dict[str, str]]) -> dict[str, Any]:
+    """Construct a fresh request; Responses always uses strict structured output."""
+    if settings.api_style == "responses":
+        payload: dict[str, Any] = {"model": settings.model, "input": list(messages),
+            "max_output_tokens": settings.max_tokens, "stream": False, "store": False,
+            "tools": [], "tool_choice": "none",
+            "text": {"format": {"type": "json_schema", "name": "cqa_evaluation",
+                                "strict": True, "schema": output_schema()}}}
+        if settings.reasoning_effort is not None:
+            payload["reasoning"] = {"effort": settings.reasoning_effort}
+        if settings.provider == "openai":
+            payload["service_tier"] = "default"
+        return payload
+    payload = {"model": settings.model, "messages": list(messages), "stream": False}
+    # Local non-reasoning providers keep their original temperature/max_tokens contract.
+    if settings.reasoning_effort is not None or settings.model.startswith(("gpt-6", "gpt-5", "o1", "o3", "o4")):
+        payload["max_completion_tokens"] = settings.max_tokens
+        if settings.reasoning_effort is not None:
+            payload["reasoning_effort"] = settings.reasoning_effort
+    else:
+        payload.update(temperature=0, max_tokens=settings.max_tokens)
+    if settings.provider == "openai":
+        payload["store"] = False
+        payload["service_tier"] = "default"
+    if settings.json_mode == "json_object":
+        payload["response_format"] = {"type": "json_object"}
+    elif settings.json_mode == "json_schema":
+        payload["response_format"] = {"type": "json_schema", "json_schema": {
+            "name": "cqa_evaluation", "strict": True, "schema": output_schema()}}
+    return payload
+
+
+def _safe_identifier(value: Any) -> str | None:
+    return value if isinstance(value, str) and re.fullmatch(r"[A-Za-z0-9_.:/-]{1,180}", value) else None
+
+
+def _attempt_cost(settings: Settings, usage: TokenUsage, response_service_tier: str | None = None) -> float | None:
+    # Standard-rate reservations cannot price a different or unreported OpenAI
+    # processing tier. Keep usage but leave billing unknown in that case.
+    if settings.provider == "openai" and response_service_tier != "default":
+        return None
+    inp, out, cached, written = (settings.input_cost_per_million, settings.output_cost_per_million,
+                                settings.cached_input_cost_per_million, settings.cache_write_input_cost_per_million)
+    # Standard API tier rates on the official GPT-6 model pages (verified 2026-11-07).
+    if settings.provider == "openai" and settings.model in {"gpt-6-astra", "gpt-6.1-sol"} and usage.input_tokens > 272000:
+        inp, cached, written = (price * 2 if price is not None else None for price in (inp, cached, written))
+        out = out * 1.5 if out is not None else None
+    return estimate_cost(usage, inp, out, cached, written)
 
 
 async def evaluate(conversation: Conversation, checklist: ChecklistVersion, *,
@@ -193,71 +266,120 @@ async def evaluate(conversation: Conversation, checklist: ChecklistVersion, *,
     settings.validate()
     text_checklist = checklist.model_copy(update={"criteria": text_criteria})
     messages = build_messages(conversation, text_checklist)
-    payload: dict[str, Any] = {"model": settings.model, "messages": messages,
-        "temperature": 0, "max_tokens": settings.max_tokens, "stream": False}
-    if settings.json_mode == "json_object":
-        payload["response_format"] = {"type": "json_object"}
-    elif settings.json_mode == "json_schema":
-        payload["response_format"] = {"type": "json_schema", "json_schema": {
-            "name": "cqa_evaluation", "strict": True, "schema": output_schema()}}
     headers = {"Content-Type": "application/json"}
     if settings.api_key:
         headers["Authorization"] = "Bearer " + settings.api_key
     owned_client = client is None
     http = client or httpx.AsyncClient(timeout=settings.timeout_seconds, follow_redirects=False)
-    prompt_tokens = completion_tokens = 0
-    usage_complete = True
+    attempts: list[dict[str, Any]] = []
     last_error = "Модель не вернула корректную оценку."
+    last_code = "invalid_response"
+    input_hash = sha256(json.dumps({"conversation": conversation.model_dump(mode="json"),
+        "checklist": checklist.model_dump(mode="json")}, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+
+    def model_info() -> dict[str, Any]:
+        prompt_tokens = sum(a["input_tokens"] for a in attempts)
+        completion_tokens = sum(a["output_tokens"] for a in attempts)
+        usage_complete = all(a["usage_complete"] for a in attempts)
+        costs = [a["estimated_cost"] for a in attempts]
+        response_models = list(dict.fromkeys(a["response_model"] for a in attempts if a.get("response_model")))
+        response_tiers = list(dict.fromkeys(a["response_service_tier"] for a in attempts if a.get("response_service_tier")))
+        info = {"provider": settings.provider, "model": settings.model, "requested_model": settings.model,
+            "response_models": response_models, "mode": "live", "prompt_version": PROMPT_VERSION,
+            "requested_service_tier": "default" if settings.provider == "openai" else None,
+            "response_service_tiers": response_tiers,
+            "service_tier_verified": all(a.get("response_service_tier") == "default" for a in attempts) if settings.provider == "openai" else None,
+            "json_mode": "json_schema" if settings.api_style == "responses" else settings.json_mode,
+            "api_style": settings.api_style, "reasoning_effort": settings.reasoning_effort,
+            "max_tokens": settings.max_tokens, "attempts": len(attempts), "retries": max(0, len(attempts) - 1),
+            "prompt_tokens": prompt_tokens, "completion_tokens": completion_tokens,
+            "input_tokens": prompt_tokens, "output_tokens": completion_tokens,
+            "total_tokens": prompt_tokens + completion_tokens, "usage_complete": usage_complete,
+            "elapsed_ms": round((time.monotonic() - started) * 1000),
+            "estimated_cost": round(sum(costs), 8) if all(cost is not None for cost in costs) else None,
+            "known_estimated_cost": round(sum(cost for cost in costs if cost is not None), 8),
+            "cost_currency": "USD", "cost_basis": "configured_standard_token_rates",
+            "input_hash": input_hash, "audio_processed": False,
+            "attempt_details": [dict(a) for a in attempts]}
+        for key in ("cached_input_tokens", "reasoning_tokens", "cache_write_input_tokens"):
+            info[key] = sum(a[key] for a in attempts if a[key] is not None)
+            info[key + "_complete"] = all(a[key] is not None for a in attempts)
+        if settings.api_style == "responses":
+            info["max_output_tokens"] = settings.max_tokens
+        elif "temperature" in build_request(settings, []):
+            info["temperature"] = 0
+        return info
+
+    def failure(message: str, code: str) -> EvaluatorError:
+        return EvaluatorError(message, code=code, model_info=model_info())
+
     try:
         for attempt in range(1, 3):
+            attempt_started = time.monotonic()
+            detail: dict[str, Any] = {"attempt": attempt, **TokenUsage().as_dict(),
+                "estimated_cost": None, "response_model": None, "response_id": None,
+                "response_service_tier": None,
+                "status": "pending", "http_status": None}
+            attempts.append(detail)
             try:
-                response = await http.post(settings.endpoint, json=payload, headers=headers,
+                response = await http.post(settings.endpoint, json=build_request(settings, messages), headers=headers,
                                            timeout=settings.timeout_seconds, follow_redirects=False)
             except httpx.RequestError as exc:
-                usage_complete = False
-                last_error = "Модель не ответила вовремя." if isinstance(exc, httpx.TimeoutException) else "Не удалось соединиться с моделью."
+                last_code = "timeout" if isinstance(exc, httpx.TimeoutException) else "network"
+                last_error = "Модель не ответила вовремя." if last_code == "timeout" else "Не удалось соединиться с моделью."
+                detail.update(status=last_code, elapsed_ms=round((time.monotonic() - attempt_started) * 1000))
                 if attempt < 2:
                     await asyncio.sleep(0.2)
                     continue
                 break
-            if response.status_code >= 400:
-                usage_complete = False
+            detail.update(http_status=response.status_code, elapsed_ms=round((time.monotonic() - attempt_started) * 1000))
+            try:
+                body = response.json()
+            except (ValueError, UnicodeError):
+                body = None
+            if isinstance(body, dict):
+                usage = read_usage(body, settings.api_style)
+                detail.update(usage.as_dict())
+                tier = body.get("service_tier")
+                response_tier = tier if isinstance(tier, str) and tier in {"auto", "default", "flex", "scale", "priority", "fast", "ultrafast"} else None
+                detail.update(estimated_cost=_attempt_cost(settings, usage, response_tier),
+                              response_service_tier=response_tier,
+                              response_model=_safe_identifier(body.get("model")),
+                              response_id=_safe_identifier(body.get("id")))
+            if response.status_code >= 300:
                 if response.status_code in {401, 403}:
-                    raise EvaluatorError("Провайдер отклонил авторизацию. Проверьте ключ и доступ к модели.")
+                    detail["status"] = "auth"
+                    raise failure("Провайдер отклонил авторизацию. Проверьте ключ и доступ к модели.", "auth")
                 if response.status_code in {400, 404, 422}:
-                    raise EvaluatorError("Провайдер отклонил запрос. Проверьте LLM_BASE_URL, LLM_MODEL и LLM_JSON_MODE.")
+                    detail["status"] = "request"
+                    raise failure("Провайдер отклонил запрос. Проверьте LLM_BASE_URL, LLM_MODEL, LLM_API_STYLE и LLM_REASONING_EFFORT.", "request")
+                detail["status"] = last_code = "http"
                 last_error = f"Модель временно недоступна (HTTP {response.status_code})."
                 if response.status_code in {408, 429, 500, 502, 503, 504} and attempt < 2:
                     await asyncio.sleep(0.3)
                     continue
                 break
-            attempt_usage_seen = False
             try:
-                body = response.json()
                 if not isinstance(body, dict):
                     raise ValueError("Expected response object")
-                inp, out, known = _usage(body)
-                attempt_usage_seen = True
-                prompt_tokens += inp
-                completion_tokens += out
-                usage_complete = usage_complete and known
-                choice = body["choices"][0]
-                message = choice["message"]
-                if message.get("refusal"):
-                    raise EvaluatorError("Модель отказалась оценивать этот диалог. Требуется ручная проверка.")
-                if choice.get("finish_reason") in {"length", "content_filter"}:
-                    raise ValueError("Model output was truncated or filtered")
-                content = message.get("content")
-                if not isinstance(content, str) or not content.strip():
-                    raise ValueError("Expected non-empty JSON content")
+                content = extract_content(body, settings.api_style)
                 draft = _parse_draft(content, conversation, text_checklist)
                 results = {r.criterion_id: r for r in draft.results + missing_audio}
                 draft.results = [results[c.criterion_id] for c in checklist.criteria]
                 validate_draft(conversation, checklist, draft)
-            except (ValueError, KeyError, IndexError, TypeError, AttributeError, ValidationError):
-                if not attempt_usage_seen:
-                    usage_complete = False
-                last_error = "Модель дважды вернула ответ с неверным форматом или неподтверждёнными доказательствами."
+            except (ValueError, KeyError, IndexError, TypeError, AttributeError, ValidationError) as exc:
+                last_code = exc.code if isinstance(exc, ProviderOutputError) else "invalid_response"
+                detail["status"] = last_code
+                errors = {
+                    "refusal": "Модель отказалась оценивать этот диалог. Требуется ручная проверка.",
+                    "content_filter": "Ответ модели остановлен фильтром. Требуется ручная проверка.",
+                    "incomplete": "Модель не завершила ответ. Увеличьте LLM_MAX_TOKENS или проверьте состояние провайдера.",
+                    "unexpected_tool_call": "Модель вернула неподдерживаемый вызов инструмента. Оценка не сохранена.",
+                    "provider_failed": "Провайдер не завершил генерацию ответа.",
+                }
+                last_error = errors.get(last_code, "Модель дважды вернула ответ с неверным форматом или неподтверждёнными доказательствами.")
+                if isinstance(exc, ProviderOutputError) and not exc.retryable:
+                    raise failure(last_error, last_code) from None
                 if attempt < 2:
                     messages.append({"role": "user", "content":
                         "Previous response failed validation. Return a fresh complete JSON object with every requested criterion exactly once. "
@@ -265,19 +387,9 @@ async def evaluate(conversation: Conversation, checklist: ChecklistVersion, *,
                         "For an absent action give a valid checked_span. Do not add metadata or markdown. Keep explanations concise."})
                     continue
                 break
-            cost = None
-            if usage_complete and settings.input_cost_per_million is not None and settings.output_cost_per_million is not None:
-                cost = round((prompt_tokens * settings.input_cost_per_million + completion_tokens * settings.output_cost_per_million) / 1_000_000, 8)
-            input_hash = sha256(json.dumps({"conversation": conversation.model_dump(mode="json"),
-                "checklist": checklist.model_dump(mode="json")}, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
-            return EvaluationRun(draft, {"provider": settings.provider, "model": settings.model,
-                "mode": "live", "prompt_version": PROMPT_VERSION, "json_mode": settings.json_mode,
-                "temperature": 0, "max_tokens": settings.max_tokens, "attempts": attempt,
-                "prompt_tokens": prompt_tokens, "completion_tokens": completion_tokens,
-                "total_tokens": prompt_tokens + completion_tokens, "usage_complete": usage_complete,
-                "elapsed_ms": round((time.monotonic() - started) * 1000),
-                "estimated_cost": cost, "input_hash": input_hash, "audio_processed": False})
+            detail["status"] = "completed"
+            return EvaluationRun(draft, model_info())
     finally:
         if owned_client:
             await http.aclose()
-    raise EvaluatorError(last_error)
+    raise failure(last_error, last_code)

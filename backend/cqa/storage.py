@@ -67,7 +67,7 @@ class Store:
         finally:
             connection.close()
 
-    def initialize(self, seed: ChecklistVersion):
+    def initialize(self, seed: ChecklistVersion, *, recover_jobs: bool = True):
         if self.memory:
             self.keeper = self.connect()
         else:
@@ -114,7 +114,8 @@ class Store:
             """)
         with self.transaction() as db:
             db.execute("INSERT OR IGNORE INTO checklist_versions VALUES(?,?,?,?)", (seed.checklist_id, seed.version, dumps(seed.model_dump()), now()))
-            db.execute("UPDATE evaluation_jobs SET status='failed', error=?, updated_at=? WHERE status IN ('queued','running')", ("Сервер перезапущен до завершения оценки. Запустите новую проверку.", now()))
+            if recover_jobs:
+                db.execute("UPDATE evaluation_jobs SET status='failed', error=?, updated_at=? WHERE status IN ('queued','running')", ("Сервер перезапущен до завершения оценки. Запустите новую проверку.", now()))
 
     def close(self):
         if self.keeper is not None:
@@ -138,7 +139,12 @@ class Store:
                     (conversation.group_id, conversation.conversation_id, conversation.language, conversation.channel, content_hash, dumps(payload), now()))
         return counts
 
-    def list_conversations(self, group_id=None, language=None, channel=None):
+    def list_conversations(self, group_id=None, language=None, channel=None, gross_error=None):
+        """Filter the latest reviewed result only when its source is still current.
+
+        Unassessed or changed conversations have an unknown flag (None), so they
+        match neither gross_error=True nor gross_error=False.
+        """
         conditions, params = [], []
         for name, value in (("group_id", group_id), ("language", language), ("channel", channel)):
             if value is not None:
@@ -150,11 +156,14 @@ class Store:
             summaries = []
             for row in rows:
                 conversation = json.loads(row["payload"])
-                latest = db.execute("SELECT evaluation_id,payload FROM evaluations WHERE group_id=? AND conversation_id=? ORDER BY created_at DESC LIMIT 1", (row["group_id"], row["conversation_id"])).fetchone()
+                latest = db.execute("SELECT evaluation_id,payload FROM evaluations WHERE group_id=? AND conversation_id=? ORDER BY created_at DESC,rowid DESC LIMIT 1", (row["group_id"], row["conversation_id"])).fetchone()
                 latest_payload = json.loads(latest["payload"]) if latest else None
                 # A previously evaluated version must not label imported new content as assessed.
                 if latest_payload and digest(latest_payload["conversation"]) != row["content_hash"]:
                     latest_payload = None
+                latest_gross_error = bool(latest_payload["score"].get("gross_error", False)) if latest_payload else None
+                if gross_error is not None and latest_gross_error is not gross_error:
+                    continue
                 messages = conversation["transcript"]
                 preview = next((m["text"] for m in messages if m["speaker"] == "client" and m["text"].strip()), messages[0]["text"])
                 summaries.append({
@@ -164,6 +173,7 @@ class Store:
                     "latest_evaluation_id": latest_payload["evaluation_id"] if latest_payload else None,
                     "latest_score": latest_payload["score"]["total"] if latest_payload else None,
                     "latest_status": latest_payload["score"]["status"] if latest_payload else None,
+                    "latest_gross_error": latest_gross_error,
                 })
         return summaries
 
@@ -272,7 +282,8 @@ class Store:
         with self.read() as db:
             return self._evaluation(db, evaluation_id)
 
-    def list_evaluations(self, group_id=None, conversation_id=None):
+    def list_evaluations(self, group_id=None, conversation_id=None, gross_error=None):
+        """Filter each historical evaluation's current score, including appeals."""
         conditions, params = [], []
         for name, value in (("group_id", group_id), ("conversation_id", conversation_id)):
             if value is not None:
@@ -280,7 +291,8 @@ class Store:
                 params.append(value)
         where = " WHERE " + " AND ".join(conditions) if conditions else ""
         with self.read() as db:
-            return [self._evaluation(db, row["evaluation_id"]) for row in db.execute("SELECT evaluation_id FROM evaluations" + where + " ORDER BY created_at DESC", params).fetchall()]
+            evaluations = [self._evaluation(db, row["evaluation_id"]) for row in db.execute("SELECT evaluation_id FROM evaluations" + where + " ORDER BY created_at DESC,rowid DESC", params).fetchall()]
+        return [evaluation for evaluation in evaluations if gross_error is None or bool(evaluation["score"].get("gross_error", False)) is gross_error]
 
     @staticmethod
     def _replay(db, scope, key, request_hash):

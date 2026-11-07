@@ -99,7 +99,8 @@ def _safe_evaluator_info() -> dict:
         return {"provider_configured": False, "provider": None, "model": None, "mode": "unconfigured", "prompt_version": "unavailable"}
 
 
-def create_app(database_path: str | Path | None = None, evaluator=None, evaluator_info: dict | None = None) -> FastAPI:
+def create_app(database_path: str | Path | None = None, evaluator=None, evaluator_info: dict | None = None,
+               *, checklist_path: str | Path | None = None) -> FastAPI:
     """Factory permits isolated test databases and an explicitly injected evaluator."""
     store = Store(database_path if database_path is not None else _default_database())
     try:
@@ -109,7 +110,8 @@ def create_app(database_path: str | Path | None = None, evaluator=None, evaluato
 
     @asynccontextmanager
     async def lifespan(application):
-        seed = ChecklistVersion.model_validate_json((ROOT / "fixtures/checklist.example.json").read_text(encoding="utf-8"))
+        seed_path = Path(checklist_path) if checklist_path is not None else ROOT / "fixtures/checklist.official.json"
+        seed = ChecklistVersion.model_validate_json(seed_path.read_text(encoding="utf-8"))
         store.initialize(seed)
         application.state.evaluator_semaphore = asyncio.Semaphore(concurrency)
         yield
@@ -145,7 +147,8 @@ def create_app(database_path: str | Path | None = None, evaluator=None, evaluato
 
     @application.get("/api/config")
     def config():
-        return evaluator_info if evaluator_info is not None else _safe_evaluator_info()
+        info = evaluator_info if evaluator_info is not None else _safe_evaluator_info()
+        return {**info, "team_name": os.getenv("CQA_TEAM_NAME", "").strip()}
 
     @application.get("/api/demo/conversations", response_model=list[Conversation])
     def demo_conversations():
@@ -170,8 +173,8 @@ def create_app(database_path: str | Path | None = None, evaluator=None, evaluato
         return store.import_conversations(conversations, dataset.data.dataset_group_id)
 
     @application.get("/api/conversations")
-    def conversations(group_id: str | None = None, language: Literal["RU", "KZ", "EN"] | None = None, channel: Literal["agent chat", "voice call"] | None = None):
-        return store.list_conversations(group_id, language, channel)
+    def conversations(group_id: str | None = None, language: Literal["RU", "KZ", "EN"] | None = None, channel: Literal["agent chat", "voice call"] | None = None, gross_error: bool | None = Query(None, description="Признак последней оценки текущего диалога с учётом апелляций. Неоценённые и изменённые диалоги исключены при true/false.")):
+        return store.list_conversations(group_id, language, channel, gross_error)
 
     @application.get("/api/conversations/{conversation_id}", response_model=Conversation)
     def conversation(conversation_id: str, group_id: str = Query(..., min_length=1)):
@@ -227,17 +230,54 @@ def create_app(database_path: str | Path | None = None, evaluator=None, evaluato
         return store.job(job_id)
 
     @application.get("/api/evaluations")
-    def evaluations(group_id: str | None = None, conversation_id: str | None = None):
-        return store.list_evaluations(group_id, conversation_id)
+    def evaluations(group_id: str | None = None, conversation_id: str | None = None, gross_error: bool | None = Query(None, description="Признак каждой сохранённой оценки с учётом апелляций, включая предыдущие версии диалога.")):
+        return store.list_evaluations(group_id, conversation_id, gross_error)
 
     @application.get("/api/evaluations/export")
-    def export_evaluations(group_id: str | None = None, conversation_id: str | None = None):
-        data = store.list_evaluations(group_id, conversation_id)
+    def export_evaluations(group_id: str | None = None, conversation_id: str | None = None, gross_error: bool | None = Query(None, description="Признак каждой сохранённой оценки с учётом апелляций. Экспортируется история, а не только последние оценки.")):
+        data = store.list_evaluations(group_id, conversation_id, gross_error)
         return Response(content=json.dumps(data, ensure_ascii=False, indent=2, allow_nan=False), media_type="application/json", headers={"Content-Disposition": 'attachment; filename="cqa-evaluations.json"'})
 
     @application.get("/api/evaluations/{evaluation_id}")
     def evaluation(evaluation_id: str):
         return store.evaluation(evaluation_id)
+
+    @application.get("/api/submission/export")
+    def official_submission(
+        group_id: str,
+        model_name: str,
+        split: Literal["dev", "prod"],
+        team_name: str | None = None,
+        model_mode: Literal["local", "external_api", "hybrid"] = Query(...),
+    ):
+        """Export latest original model decisions in the organizers' JSON 1.0 format."""
+        from evaluation.submission import export_submission, load_approved_checklist, checklist_criteria_fingerprint
+
+        team = (team_name if team_name is not None else os.getenv("CQA_TEAM_NAME", "")).strip()
+        if not team:
+            raise HTTPException(status_code=422, detail="Укажите team_name или CQA_TEAM_NAME.")
+        conversations = [Conversation.model_validate(store.conversation(group_id, item["conversation_id"]))
+                         for item in store.list_conversations(group_id=group_id)]
+        approved = load_approved_checklist()
+        approved_fingerprint = checklist_criteria_fingerprint(approved)
+        selected = {}
+        for item in store.list_evaluations(group_id=group_id):
+            info = item.get("model_info", {})
+            if ((info.get("requested_model") or info.get("model")) == model_name
+                    and checklist_criteria_fingerprint(item["checklist"]) == approved_fingerprint):
+                selected.setdefault(item["conversation"]["conversation_id"], item)
+        known_modes = {"local" if item.get("model_info", {}).get("provider") == "local" else "external_api"
+                       for item in selected.values()
+                       if item.get("model_info", {}).get("provider") in {"local", "openai", "openai_compatible"}}
+        inferred_mode = "hybrid" if len(known_modes) > 1 else next(iter(known_modes), None)
+        if inferred_mode is not None and model_mode != inferred_mode:
+            raise HTTPException(status_code=422, detail="model_mode не соответствует провайдеру выбранных оценок.")
+        document = export_submission(conversations, list(selected.values()), team_name=team,
+                                     model_mode=model_mode, model_name=model_name,
+                                     split=split, basis="original", approved_checklist=approved)
+        return Response(content=json.dumps(document, ensure_ascii=False, indent=2, allow_nan=False),
+                        media_type="application/json",
+                        headers={"Content-Disposition": 'attachment; filename="results.json"'})
 
     @application.post("/api/evaluations/{evaluation_id}/appeals", status_code=201)
     def create_appeal(evaluation_id: str, body: AppealRequest):

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertCircle, ArrowUpRight, CheckCheck, ClipboardList, Download, FileJson, Headphones, ListFilter, LoaderCircle, MessageSquare, Play, RefreshCw, Search, Settings2, ShieldCheck, Upload, X } from 'lucide-react';
-import type { ChecklistVersion, Conversation, ConversationSummary, Evaluation, EvaluationJob, ProviderInfo, Speaker } from './contracts';
-import { errorText, post, q, request, uid } from './api';
+import type { ChecklistVersion, Conversation, ConversationSummary, Evaluation, EvaluationJob, ProviderInfo, Speaker, SubmissionFile } from './contracts';
+import { downloadJson, errorText, post, q, request, uid } from './api';
 import { date, number, statusName } from './format';
 import Assessment from './Assessment';
 import ChecklistEditor from './ChecklistEditor';
@@ -10,11 +10,15 @@ const conversationKey = (value: { group_id: string; conversation_id: string }) =
 const checklistKey = (value: ChecklistVersion) => JSON.stringify([value.checklist_id, value.version]);
 const speakerNames: Record<Speaker, string> = { operator: 'Оператор', client: 'Клиент', bot: 'Бот', system: 'Система' };
 type Batch = { total: number; done: number; failed: number; label: string; stopped: boolean };
+type SubmissionForm = { team: string; group: string; split: 'dev' | 'prod'; model: string; mode: SubmissionFile['model']['mode'] };
 
 export default function App() {
   const [tab, setTab] = useState<'review' | 'checklist'>('review');
   const [config, setConfig] = useState<ProviderInfo | null>(null);
   const [showSetup, setShowSetup] = useState(false);
+  const [submission, setSubmission] = useState<SubmissionForm | null>(null);
+  const [submissionError, setSubmissionError] = useState('');
+  const [exportingSubmission, setExportingSubmission] = useState(false);
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [checklists, setChecklists] = useState<ChecklistVersion[]>([]);
   const [selectedKey, setSelectedKey] = useState('');
@@ -27,6 +31,7 @@ export default function App() {
   const [language, setLanguage] = useState('');
   const [channel, setChannel] = useState('');
   const [group, setGroup] = useState('');
+  const [grossError, setGrossError] = useState('');
   const [initialLoading, setInitialLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -46,8 +51,31 @@ export default function App() {
   const evaluation = evaluations.find(item => item.evaluation_id === evaluationId) ?? null;
   const source = evaluation?.conversation ?? conversation;
   const groups = useMemo(() => [...new Set(conversations.map(item => item.group_id))], [conversations]);
-  const filtered = useMemo(() => conversations.filter(item => (!language || item.language === language) && (!channel || item.channel === channel) && (!group || item.group_id === group) && (!query || `${item.conversation_id} ${item.preview}`.toLocaleLowerCase().includes(query.toLocaleLowerCase()))), [conversations, language, channel, group, query]);
+  const filtered = useMemo(() => conversations.filter(item => (!language || item.language === language) && (!channel || item.channel === channel) && (!group || item.group_id === group) && (!grossError || item.latest_gross_error === (grossError === 'true')) && (!query || `${item.conversation_id} ${item.preview}`.toLocaleLowerCase().includes(query.toLocaleLowerCase()))), [conversations, language, channel, group, grossError, query]);
   const completedCount = conversations.filter(item => item.latest_score != null).length;
+  const submissionCount = submission ? conversations.filter(item => item.group_id === submission.group).length : 0;
+  const exportParams = new URLSearchParams();
+  if (group) exportParams.set('group_id', group);
+  if (grossError) exportParams.set('gross_error', grossError);
+
+  function openSubmission() {
+    const chosenGroup = group || selectedSummary?.group_id || groups[0] || '';
+    setSubmission({ team: config?.team_name ?? '', group: chosenGroup, split: chosenGroup.toUpperCase() === 'DEV' ? 'dev' : 'prod', model: config?.model ?? '', mode: config?.provider === 'local' ? 'local' : 'external_api' });
+    setSubmissionError('');
+  }
+
+  async function exportSubmission() {
+    if (!submission || !submission.team.trim() || !submission.group || !submission.model.trim()) return;
+    setExportingSubmission(true); setSubmissionError(''); setNotice('');
+    try {
+      const params = new URLSearchParams({ group_id: submission.group, model_name: submission.model.trim(), split: submission.split, team_name: submission.team.trim(), model_mode: submission.mode });
+      const document = await request<SubmissionFile>(`/submission/export?${params}`);
+      downloadJson(document, 'results.json');
+      const ok = document.results.filter(item => item.status === 'ok').length;
+      const errors = document.results.filter(item => item.status === 'error').length;
+      setNotice(`results.json сформирован: ${submission.group} / ${submission.split.toUpperCase()} — ${document.results.length} записей, успешных оценок: ${ok}, записей с ошибкой: ${errors}. Сохраните файл в results/${submission.split}/.`);
+    } catch (error) { setSubmissionError(errorText(error)); } finally { setExportingSubmission(false); }
+  }
 
   async function loadOverview() {
     const [list, rules, provider] = await Promise.all([request<ConversationSummary[]>('/conversations'), request<ChecklistVersion[]>('/checklists'), request<ProviderInfo>('/config')]);
@@ -87,7 +115,7 @@ export default function App() {
     try {
       const result = await post<{ group_id: string; imported: number; updated: number; unchanged: number; total: number }>('/datasets/import', value);
       const list = await request<ConversationSummary[]>('/conversations');
-      setConversations(list); setGroup(result.group_id); setLanguage(''); setChannel(''); setQuery('');
+      setConversations(list); setGroup(result.group_id); setLanguage(''); setChannel(''); setGrossError(''); setQuery('');
       const first = list.find(item => item.group_id === result.group_id);
       if (first) {
         const nextKey = conversationKey(first);
@@ -191,7 +219,20 @@ export default function App() {
         <label className="checklist-select"><ClipboardList size={16} /><span className="sr-only">Версия чек-листа</span><select value={selectedChecklist ? checklistKey(selectedChecklist) : ''} onChange={event => setSelectedChecklistKey(event.target.value)} disabled={!checklists.length}>{checklists.map(item => <option value={checklistKey(item)} key={checklistKey(item)}>{item.title} — v{item.version}</option>)}</select></label>
         <input type="file" accept="application/json,.json" className="sr-only" ref={inputRef} onChange={event => void readFile(event.target.files?.[0])} aria-label="Выбрать JSON с диалогами" tabIndex={-1} />
         <button className="button primary" disabled={importing || running} onClick={() => inputRef.current?.click()}>{importing ? <LoaderCircle size={17} className="spin" /> : <Upload size={17} />} Импорт JSON</button>
+        <button className="button secondary" disabled={initialLoading || !groups.length || exportingSubmission} onClick={openSubmission} aria-expanded={submission != null} aria-controls="submission-form"><FileJson size={17} /> Файл для сдачи</button>
       </div>
+
+      {submission ? <form id="submission-form" className="checklist-meta form-grid" aria-labelledby="submission-heading" onSubmit={event => { event.preventDefault(); void exportSubmission(); }}>
+        <div className="span-3"><h2 id="submission-heading">Файл для сдачи</h2><p className="form-help">JSON 1.0 организаторов. Весь выбранный набор: {submissionCount} диалогов; фильтры списка не применяются. Используются исходные оценки модели по официальному чек-листу.</p></div>
+        <label className="field">Команда<input value={submission.team} required disabled={exportingSubmission} onChange={event => setSubmission({ ...submission, team: event.target.value })} /></label>
+        <label className="field">Набор для сдачи<select value={submission.group} required disabled={exportingSubmission} onChange={event => setSubmission({ ...submission, group: event.target.value, split: event.target.value.toUpperCase() === 'DEV' ? 'dev' : 'prod' })}>{groups.map(value => <option key={value}>{value}</option>)}</select></label>
+        <label className="field">Раздел сдачи<select value={submission.split} disabled={exportingSubmission} onChange={event => setSubmission({ ...submission, split: event.target.value as SubmissionForm['split'] })}><option value="dev">DEV — 65 диалогов</option><option value="prod">PROD — 10 чатов</option></select></label>
+        <label className="field span-2">Модель для сдачи<input value={submission.model} required disabled={exportingSubmission} onChange={event => setSubmission({ ...submission, model: event.target.value })} /></label>
+        <label className="field">Режим модели<select value={submission.mode} disabled={exportingSubmission} onChange={event => setSubmission({ ...submission, mode: event.target.value as SubmissionForm['mode'] })}><option value="external_api">Внешний API</option><option value="local">Локальная модель</option><option value="hybrid">Гибридный</option></select></label>
+        {submissionError ? <p className="notice error span-3" role="alert">{submissionError}</p> : null}
+        <p className="form-help span-3">Назначение: results/{submission.split}/results.json. Проверка формата файла не подтверждает точность оценок относительно Ground Truth.</p>
+        <div className="button-row span-3"><button className="button primary small" type="submit" disabled={exportingSubmission || !submission.team.trim() || !submission.group || !submission.model.trim()}>{exportingSubmission ? <LoaderCircle size={15} className="spin" /> : <Download size={15} />}{exportingSubmission ? 'Формируем…' : 'Скачать results.json'}</button><button className="button ghost small" type="button" disabled={exportingSubmission} onClick={() => setSubmission(null)}>Закрыть</button></div>
+      </form> : null}
 
       {batch ? <div className="batch-banner" role="status"><div><strong>{running ? `Анализ: ${batch.label}` : batch.stopped ? 'Очередь остановлена' : 'Обработка завершена'}</strong><span>Обработано {batch.done} из {batch.total}{batch.failed ? ` • ошибок ${batch.failed}` : ''}</span></div><progress value={batch.done} max={batch.total} aria-label="Прогресс оценки диалогов" />{running ? <button className="button secondary small" onClick={() => { stopRef.current = true; setBatch(current => current ? { ...current, stopped: true } : current); }} disabled={batch.stopped}>{batch.stopped ? 'После текущего диалога' : 'Остановить очередь'}</button> : <button className="icon-button" aria-label="Скрыть прогресс" onClick={() => { setBatch(null); setJobErrors([]); }}><X size={17} /></button>}</div> : null}
       {jobErrors.length ? <details className="job-errors"><summary>{jobErrors.length} ошибок обработки. Открыть подробности</summary>{jobErrors.map((item, index) => <p key={index}><strong>{item.label}:</strong> {item.error}</p>)}</details> : null}
@@ -200,9 +241,9 @@ export default function App() {
         <aside className="conversation-sidebar" aria-label="Список диалогов">
           <div className="sidebar-heading"><h2>Диалоги <span>{filtered.length}</span></h2><ListFilter size={17} /></div>
           <label className="search-field"><Search size={16} /><input type="search" placeholder="ID или начало диалога" value={query} onChange={event => setQuery(event.target.value)} aria-label="Поиск диалога" /></label>
-          <div className="filters"><label><span className="sr-only">Язык</span><select value={language} onChange={event => setLanguage(event.target.value)}><option value="">Все языки</option><option>RU</option><option>KZ</option><option>EN</option></select></label><label><span className="sr-only">Канал</span><select value={channel} onChange={event => setChannel(event.target.value)}><option value="">Все каналы</option><option value="agent chat">Чаты</option><option value="voice call">Звонки</option></select></label><label className="full-width"><span className="sr-only">Набор</span><select value={group} onChange={event => setGroup(event.target.value)}><option value="">Все наборы</option>{groups.map(value => <option key={value}>{value}</option>)}</select></label></div>
-          <div className="conversation-list">{filtered.map(item => <button key={conversationKey(item)} className={`conversation-item ${conversationKey(item) === selectedKey ? 'selected' : ''}`} onClick={() => setSelectedKey(conversationKey(item))} aria-current={conversationKey(item) === selectedKey ? 'true' : undefined}><span className="conversation-item-top"><span>{item.channel === 'voice call' ? <Headphones size={15} /> : <MessageSquare size={15} />}<strong>{item.conversation_id}</strong></span><span className="language-tag">{item.language}</span></span><span className="conversation-preview">{item.preview || 'Текст диалога'}</span><span className="conversation-item-bottom"><span>{item.message_count} реплик</span><span className={item.latest_score != null ? 'list-score' : ''}>{item.latest_score != null ? `${number(item.latest_score)} / 100` : statusName(item.latest_status)}</span></span></button>)}{!filtered.length ? <div className="small-empty"><Search size={24} /><strong>Ничего не найдено</strong><p>Измените запрос или фильтры.</p><button className="text-button" onClick={() => { setQuery(''); setLanguage(''); setChannel(''); setGroup(''); }}>Сбросить фильтры</button></div> : null}</div>
-          <footer className="sidebar-footer"><button className="button secondary full-width" disabled={running || !filtered.length || !config?.provider_configured} onClick={() => void run(filtered)}><Play size={15} /> Оценить выборку ({filtered.length})</button><div className="sidebar-links"><button className="text-button" disabled={importing || running} onClick={() => void importDataset({ source: 'dev' })}>Загрузить DEV</button><a className="text-button" href={`/api/evaluations/export${group ? `?group_id=${q(group)}` : ''}`} download><Download size={13} /> Экспорт</a></div></footer>
+          <div className="filters"><label><span className="sr-only">Язык</span><select value={language} onChange={event => setLanguage(event.target.value)}><option value="">Все языки</option><option>RU</option><option>KZ</option><option>EN</option></select></label><label><span className="sr-only">Канал</span><select value={channel} onChange={event => setChannel(event.target.value)}><option value="">Все каналы</option><option value="agent chat">Чаты</option><option value="voice call">Звонки</option></select></label><label className="full-width"><span className="sr-only">Набор</span><select value={group} onChange={event => setGroup(event.target.value)}><option value="">Все наборы</option>{groups.map(value => <option key={value}>{value}</option>)}</select></label><label className="full-width"><span className="sr-only">Грубые ошибки в последней оценке</span><select value={grossError} onChange={event => setGrossError(event.target.value)} title="По последней оценке текущего диалога, с учётом апелляций"><option value="">Грубые ошибки: все</option><option value="true">С грубой ошибкой</option><option value="false">Без грубых ошибок</option></select></label></div>
+          <div className="conversation-list">{filtered.map(item => <button key={conversationKey(item)} className={`conversation-item ${conversationKey(item) === selectedKey ? 'selected' : ''}`} onClick={() => setSelectedKey(conversationKey(item))} aria-current={conversationKey(item) === selectedKey ? 'true' : undefined}><span className="conversation-item-top"><span>{item.channel === 'voice call' ? <Headphones size={15} /> : <MessageSquare size={15} />}<strong>{item.conversation_id}</strong></span><span className="language-tag">{item.language}</span></span><span className="conversation-preview">{item.preview || 'Текст диалога'}</span><span className="conversation-item-bottom"><span>{item.message_count} реплик</span><span className={item.latest_score != null ? 'list-score' : ''}>{item.latest_score != null ? `${number(item.latest_score)} / 100` : statusName(item.latest_status)}</span></span></button>)}{!filtered.length ? <div className="small-empty"><Search size={24} /><strong>Ничего не найдено</strong><p>Измените запрос или фильтры.</p><button className="text-button" onClick={() => { setQuery(''); setLanguage(''); setChannel(''); setGroup(''); setGrossError(''); }}>Сбросить фильтры</button></div> : null}</div>
+          <footer className="sidebar-footer"><button className="button secondary full-width" disabled={running || !filtered.length || !config?.provider_configured} onClick={() => void run(filtered)}><Play size={15} /> Оценить выборку ({filtered.length})</button><div className="sidebar-links"><button className="text-button" disabled={importing || running} onClick={() => void importDataset({ source: 'dev' })}>Загрузить DEV</button><a className="text-button" href={`/api/evaluations/export${exportParams.size ? `?${exportParams}` : ''}`} title="Экспорт истории: признак грубой ошибки проверяется у каждой оценки" download><Download size={13} /> Экспорт</a></div></footer>
         </aside>
 
         <section className="transcript-pane" aria-labelledby="transcript-heading">

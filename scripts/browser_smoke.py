@@ -42,7 +42,10 @@ def main() -> None:
     checks = []
 
     with sync_playwright() as playwright:
-        browser = playwright.chromium.launch(channel="chrome", headless=True)
+        try:
+            browser = playwright.chromium.launch(channel="chrome", headless=True)
+        except Exception:
+            browser = playwright.chromium.launch(headless=True)
         page = browser.new_page(viewport={"width": 1440, "height": 1000}, reduced_motion="reduce")
         page.set_default_timeout(12000)
         page.on("pageerror", lambda error: errors.append(str(error)))

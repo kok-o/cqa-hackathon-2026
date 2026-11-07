@@ -28,6 +28,8 @@ export default function CallAudio({ groupId, conversationId, hasAudio, evaluatio
     }
   }
 
+  if (!hasAudio && !url && !error) return null;
+
   return <section className="call-audio" aria-label="Аудиозапись звонка">
     <div className="audio-player"><Headphones size={16} />
       {url ? <audio key={url} controls preload="metadata" src={url} aria-label="Запись звонка" onError={() => { setError('Запись не воспроизводится. Обновите ссылку; если ошибка повторится, проверьте доступ к записи у организаторов.'); setUrl(''); }} />

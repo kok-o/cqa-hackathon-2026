@@ -99,7 +99,7 @@ def main() -> None:
 
         try:
             page.goto(base)
-            expect(page.get_by_role('heading', name='Разбор диалогов', exact=True)).to_be_visible()
+            expect(page.get_by_role('heading', level=1, name=re.compile(r'^Диалоги'))).to_be_visible()
             if not page.get_by_label('Набор', exact=True).count():
                 page.get_by_role('button', name=re.compile('^Фильтры')).click()
             page.get_by_label('Набор', exact=True).select_option(group)

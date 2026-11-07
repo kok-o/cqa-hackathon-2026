@@ -53,7 +53,7 @@ def main() -> None:
         try:
             page.goto(base)
             page.wait_for_load_state("networkidle")
-            expect(page.get_by_role("heading", name="Разбор диалогов", exact=True)).to_be_visible()
+            expect(page.get_by_role("heading", level=1, name=re.compile(r"^Диалоги"))).to_be_visible()
 
             def import_dataset(value):
                 with page.expect_response(lambda r: r.request.method == "POST" and r.url.endswith("/api/datasets/import")) as response:

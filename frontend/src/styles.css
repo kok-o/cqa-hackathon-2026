@@ -14,6 +14,7 @@
   --selected: #e5eee6;
   --danger: #a03434;
   --warning: #875313;
+  --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
   font-size: 14px;
 }
 * {
@@ -253,12 +254,13 @@ code {
   font-size: 13px;
   font-weight: 400;
   padding: 0;
+  transition: color 180ms ease;
 }
 .main-nav button.active {
   color: var(--text);
   font-weight: 500;
 }
-.main-nav button.active::after {
+.main-nav button::after {
   content: "";
   position: absolute;
   bottom: 0;
@@ -266,6 +268,13 @@ code {
   right: 0;
   height: 2px;
   background: var(--primary);
+  transform: scaleX(0);
+  opacity: 0;
+  transition: transform 220ms var(--motion-ease), opacity 180ms ease;
+}
+.main-nav button.active::after {
+  transform: scaleX(1);
+  opacity: 1;
 }
 .main-nav button:hover {
   color: var(--primary);
@@ -394,6 +403,23 @@ main {
   border-top: 0;
   border-radius: 0 0 6px 6px;
   overflow: hidden;
+}
+.page-title,
+.review-context,
+.review-workspace,
+.editor-workspace,
+.onboarding {
+  animation: workspace-enter 240ms var(--motion-ease);
+}
+@keyframes workspace-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .conversation-sidebar,
 .transcript-pane,
@@ -1332,11 +1358,26 @@ main {
     color: #65715f;
     font-size: 12px;
     font-weight: 400;
+    transition: color 180ms ease, background-color 180ms ease;
+  }
+  .mobile-panel-tabs button::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 -2px;
+    height: 2px;
+    background: var(--primary);
+    opacity: 0;
+    transform: scaleX(0.6);
+    transition: opacity 180ms ease, transform 220ms var(--motion-ease);
   }
   .mobile-panel-tabs button[aria-selected="true"] {
-    border-bottom-color: var(--primary);
     color: var(--primary);
+    background: #21644706;
     font-weight: 500;
+  }
+  .mobile-panel-tabs button[aria-selected="true"]::after {
+    opacity: 1;
+    transform: scaleX(1);
   }
   .mobile-panel-tabs svg {
     display: none;
@@ -1356,6 +1397,7 @@ main {
     display: none;
     height: 100%;
     border-right: 0;
+    animation: workspace-enter 220ms var(--motion-ease);
   }
   .mobile-queue > .conversation-sidebar,
   .mobile-transcript > .transcript-pane {

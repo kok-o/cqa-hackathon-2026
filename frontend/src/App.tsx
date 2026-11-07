@@ -739,7 +739,7 @@ export default function App() {
       {importWarning && <div className="notice warning" role="status"><AlertCircle size={17}/><span>{importWarning}</span><button className="icon-button" aria-label="Закрыть предупреждение о составе набора" onClick={() => setImportWarning('')}><X size={16}/></button></div>}
       <main id="main-content">
         <div className="workspace-toolbar">
-          <h1 className="page-title">
+          <h1 key={tab} className="page-title">
             {tab === "review" ? "Диалоги" : "Чек-листы"}
           </h1>
           <label className="checklist-select">

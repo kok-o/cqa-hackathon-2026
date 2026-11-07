@@ -93,6 +93,8 @@ export default function App() {
   const [batch, setBatch] = useState<Batch | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [noticeKind, setNoticeKind] = useState<'success' | 'warning'>('success');
+  const [importWarning, setImportWarning] = useState('');
   const [jobErrors, setJobErrors] = useState<
     Array<{ key: string; label: string; error: string }>
   >([]);
@@ -174,6 +176,7 @@ export default function App() {
       const errors = document.results.filter(
         (item) => item.status === "error",
       ).length;
+      setNoticeKind(errors ? 'warning' : 'success');
       setNotice(
         `results.json сформирован: ${submission.group} / ${submission.split.toUpperCase()} — ${document.results.length} записей, успешных оценок: ${ok}, записей с ошибкой: ${errors}. Сохраните файл в results/${submission.split}/.`,
       );
@@ -210,6 +213,13 @@ export default function App() {
           : "",
     );
   }
+
+  useEffect(() => {
+    if (!running) return;
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ''; };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [running]);
 
   async function refreshConversations() {
     const list = await request<ConversationSummary[]>("/conversations");
@@ -301,6 +311,8 @@ export default function App() {
         updated: number;
         unchanged: number;
         total: number;
+        current_group_total?: number;
+        retained_from_previous_import?: number;
       }>("/datasets/import", value);
       const list = await request<ConversationSummary[]>("/conversations");
       setConversations(list);
@@ -330,6 +342,8 @@ export default function App() {
       }
       setTab("review");
       setMobilePanel("queue");
+      setNoticeKind('success');
+      setImportWarning(result.retained_from_previous_import ? `Набор также содержит ${result.retained_from_previous_import} диалогов из предыдущих импортов. Всего: ${result.current_group_total}.` : '');
       setNotice(
         `Набор ${result.group_id}: добавлено ${result.imported}, обновлено ${result.updated}, без изменений ${result.unchanged}.`,
       );
@@ -709,7 +723,7 @@ export default function App() {
           </div>
         )}
         {notice && (
-          <div className="notice success" role="status">
+          <div className={`notice ${noticeKind}`} role="status">
             <CheckCheck size={17} />
             <span>{notice}</span>
             <button
@@ -722,6 +736,7 @@ export default function App() {
           </div>
         )}
       </div>
+      {importWarning && <div className="notice warning" role="status"><AlertCircle size={17}/><span>{importWarning}</span><button className="icon-button" aria-label="Закрыть предупреждение о составе набора" onClick={() => setImportWarning('')}><X size={16}/></button></div>}
       <main id="main-content">
         <div className="workspace-toolbar">
           <h1 className="page-title">

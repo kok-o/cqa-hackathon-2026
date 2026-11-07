@@ -15,6 +15,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from pydantic import Field, ValidationError, field_validator, model_validator
 
+from .audio import AudioSourceError, resolve_audio
 from .importer import normalize
 from .models import ChecklistVersion, Contract, Conversation, Criterion, CriterionResult, DatasetExport
 from .storage import ConflictError, NotFoundError, Store
@@ -176,9 +177,24 @@ def create_app(database_path: str | Path | None = None, evaluator=None, evaluato
     def conversations(group_id: str | None = None, language: Literal["RU", "KZ", "EN"] | None = None, channel: Literal["agent chat", "voice call"] | None = None, gross_error: bool | None = Query(None, description="Признак последней оценки текущего диалога с учётом апелляций. Неоценённые и изменённые диалоги исключены при true/false.")):
         return store.list_conversations(group_id, language, channel, gross_error)
 
-    @application.get("/api/conversations/{conversation_id}", response_model=Conversation)
+    @application.get("/api/conversations/{conversation_id:path}", response_model=Conversation)
     def conversation(conversation_id: str, group_id: str = Query(..., min_length=1)):
         return store.conversation(group_id, conversation_id)
+
+    @application.get("/api/audio-source")
+    async def audio_source(group_id: str = Query(..., min_length=1), conversation_id: str = Query(..., min_length=1),
+                           evaluation_id: str | None = Query(None, min_length=1)):
+        if evaluation_id is None:
+            conversation = store.conversation(group_id, conversation_id)
+        else:
+            conversation = Conversation.model_validate(store.evaluation(evaluation_id)["conversation"])
+            if (conversation.group_id, conversation.conversation_id) != (group_id, conversation_id):
+                raise HTTPException(status_code=404, detail="Аудиозапись не относится к выбранному диалогу.")
+        try:
+            resolved = await resolve_audio(conversation.audio_url)
+        except AudioSourceError as error:
+            raise HTTPException(status_code=error.status_code, detail=str(error)) from None
+        return JSONResponse(content=resolved, headers={"Cache-Control": "no-store"})
 
     @application.get("/api/checklists")
     def checklists():

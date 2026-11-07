@@ -2,7 +2,7 @@
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class Contract(BaseModel):
@@ -26,16 +26,44 @@ class RawConversation(Contract):
     transcript: list[RawMessage] = Field(min_length=1)
     audio_url: str | None = None
 
+    @field_validator("conversation_id")
+    @classmethod
+    def meaningful_id(cls, value):
+        if not value.strip():
+            raise ValueError("conversation_id must not be blank")
+        return value
+
+    @field_validator("transcript")
+    @classmethod
+    def meaningful_transcript(cls, value):
+        if not any(message.text.strip() for message in value):
+            raise ValueError("transcript must contain at least one non-blank message")
+        return value
+
 
 class Conversation(RawConversation):
     group_id: str = Field(min_length=1)
     transcript: list[Message] = Field(min_length=1)
+
+    @field_validator("group_id")
+    @classmethod
+    def meaningful_group_id(cls, value):
+        if not value.strip():
+            raise ValueError("group_id must not be blank")
+        return value
 
 
 class Dataset(Contract):
     dataset_group_id: str = Field(min_length=1)
     total_records: int = Field(ge=0)
     records: list[RawConversation]
+
+    @field_validator("dataset_group_id")
+    @classmethod
+    def meaningful_group_id(cls, value):
+        if not value.strip():
+            raise ValueError("dataset_group_id must not be blank")
+        return value
 
     @model_validator(mode="after")
     def validate_records(self):

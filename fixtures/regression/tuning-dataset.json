@@ -1,0 +1,104 @@
+{
+  "error": "",
+  "isSuccess": true,
+  "data": {
+    "dataset_group_id": "SYNTHETIC-PROMPT-TUNING-v1",
+    "total_records": 3,
+    "records": [
+      {
+        "conversation_id": "tune-ru-repaired-directions",
+        "channel": "agent chat",
+        "language": "RU",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "На открытой странице расписания вижу две кнопки: «Сохранить PDF» и «Поделиться ссылкой». Мне нужна копия расписания на компьютере. Какую кнопку выбрать?"
+          },
+          {
+            "timestamp": "00:05",
+            "speaker": "operator",
+            "text": "Здравствуйте, я Лев. Воспользуйтесь подходящим вариантом справа."
+          },
+          {
+            "timestamp": "00:10",
+            "speaker": "client",
+            "text": "Не понимаю, какой из двух вариантов вы имеете в виду. Назовите кнопку, пожалуйста."
+          },
+          {
+            "timestamp": "00:15",
+            "speaker": "operator",
+            "text": "Извините за неясное указание. Для копии на компьютере нажмите «Сохранить PDF»."
+          },
+          {
+            "timestamp": "00:20",
+            "speaker": "client",
+            "text": "Получилось, файл сохранён."
+          },
+          {
+            "timestamp": "00:25",
+            "speaker": "operator",
+            "text": "Копия расписания теперь сохранена. Если потребуется помощь с другим документом, напишите. Всего хорошего!"
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "tune-kz-neutral-inconvenience",
+        "channel": "agent chat",
+        "language": "KZ",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "Ашық кітапхана бетіндегі нұсқаулықты жүктей алмаймын: «Жүктеу» батырмасы жұмыс істемейді. «Онлайн оқу» батырмасы белсенді. Нұсқаулықты файлды жүктемей қалай оқуға болады?"
+          },
+          {
+            "timestamp": "00:05",
+            "speaker": "operator",
+            "text": "Сәлеметсіз бе, мен Ләйліммін. Бұл сұрақ бойынша ештеңе ұсына алмаймын. Сау болыңыз."
+          },
+          {
+            "timestamp": "00:10",
+            "speaker": "system",
+            "text": "Оператор чатты аяқтады."
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "tune-en-attributed-paraphrase",
+        "channel": "agent chat",
+        "language": "EN",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "My notification-settings change did not finish. I only want the public contact form, not an account investigation. The help page has a button labelled \"Report a problem\". Is that the form to open?"
+          },
+          {
+            "timestamp": "00:05",
+            "speaker": "system",
+            "text": "Session event: no identity verification or account-record access has occurred."
+          },
+          {
+            "timestamp": "00:10",
+            "speaker": "operator",
+            "text": "Hello, I am Robin. I am sorry you could not finish changing your notification settings. According to your message, that change failed; I have not accessed or checked your account. Open the public \"Report a problem\" button you described to reach the contact form."
+          },
+          {
+            "timestamp": "00:15",
+            "speaker": "client",
+            "text": "The contact form opened. That is what I needed."
+          },
+          {
+            "timestamp": "00:20",
+            "speaker": "operator",
+            "text": "You now have the contact form. Let us know if you need further help. Have a good day, goodbye."
+          }
+        ],
+        "audio_url": null
+      }
+    ]
+  }
+}

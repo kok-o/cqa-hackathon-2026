@@ -35,7 +35,7 @@ from .cli import validate_labels
 from .metrics import summarize
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_MODELS = ["gpt-6.1-sol", "gpt-6-astra", "gpt-6-luna"]
+DEFAULT_MODELS = ["gpt-6-luna"]
 LANGUAGES = ("RU", "KZ", "EN")
 SCHEMA_VERSION = 1
 MAX_ATTEMPTS = 2  # Evaluator contract: initial request plus one validation/network retry.
@@ -530,10 +530,10 @@ def parser() -> argparse.ArgumentParser:
     p.add_argument("--conversation-ids", nargs="+", help="IDs or group/id; sampling applies after filtering")
     p.add_argument("--channel", choices=["agent chat", "voice call", "all"], default="agent chat")
     p.add_argument("--seed", type=int, default=2026)
-    p.add_argument("--reasoning-effort", default="max", choices=["omit", "none", "minimal", "low", "medium", "high", "xhigh", "max"],
-                   help="max by default; omit is available for non-reasoning local providers")
+    p.add_argument("--reasoning-effort", default="high", choices=["omit", "none", "minimal", "low", "medium", "high", "xhigh", "max"],
+                   help="high by default; omit is available for non-reasoning local providers")
     p.add_argument("--max-output-tokens", type=int, default=16384, help="Explicit per-attempt total output limit including reasoning; never silently reduced")
-    p.add_argument("--timeout-seconds", type=float, default=300)
+    p.add_argument("--timeout-seconds", type=float, default=180)
     p.add_argument("--concurrency", type=int, default=1)
     p.add_argument("--api-style", choices=["responses", "chat_completions"], default="responses")
     p.add_argument("--base-url", help="Override API endpoint; API key comes only from environment/.env")

@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "provenance": "synthetic_regression_authored_by_assistant",
+  "not_ground_truth": true,
+  "purpose": "prompt_development_after_observing_DEV",
+  "created_at": "2026-11-07",
+  "checklist_sha256": "9264b4d2099685078769691b7f72ef1fcb1befe19ec6c9ad94e69a6531cedfaf",
+  "dataset_sha256": "7c3aa9a3c6737eaefed1cdc0fe35cfe07f00f9423d5e2dc0f1e64c6c6dc2a1f7",
+  "limitations": "Focused single-criterion authored development assertion after inspecting DEV; not independent human or organizer Ground Truth. Other criterion answers intentionally unlabelled.",
+  "items": [
+    {
+      "group_id": "SYNTHETIC-SPECULATION-GUARD-v1",
+      "conversation_id": "guard-ru-retracted-guess",
+      "language": "RU",
+      "scenario": "An unsupported guessed cause is explicitly retracted; no account was accessed and no private fact was established.",
+      "expected_results": [
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "An explicitly withdrawn guess is not itself evidence that confidential data was disclosed. No insult or private paid-service offer appears. Consultation quality is a separate criterion."
+        }
+      ]
+    }
+  ]
+}

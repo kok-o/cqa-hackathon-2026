@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "provenance": "synthetic_regression_authored_by_assistant",
+  "not_ground_truth": true,
+  "created_at": "2026-11-07",
+  "frozen_before_live_model_run": true,
+  "checklist_sha256": "9264b4d2099685078769691b7f72ef1fcb1befe19ec6c9ad94e69a6531cedfaf",
+  "dataset_sha256": "f7bc0d6e4608ccd4123fc6eddceed30f3fe2fbea55346fd1299ef455f1b97db5",
+  "limitations": "New invented rehearsal cases with narrow fallible assistant-authored assertions. Not human/organizer GT, not proof of accuracy. Unasserted criteria intentionally remain unlabelled. No real customer data.",
+  "items": [
+    {
+      "group_id": "SYNTHETIC-READINESS-VOICE-v1",
+      "conversation_id": "ready-voice-ru-cropped-asr",
+      "language": "RU",
+      "scenario": "Cropped beginning/end and ASR uncertainty: no asserted C1/C6/C7 grade; public topic and no violation only.",
+      "expected_results": [
+        {
+          "criterion_id": "identification",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "Visible question is limited to a public memo; no protected act is requested or performed."
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "No recorded operator insult, private paid offer or confidential disclosure."
+        }
+      ]
+    },
+    {
+      "group_id": "SYNTHETIC-READINESS-VOICE-v1",
+      "conversation_id": "ready-voice-kz-unverified-disclosure",
+      "language": "KZ",
+      "scenario": "Explicit failed verification followed by operator account disclosure; unambiguous system disconnect.",
+      "expected_results": [
+        {
+          "criterion_id": "identification",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "System expressly records failed verification before the disclosed balance."
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": true,
+          "rationale": "Operator discloses account balance without verified identity."
+        },
+        {
+          "criterion_id": "closure",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "System explicitly records abrupt loss before an operator reply."
+        }
+      ]
+    },
+    {
+      "group_id": "SYNTHETIC-READINESS-VOICE-v1",
+      "conversation_id": "ready-voice-mixed-client-quotation",
+      "language": "KZ",
+      "scenario": "Client quotes someone else; operator turn and ending partially lost. No forced C6/C7 label.",
+      "expected_results": [
+        {
+          "criterion_id": "contact",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "Recorded first operator turn greets in Kazakh and introduces the operator."
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "Insult is explicitly attributed by client to someone else, not this operator."
+        }
+      ]
+    }
+  ]
+}

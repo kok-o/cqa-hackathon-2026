@@ -1610,3 +1610,6 @@ main {
 @media(min-width:701px) and (max-width:1199px) { .review-workspace { grid-template-columns:minmax(0,1fr) 355px; } .queue-open .conversation-sidebar { width:340px; max-width:85%; } .transcript-content { padding-inline:18px; } }
 @media(min-width:701px) and (max-width:900px) { .review-workspace { grid-template-columns:minmax(0,1fr) 330px; } }
 @media(max-width:700px) { .page-title { font-size:21px; } .workspace-toolbar { min-height:68px; } .review-context { padding:12px 14px; } .conversation-context strong { font-size:17px; width:100%; } .conversation-context>span { padding:3px 6px; font-size:11px; } .transcript-content { padding-inline:14px; } .message { padding:13px 14px; } .message p { font-size:16px; } .panel-heading { padding-inline:16px; } .no-audio-banner { margin-inline:14px; } .filters { grid-template-columns:1fr; } }
+.notice.warning { background:#fff5df; color:#875313; }
+.audio-error { color:var(--danger); padding:0 22px 10px; font-size:12px; }
+.audio-note { color:var(--muted); padding:0 22px 15px; font-size:12px; }

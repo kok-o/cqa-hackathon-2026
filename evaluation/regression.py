@@ -10,7 +10,20 @@ import sys
 from .benchmark import conversation_key, decision, fingerprint, read_json, write_json
 
 
-def compare(expected: dict, manifest: dict, checkpoint: dict) -> dict:
+def compare(expected: dict, manifest: dict, checkpoint: dict, *, group: str | None = None) -> dict:
+    tasks = manifest["tasks"]
+    checkpoint_records = list(checkpoint["records"].values())
+    skipped_tasks = skipped_records = 0
+    if group is not None:
+        if not isinstance(group, str) or not group.strip():
+            raise ValueError("--group must be a non-empty group ID")
+        tasks = [task for task in tasks if task["conversation"]["group_id"] == group]
+        selected_records = [record for record in checkpoint_records if record["conversation"]["group_id"] == group]
+        skipped_tasks = len(manifest["tasks"]) - len(tasks)
+        skipped_records = len(checkpoint_records) - len(selected_records)
+        checkpoint_records = selected_records
+        if not tasks:
+            raise ValueError("No planned conversations match --group")
     if expected.get("provenance") != "synthetic_regression_authored_by_assistant" or expected.get("not_ground_truth") is not True:
         raise ValueError("Regression expectations must be explicitly marked as assistant-authored and not ground truth")
     if expected["checklist_sha256"] != manifest["inputs"]["checklist_sha256"]:
@@ -20,12 +33,14 @@ def compare(expected: dict, manifest: dict, checkpoint: dict) -> dict:
     reference = {conversation_key(item): item for item in expected["items"]}
     if len(reference) != len(expected["items"]):
         raise ValueError("Duplicate regression conversation")
+    if group is not None and any(conversation_key(record["conversation"]) not in reference for record in checkpoint_records):
+        raise ValueError("Selected group includes records with no regression expectation")
     output = []
     for model in manifest["inputs"]["models"]:
-        planned = {conversation_key(t["conversation"]): t for t in manifest["tasks"] if t["model"] == model}
+        planned = {conversation_key(t["conversation"]): t for t in tasks if t["model"] == model}
         if not set(planned) <= set(reference):
             raise ValueError("Run includes conversations with no regression expectation")
-        records = {conversation_key(r["conversation"]): r for r in checkpoint["records"].values() if r["model"] == model}
+        records = {conversation_key(r["conversation"]): r for r in checkpoint_records if r["model"] == model}
         cases = []
         by_criterion = defaultdict(lambda: {"passed": 0, "checked": 0})
         for key in planned:
@@ -63,6 +78,8 @@ def compare(expected: dict, manifest: dict, checkpoint: dict) -> dict:
             "provenance": expected["provenance"], "not_ground_truth": True,
             "prediction_basis": "original_model_outputs_before_appeals", "expectations_sha256": fingerprint(expected),
             "run_fingerprint": manifest["fingerprint"],
+            "filtered_group": group, "skipped_planned_tasks": skipped_tasks,
+            "skipped_records": skipped_records, "selected_records": len(checkpoint_records),
             "limitations": "Expected decisions were authored by an assistant for controlled software regression cases. They are fallible test assertions, not independent human labels, official answers, or a model-quality ranking.",
             "models": output}
 
@@ -71,14 +88,17 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--expected", default="fixtures/regression/expected.json")
     parser.add_argument("--run-dir", required=True)
+    parser.add_argument("--group", help="Explicitly compare only this dataset group in a mixed run; unknown selected cases still fail validation")
     parser.add_argument("--out", help="Defaults to RUN_DIR/regression-report.json")
     args = parser.parse_args(argv)
     try:
         root = Path(args.run_dir)
-        report = compare(read_json(args.expected), read_json(root / "manifest.json"), read_json(root / "checkpoint.json"))
+        report = compare(read_json(args.expected), read_json(root / "manifest.json"), read_json(root / "checkpoint.json"), group=args.group)
         output = Path(args.out) if args.out else root / "regression-report.json"
         write_json(output, report)
         print(json.dumps({"report": str(output), "metric_status": report["metric_status"],
+                          "filtered_group": report["filtered_group"], "skipped_records": report["skipped_records"],
+                          "skipped_planned_tasks": report["skipped_planned_tasks"],
                           "models": [{k: v for k, v in m.items() if k not in {"cases", "by_criterion"}} for m in report["models"]]}, ensure_ascii=False))
         return 0
     except (ValueError, KeyError, OSError) as exc:

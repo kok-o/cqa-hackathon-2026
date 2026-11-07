@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "provenance": "synthetic_regression_authored_by_assistant",
+  "not_ground_truth": true,
+  "purpose": "prompt_development_after_observing_DEV",
+  "created_at": "2026-11-07",
+  "checklist_sha256": "9264b4d2099685078769691b7f72ef1fcb1befe19ec6c9ad94e69a6531cedfaf",
+  "dataset_sha256": "6b681c97d6eeea4656f7a68e390f67dc1dcc06cb7f50b74a5fba0de146e80264",
+  "limitations": "One invented assistant-authored prompt-development case created after observing the v4 DEV pre-operator-wait attribution defect. Not an independent test, human label, organizer GT, or evidence of general accuracy. No real conversation text or personal data is copied.",
+  "items": [
+    {
+      "group_id": "SYNTHETIC-QUEUE-GUARD-v1",
+      "conversation_id": "queue-ru-before-agent",
+      "language": "RU",
+      "scenario": "Long pre-operator queue with an explicit bot notice, followed by a clear operator greeting, immediate answer and full closure; no operator-created wait.",
+      "expected_results": [
+        {
+          "criterion_id": "contact",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "The first operator reply greets in Russian and introduces the operator."
+        },
+        {
+          "criterion_id": "discovery",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "The client supplied the exact public page context, visible link and desired result before the operator joined."
+        },
+        {
+          "criterion_id": "identification",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "Public event-program navigation requires neither identity verification nor a protected action."
+        },
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 20,
+          "gross_error": false,
+          "rationale": "The operator identifies the requested public link and the client confirms that both requested days are visible."
+        },
+        {
+          "criterion_id": "empathy",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "The operator is polite and provides the requested help; the client expresses no separate complaint about the queue."
+        },
+        {
+          "criterion_id": "dialogue",
+          "status": "applicable",
+          "answer": 10,
+          "gross_error": false,
+          "rationale": "The long delay occurred in the pre-operator queue and the bot warned about it. The operator then answered clearly, created no wait and caused no confusion. This checklist excludes first-response thresholds; it does not require an operator to pre-announce joining or repeat a bot queue notice."
+        },
+        {
+          "criterion_id": "closure",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "The operator recaps the opened program, offers additional assistance and says farewell."
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "No operator insult, private paid offer or confidential disclosure is present."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,228 @@
+{
+  "provenance": "assistant_authored_contract_tests",
+  "not_ground_truth": true,
+  "cases": [
+    {
+      "case_id": "empty-transcript",
+      "expected_http_status": 422,
+      "dataset": {
+        "error": "",
+        "isSuccess": true,
+        "data": {
+          "dataset_group_id": "MALFORMED-READINESS-empty-transcript",
+          "total_records": 1,
+          "records": [
+            {
+              "conversation_id": "ready-ru-verified-balance",
+              "channel": "agent chat",
+              "language": "RU",
+              "transcript": [],
+              "audio_url": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "case_id": "count-mismatch",
+      "expected_http_status": 422,
+      "dataset": {
+        "error": "",
+        "isSuccess": true,
+        "data": {
+          "dataset_group_id": "MALFORMED-READINESS-count-mismatch",
+          "total_records": 99,
+          "records": [
+            {
+              "conversation_id": "ready-ru-verified-balance",
+              "channel": "agent chat",
+              "language": "RU",
+              "transcript": [
+                {
+                  "timestamp": "00:00",
+                  "speaker": "client",
+                  "text": "Здравствуйте. Сообщите остаток на моём учебном счёте ТЕСТ-77."
+                },
+                {
+                  "timestamp": "00:05",
+                  "speaker": "system",
+                  "text": "Проверка личности клиента успешно завершена до подключения оператора; доступ к сведениям счёта разрешён."
+                },
+                {
+                  "timestamp": "00:10",
+                  "speaker": "operator",
+                  "text": "Здравствуйте, меня зовут Нина. Проверка подтверждена. На учебном счёте ТЕСТ-77 остаток 420 условных единиц."
+                },
+                {
+                  "timestamp": "00:15",
+                  "speaker": "client",
+                  "text": "Спасибо, это всё."
+                },
+                {
+                  "timestamp": "00:20",
+                  "speaker": "operator",
+                  "text": "Итак, остаток 420 условных единиц. Если возникнет другой вопрос, обращайтесь. До свидания!"
+                }
+              ],
+              "audio_url": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "case_id": "unknown-speaker",
+      "expected_http_status": 422,
+      "dataset": {
+        "error": "",
+        "isSuccess": true,
+        "data": {
+          "dataset_group_id": "MALFORMED-READINESS-unknown-speaker",
+          "total_records": 1,
+          "records": [
+            {
+              "conversation_id": "ready-ru-verified-balance",
+              "channel": "agent chat",
+              "language": "RU",
+              "transcript": [
+                {
+                  "timestamp": "00:00",
+                  "speaker": "administrator",
+                  "text": "Здравствуйте. Сообщите остаток на моём учебном счёте ТЕСТ-77."
+                },
+                {
+                  "timestamp": "00:05",
+                  "speaker": "system",
+                  "text": "Проверка личности клиента успешно завершена до подключения оператора; доступ к сведениям счёта разрешён."
+                },
+                {
+                  "timestamp": "00:10",
+                  "speaker": "operator",
+                  "text": "Здравствуйте, меня зовут Нина. Проверка подтверждена. На учебном счёте ТЕСТ-77 остаток 420 условных единиц."
+                },
+                {
+                  "timestamp": "00:15",
+                  "speaker": "client",
+                  "text": "Спасибо, это всё."
+                },
+                {
+                  "timestamp": "00:20",
+                  "speaker": "operator",
+                  "text": "Итак, остаток 420 условных единиц. Если возникнет другой вопрос, обращайтесь. До свидания!"
+                }
+              ],
+              "audio_url": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "case_id": "all-whitespace-transcript",
+      "expected_http_status": 422,
+      "dataset": {
+        "error": "",
+        "isSuccess": true,
+        "data": {
+          "dataset_group_id": "MALFORMED-READINESS-all-whitespace-transcript",
+          "total_records": 1,
+          "records": [
+            {
+              "conversation_id": "ready-ru-verified-balance",
+              "channel": "agent chat",
+              "language": "RU",
+              "transcript": [
+                {
+                  "timestamp": "00:00",
+                  "speaker": "client",
+                  "text": "   \t"
+                }
+              ],
+              "audio_url": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "case_id": "duplicate-id",
+      "expected_http_status": 422,
+      "dataset": {
+        "error": "",
+        "isSuccess": true,
+        "data": {
+          "dataset_group_id": "MALFORMED-READINESS-duplicate-id",
+          "total_records": 2,
+          "records": [
+            {
+              "conversation_id": "ready-ru-verified-balance",
+              "channel": "agent chat",
+              "language": "RU",
+              "transcript": [
+                {
+                  "timestamp": "00:00",
+                  "speaker": "client",
+                  "text": "Здравствуйте. Сообщите остаток на моём учебном счёте ТЕСТ-77."
+                },
+                {
+                  "timestamp": "00:05",
+                  "speaker": "system",
+                  "text": "Проверка личности клиента успешно завершена до подключения оператора; доступ к сведениям счёта разрешён."
+                },
+                {
+                  "timestamp": "00:10",
+                  "speaker": "operator",
+                  "text": "Здравствуйте, меня зовут Нина. Проверка подтверждена. На учебном счёте ТЕСТ-77 остаток 420 условных единиц."
+                },
+                {
+                  "timestamp": "00:15",
+                  "speaker": "client",
+                  "text": "Спасибо, это всё."
+                },
+                {
+                  "timestamp": "00:20",
+                  "speaker": "operator",
+                  "text": "Итак, остаток 420 условных единиц. Если возникнет другой вопрос, обращайтесь. До свидания!"
+                }
+              ],
+              "audio_url": null
+            },
+            {
+              "conversation_id": "ready-ru-verified-balance",
+              "channel": "agent chat",
+              "language": "RU",
+              "transcript": [
+                {
+                  "timestamp": "00:00",
+                  "speaker": "client",
+                  "text": "Здравствуйте. Сообщите остаток на моём учебном счёте ТЕСТ-77."
+                },
+                {
+                  "timestamp": "00:05",
+                  "speaker": "system",
+                  "text": "Проверка личности клиента успешно завершена до подключения оператора; доступ к сведениям счёта разрешён."
+                },
+                {
+                  "timestamp": "00:10",
+                  "speaker": "operator",
+                  "text": "Здравствуйте, меня зовут Нина. Проверка подтверждена. На учебном счёте ТЕСТ-77 остаток 420 условных единиц."
+                },
+                {
+                  "timestamp": "00:15",
+                  "speaker": "client",
+                  "text": "Спасибо, это всё."
+                },
+                {
+                  "timestamp": "00:20",
+                  "speaker": "operator",
+                  "text": "Итак, остаток 420 условных единиц. Если возникнет другой вопрос, обращайтесь. До свидания!"
+                }
+              ],
+              "audio_url": null
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

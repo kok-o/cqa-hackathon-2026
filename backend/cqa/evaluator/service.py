@@ -18,10 +18,10 @@ from pydantic import ValidationError
 
 from ..models import ChecklistVersion, Conversation, CriterionResult, EvaluationDraft
 from .provider import ProviderOutputError, TokenUsage, estimate_cost, extract_content, read_usage
-from .validation import validate_draft
+from .validation import DraftValidationError, validate_draft
 
 ROOT = Path(__file__).resolve().parents[3]
-PROMPT_VERSION = "cqa-evaluator-v3"
+PROMPT_VERSION = "cqa-evaluator-v6"
 PROMPT_PATH = ROOT / "prompts" / "evaluator.md"
 
 
@@ -147,7 +147,8 @@ def output_schema() -> dict[str, Any]:
         "criterion_id": {"type": "string"},
         "status": {"type": "string", "enum": ["applicable", "not_applicable", "needs_review"]},
         "answer": {"anyOf": [{"type": "boolean"}, {"type": "number"}, {"type": "string"}, {"type": "null"}]},
-        "explanation": {"type": "string"}, "evidence": {"type": "array", "items": evidence},
+        "explanation": {"type": "string", "description": "Краткое обоснование на русском языке, обычно 1–2 предложения. Согласуйте его с ответом, контекстом и порядком реплик."},
+        "evidence": {"type": "array", "items": evidence},
         "checked_span": {"anyOf": [span, {"type": "null"}]}, "gross_error": {"type": "boolean"},
     }
     return {"type": "object", "additionalProperties": False,
@@ -159,7 +160,8 @@ def output_schema() -> dict[str, Any]:
 def build_messages(conversation: Conversation, checklist: ChecklistVersion) -> list[dict[str, str]]:
     content = {"checklist": checklist.model_dump(mode="json"),
         "conversation": conversation.model_dump(mode="json", exclude={"audio_url"}),
-        "available_materials": {"transcript": True, "audio": False}, "output_schema": output_schema()}
+        "available_materials": {"transcript": True, "audio": False}, "output_schema": output_schema(),
+        "required_output_language": "Russian (ru) for every explanation; verbatim evidence quotes keep their original language."}
     return [{"role": "system", "content": PROMPT_PATH.read_text(encoding="utf-8")},
             {"role": "user", "content": json.dumps(content, ensure_ascii=False, allow_nan=False)}]
 
@@ -170,28 +172,93 @@ def _parse_draft(content: str, conversation: Conversation, checklist: ChecklistV
         text = "\n".join(text.splitlines()[1:-1]).strip()
     data = json.loads(text)
     if not isinstance(data, dict) or set(data) != {"results"} or not isinstance(data["results"], list):
-        raise ValueError("Expected a JSON object containing only results")
+        raise DraftValidationError("Expected a JSON object containing only results", code="response_shape", path=("results",))
     criteria = {criterion.criterion_id: criterion for criterion in checklist.criteria}
-    for item in data["results"]:
-        if not isinstance(item, dict) or item.get("criterion_id") not in criteria:
-            raise ValueError("Unknown criterion_id")
+    for result_index, item in enumerate(data["results"]):
+        if not isinstance(item, dict) or not isinstance(item.get("criterion_id"), str) or item["criterion_id"] not in criteria:
+            raise DraftValidationError("Unknown criterion_id", code="criterion_unknown", path=("results", result_index, "criterion_id"))
         criterion = criteria[item["criterion_id"]]
+
+        def invalid_type(message: str, field: str) -> DraftValidationError:
+            return DraftValidationError(message, code="answer_type" if field == "answer" else "gross_error_type",
+                criterion_id=criterion.criterion_id, path=("results", result_index, field))
+
         if type(item.get("gross_error", False)) is not bool:
-            raise ValueError("gross_error must be a boolean")
+            raise invalid_type("gross_error must be a boolean", "gross_error")
         if item.get("status") == "applicable":
             answer = item.get("answer")
             if criterion.answer_type == "boolean" and type(answer) is not bool:
-                raise ValueError("A boolean criterion requires true or false")
+                raise invalid_type("A boolean criterion requires true or false", "answer")
             if criterion.answer_type == "scale" and type(answer) not in {int, float}:
-                raise ValueError("A scale criterion requires a number")
+                raise invalid_type("A scale criterion requires a number", "answer")
             if criterion.answer_type == "choice" and type(answer) is not str:
-                raise ValueError("A choice criterion requires a string")
+                raise invalid_type("A choice criterion requires a string", "answer")
     draft = EvaluationDraft(conversation_id=conversation.conversation_id, group_id=conversation.group_id,
         checklist_id=checklist.checklist_id, checklist_version=checklist.version,
         prompt_version=PROMPT_VERSION, results=data["results"])
     validate_draft(conversation, checklist, draft)
     draft.results.sort(key=lambda result: list(criteria).index(result.criterion_id))
     return draft
+
+
+def _validation_diagnostic(error: Exception) -> dict[str, Any]:
+    """Expose only server-defined codes/paths; exception messages can contain input."""
+    if isinstance(error, DraftValidationError):
+        detail: dict[str, Any] = {"code": error.code, "path": list(error.path)}
+        if error.criterion_id is not None:
+            detail["criterion_id"] = error.criterion_id
+        if error.message_id is not None:
+            detail["message_id"] = error.message_id
+        return detail
+    if isinstance(error, json.JSONDecodeError):
+        return {"code": "json_decode", "type": "JSONDecodeError", "position": error.pos,
+                "line": error.lineno, "column": error.colno}
+    if isinstance(error, ValidationError):
+        # Extra-field names in loc can themselves be malicious provider strings.
+        fields = {"results", "criterion_id", "status", "answer", "explanation", "evidence", "message_id", "quote",
+                  "checked_span", "start_message_id", "end_message_id", "gross_error", "conversation_id", "group_id",
+                  "checklist_id", "checklist_version", "prompt_version", "bool", "float", "str"}
+        errors = error.errors(include_input=False, include_context=False, include_url=False)
+        safe_errors = []
+        for item in errors[:3]:
+            path = [part if type(part) is int and part >= 0 or isinstance(part, str) and part in fields else "*"
+                    for part in item.get("loc", ())]
+            code = item.get("type")
+            safe_errors.append({"type": code if isinstance(code, str) and re.fullmatch(r"[a-z_]{1,80}", code) else "validation_error", "loc": path})
+        return {"code": "schema_validation", "errors": safe_errors, "error_count": len(errors)}
+    if isinstance(error, ProviderOutputError):
+        return {"code": error.code}
+    return {"code": "invalid_response", "type": type(error).__name__}
+
+
+def _repair_instruction(diagnostic: dict[str, Any]) -> str:
+    hints = {
+        "quote_not_exact": "For the indicated criterion and message_id, choose a non-empty exact contiguous substring of that source message. Copy characters and punctuation verbatim. Do not normalize whitespace, dashes, quotation marks, spelling, or case; never invent a quote.",
+        "evidence_message_unknown": "Use only message_id values present in the original transcript; choose the actual source message and copy its quote exactly.",
+        "discrete_value_invalid": "For the indicated criterion choose exactly one of its configured allowed_values. Do not interpolate or invent a scale step.",
+        "scale_out_of_bounds": "Use the indicated criterion's configured scale bounds and allowed_values, when specified.",
+        "answer_type": "Use the indicated criterion's configured answer_type: JSON booleans for boolean criteria, numbers for scale criteria, and a configured string for choice criteria.",
+        "choice_value_invalid": "Use one of the indicated criterion's configured choice keys exactly.",
+        "na_not_allowed": "This criterion does not permit not_applicable. Reassess the transcript under its configured rule; do not invent evidence or use N/A to hide missing evidence.",
+        "critical_flag_mismatch": "Make gross_error agree with the indicated criterion's configured critical_answer and its actual answer.",
+        "gross_error_rule_missing": "Only criteria with a configured gross_error_rule may set gross_error=true.",
+        "gross_error_status_invalid": "A not_applicable or needs_review result cannot establish gross_error=true.",
+        "gross_error_type": "Use a JSON boolean for gross_error.",
+        "checked_span_invalid": "Use existing transcript message IDs for checked_span, with the start no later than the end in original source order.",
+        "explanation_empty": "Provide a non-empty concise Russian explanation for the indicated criterion.",
+        "criterion_set_mismatch": "Include every configured criterion_id exactly once, without extra or duplicate criteria.",
+        "criterion_unknown": "Use only criterion_id values from the configured checklist, each exactly once.",
+        "schema_validation": "Correct the listed schema error types and locations. Follow the provided JSON schema, including status/answer/evidence consistency; do not add extra fields.",
+        "json_decode": "Return syntactically complete JSON without markdown, comments, or trailing commas.",
+        "response_shape": "Return one JSON object with only the results array at its top level.",
+        "incomplete": "The preceding response was incomplete. Keep explanations concise and return the entire required JSON object within the output limit.",
+    }
+    metadata = json.dumps(diagnostic, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
+    return ("The previous response failed server validation. Safe validation metadata: " + metadata + ". "
+            + hints.get(diagnostic["code"], "Follow the provided schema and use only supported transcript evidence.")
+            + " Return a fresh complete JSON object containing every requested criterion exactly once. "
+              "Use exact source quotes; for an absent action use a valid checked_span. Preserve all rubric constraints. "
+              "Do not include validation metadata or markdown in the answer. Keep explanations concise and in Russian.")
 
 
 def build_request(settings: Settings, messages: list[dict[str, str]]) -> dict[str, Any]:
@@ -333,10 +400,12 @@ async def evaluate(conversation: Conversation, checklist: ChecklistVersion, *,
                     continue
                 break
             detail.update(http_status=response.status_code, elapsed_ms=round((time.monotonic() - attempt_started) * 1000))
+            response_json_error: Exception | None = None
             try:
                 body = response.json()
-            except (ValueError, UnicodeError):
+            except (ValueError, UnicodeError) as exc:
                 body = None
+                response_json_error = exc
             if isinstance(body, dict):
                 usage = read_usage(body, settings.api_style)
                 detail.update(usage.as_dict())
@@ -360,8 +429,10 @@ async def evaluate(conversation: Conversation, checklist: ChecklistVersion, *,
                     continue
                 break
             try:
+                if response_json_error is not None:
+                    raise response_json_error
                 if not isinstance(body, dict):
-                    raise ValueError("Expected response object")
+                    raise DraftValidationError("Expected response object", code="response_shape")
                 content = extract_content(body, settings.api_style)
                 draft = _parse_draft(content, conversation, text_checklist)
                 results = {r.criterion_id: r for r in draft.results + missing_audio}
@@ -370,6 +441,7 @@ async def evaluate(conversation: Conversation, checklist: ChecklistVersion, *,
             except (ValueError, KeyError, IndexError, TypeError, AttributeError, ValidationError) as exc:
                 last_code = exc.code if isinstance(exc, ProviderOutputError) else "invalid_response"
                 detail["status"] = last_code
+                detail["validation_error"] = _validation_diagnostic(exc)
                 errors = {
                     "refusal": "Модель отказалась оценивать этот диалог. Требуется ручная проверка.",
                     "content_filter": "Ответ модели остановлен фильтром. Требуется ручная проверка.",
@@ -381,10 +453,7 @@ async def evaluate(conversation: Conversation, checklist: ChecklistVersion, *,
                 if isinstance(exc, ProviderOutputError) and not exc.retryable:
                     raise failure(last_error, last_code) from None
                 if attempt < 2:
-                    messages.append({"role": "user", "content":
-                        "Previous response failed validation. Return a fresh complete JSON object with every requested criterion exactly once. "
-                        "Use exact message IDs and verbatim non-empty quotes from the transcript, proper answer types and bounds. "
-                        "For an absent action give a valid checked_span. Do not add metadata or markdown. Keep explanations concise."})
+                    messages.append({"role": "user", "content": _repair_instruction(detail["validation_error"])})
                     continue
                 break
             detail["status"] = "completed"

@@ -1,3 +1,4 @@
+import CallAudio from "./CallAudio";
 import { UserRound } from "lucide-react";
 
 import { ArrowLeft, Headphones, MessageSquare } from "lucide-react";
@@ -66,23 +67,7 @@ export default function Transcript({
           )}
         </div>
       )}
-      {source?.audio_url && (
-        <div className="audio-player">
-          <Headphones size={18} />
-          <audio
-            controls
-            preload="none"
-            src={source.audio_url}
-            aria-label="Запись звонка"
-          />
-        </div>
-      )}
-      {source?.channel === "voice call" && !source.audio_url && (
-        <div className="no-audio-banner">
-          <Headphones size={16} />
-          <span>Запись звонка недоступна</span>
-        </div>
-      )}
+      {source?.channel === 'voice call' && <CallAudio key={`${source.group_id}:${source.conversation_id}:${evaluation?.evaluation_id ?? ''}`} groupId={source.group_id} conversationId={source.conversation_id} evaluationId={evaluation?.evaluation_id} hasAudio={Boolean(source.audio_url)} />}
       <div className="transcript-content">
         {loading ? (
           <div

@@ -264,6 +264,19 @@ def _export_record(conversation: Conversation, record: dict | None, basis: str,
         return _error(conversation.conversation_id, reason)
 
 
+def _evaluation_model(record: Any) -> str | None:
+    """Read optional metadata without leaking malformed input into exceptions."""
+    if not isinstance(record, dict):
+        raise ValueError("Every evaluation must be an object")
+    info = record.get("model_info", {})
+    if not isinstance(info, dict):
+        raise ValueError("Evaluation model_info must be an object when provided")
+    for model in (info.get("model"), record.get("model")):
+        if model is not None and not isinstance(model, str):
+            raise ValueError("Evaluation model name must be a string or null")
+    return info.get("model") or record.get("model")
+
+
 def export_submission(conversations: list[Conversation], evaluations: list[dict], *, team_name: str,
                       model_mode: str, model_name: str | None = None, split: str | None = None,
                       basis: str = "original", approved_checklist: ChecklistVersion | dict | None = None) -> dict:
@@ -274,6 +287,8 @@ def export_submission(conversations: list[Conversation], evaluations: list[dict]
     """
     if basis not in {"original", "current"}:
         raise ValueError("basis must be original or current")
+    if not isinstance(evaluations, list):
+        raise ValueError("Evaluations must be an array")
     sources = _source_index(conversations, split)
     approved = load_approved_checklist() if approved_checklist is None else (
         approved_checklist if isinstance(approved_checklist, ChecklistVersion) else ChecklistVersion.model_validate(approved_checklist))
@@ -282,16 +297,15 @@ def export_submission(conversations: list[Conversation], evaluations: list[dict]
     by_id = {}
     actual_models = set()
     for record in evaluations:
-        if not isinstance(record, dict) or not isinstance(record.get("conversation"), dict):
+        model = _evaluation_model(record)
+        if not isinstance(record.get("conversation"), dict):
             raise ValueError("Every evaluation must contain its original conversation snapshot")
-        conversation_id = record["conversation"].get("conversation_id")
+        conversation_id = _text(record["conversation"].get("conversation_id"), "Evaluation conversation_id")
         if conversation_id not in sources:
             raise ValueError("Evaluation refers to a conversation outside the supplied dataset")
         if conversation_id in by_id:
             raise ValueError("Multiple evaluations for one conversation; select one model/run explicitly")
         by_id[conversation_id] = record
-        info = record.get("model_info", {})
-        model = info.get("model") or record.get("model")
         if isinstance(model, str) and model.strip():
             actual_models.add(model)
     if model_name is None:
@@ -330,8 +344,9 @@ def _evaluations(document: Any, select_model: str | None) -> list[dict]:
         records = list(document["records"].values())
     else:
         raise ValueError("Predictions must be an evaluations array, internal export, or benchmark checkpoint")
+    models = [_evaluation_model(record) for record in records]
     if select_model:
-        records = [r for r in records if (r.get("model_info", {}).get("model") or r.get("model")) == select_model]
+        records = [record for record, model in zip(records, models) if model == select_model]
         if not records:
             raise ValueError("No predictions match --select-model")
     return records
@@ -374,8 +389,9 @@ def main(argv: list[str] | None = None) -> int:
             if destination.exists() and not args.replace:
                 raise ValueError("Output already exists; choose another --out or explicitly use --replace")
             input_paths = {Path(path).resolve() for path in args.dataset + args.predictions}
+            input_paths.add(Path(args.approved_checklist or DEFAULT_APPROVED_CHECKLIST).resolve())
             if destination.resolve() in input_paths:
-                raise ValueError("Output cannot overwrite an original dataset or prediction snapshot")
+                raise ValueError("Output cannot overwrite an original dataset, prediction snapshot, or approved checklist")
             destination.parent.mkdir(parents=True, exist_ok=True)
             content = json.dumps(document, ensure_ascii=False, indent=2, allow_nan=False) + "\n"
             destination.write_text(content, encoding="utf-8")

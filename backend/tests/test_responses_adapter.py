@@ -47,7 +47,7 @@ class ResponsesAdapterTests(unittest.IsolatedAsyncioTestCase):
 
     async def call(self, handler, **kwargs):
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
-            return await evaluate(self.conversation, self.checklist,
+            return await evaluate(self.conversation, kwargs.pop("checklist", self.checklist),
                 settings=kwargs.pop("settings", self.settings), client=client, **kwargs)
 
     async def test_strict_request_max_effort_without_unsupported_sampling_or_storage(self):
@@ -100,6 +100,106 @@ class ResponsesAdapterTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(requests[1]["input"]), 3)
         self.assertNotIn("made up quote", json.dumps(requests[1]))
         self.assertEqual(run.model_info["attempt_details"][0]["status"], "invalid_response")
+
+    async def test_quote_repair_has_safe_location_without_fabricated_secret(self):
+        invalid = deepcopy(self.results)
+        secret = "TEST_SECRET_FABRICATED_PRIVATE_VALUE_NEVER_LOG"
+        invalid[0]["evidence"][0]["quote"] = secret
+        requests = []
+        def handler(request):
+            requests.append(json.loads(request.content))
+            return httpx.Response(200, json=body(invalid if len(requests) == 1 else self.results))
+        run = await self.call(handler)
+        diagnostic = run.model_info["attempt_details"][0]["validation_error"]
+        self.assertEqual(diagnostic, {"code": "quote_not_exact", "path": ["results", 0, "evidence", 0, "quote"],
+            "criterion_id": self.results[0]["criterion_id"], "message_id": self.results[0]["evidence"][0]["message_id"]})
+        repair = requests[1]["input"][-1]["content"]
+        self.assertIn("quote_not_exact", repair)
+        self.assertIn(diagnostic["criterion_id"], repair)
+        self.assertIn(diagnostic["message_id"], repair)
+        self.assertIn("exact contiguous substring", repair)
+        self.assertIn("Do not normalize", repair)
+        self.assertNotIn(secret, json.dumps(run.model_info) + json.dumps(requests))
+        with self.assertRaises(EvaluatorError) as caught:
+            await self.call(lambda _: httpx.Response(200, json=body(invalid)))
+        self.assertEqual(caught.exception.model_info["attempts"], 2)
+        self.assertNotIn(secret, str(caught.exception) + json.dumps(caught.exception.model_info))
+        self.assertTrue(all(a["validation_error"]["code"] == "quote_not_exact" for a in caught.exception.model_info["attempt_details"]))
+
+    async def test_discrete_value_repair_identifies_configured_scale_without_weakening_it(self):
+        checklist = self.checklist.model_copy(deep=True)
+        checklist.criteria[1].allowed_values = [0, 2]
+        invalid = deepcopy(self.results)
+        invalid[1]["answer"] = 1
+        requests = []
+        def handler(request):
+            requests.append(json.loads(request.content))
+            return httpx.Response(200, json=body(invalid if len(requests) == 1 else self.results))
+        run = await self.call(handler, checklist=checklist)
+        diagnostic = run.model_info["attempt_details"][0]["validation_error"]
+        self.assertEqual(diagnostic["code"], "discrete_value_invalid")
+        self.assertEqual(diagnostic["criterion_id"], checklist.criteria[1].criterion_id)
+        self.assertEqual(diagnostic["path"], ["results", 1, "answer"])
+        self.assertIn("configured allowed_values", requests[1]["input"][-1]["content"])
+        with self.assertRaises(EvaluatorError):
+            await self.call(lambda _: httpx.Response(200, json=body(invalid)), checklist=checklist)
+
+    async def test_unknown_provider_identifiers_are_not_echoed_in_repair_or_metadata(self):
+        secret_id = "TEST_SECRET_PROVIDER_INVENTED_IDENTIFIER"
+        for field, code in (("criterion", "criterion_unknown"), ("message", "evidence_message_unknown")):
+            with self.subTest(field=field):
+                invalid = deepcopy(self.results)
+                if field == "criterion":
+                    invalid[0]["criterion_id"] = secret_id
+                else:
+                    invalid[0]["evidence"][0]["message_id"] = secret_id
+                requests = []
+                def handler(request):
+                    requests.append(json.loads(request.content))
+                    return httpx.Response(200, json=body(invalid if len(requests) == 1 else self.results))
+                run = await self.call(handler)
+                diagnostic = run.model_info["attempt_details"][0]["validation_error"]
+                self.assertEqual(diagnostic["code"], code)
+                self.assertNotIn("message_id", diagnostic)
+                self.assertNotIn(secret_id, json.dumps(run.model_info) + json.dumps(requests))
+
+    async def test_pydantic_diagnostic_omits_input_context_messages_and_unknown_field_names(self):
+        invalid = deepcopy(self.results)
+        secret = "TEST_SECRET_PRIVATE_INPUT_AND_EXTRA_FIELD"
+        invalid[0][secret] = {"secret": secret}
+        invalid[0]["evidence"][0]["quote"] = {"private": secret}
+        requests = []
+        def handler(request):
+            requests.append(json.loads(request.content))
+            return httpx.Response(200, json=body(invalid if len(requests) == 1 else self.results))
+        run = await self.call(handler)
+        diagnostic = run.model_info["attempt_details"][0]["validation_error"]
+        self.assertEqual(diagnostic["code"], "schema_validation")
+        self.assertTrue(all(set(error) == {"type", "loc"} for error in diagnostic["errors"]))
+        self.assertTrue(any("*" in error["loc"] for error in diagnostic["errors"]))
+        self.assertNotIn(secret, json.dumps(run.model_info) + json.dumps(requests))
+
+    async def test_json_diagnostic_keeps_only_error_type_and_position(self):
+        secret = "TEST_SECRET_BROKEN_JSON_PRIVATE_VALUE"
+        invalid_text = '{"results":[{"secret":"' + secret + '",}'
+        for envelope in (False, True):
+            with self.subTest(envelope=envelope):
+                requests = []
+                def handler(request):
+                    requests.append(json.loads(request.content))
+                    if len(requests) > 1:
+                        return httpx.Response(200, json=body(self.results))
+                    if envelope:
+                        return httpx.Response(200, text=invalid_text)
+                    invalid_body = body(self.results)
+                    invalid_body["output"][1]["content"][0]["text"] = invalid_text
+                    return httpx.Response(200, json=invalid_body)
+                run = await self.call(handler)
+                diagnostic = run.model_info["attempt_details"][0]["validation_error"]
+                self.assertEqual(set(diagnostic), {"code", "type", "position", "line", "column"})
+                self.assertEqual(diagnostic["code"], "json_decode")
+                self.assertEqual(diagnostic["type"], "JSONDecodeError")
+                self.assertNotIn(secret, json.dumps(run.model_info) + json.dumps(requests))
 
     async def test_refusal_not_retried_and_failed_usage_preserved(self):
         calls = []

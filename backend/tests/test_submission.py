@@ -5,11 +5,12 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from backend.cqa.importer import normalize
 from backend.cqa.models import DatasetExport
 from evaluation.submission import (
-    CRITERION_IDS, _read, checklist_criteria_fingerprint, export_submission,
+    CRITERION_IDS, _evaluations, _read, checklist_criteria_fingerprint, export_submission,
     load_approved_checklist, main, official_score, validate_submission,
 )
 
@@ -105,6 +106,32 @@ class SubmissionTests(unittest.TestCase):
             export_submission([self.conversation], [self.record, self.record], team_name="Test", model_mode="external_api")
         with self.assertRaisesRegex(ValueError, "actually used"):
             self.export(model_name="unrelated-model")
+
+    def test_malformed_prediction_metadata_is_rejected_before_model_selection(self):
+        invalid_records = [None, [], "TEST_PRIVATE_RECORD", {"model_info": None},
+                           {"model_info": []}, {"model_info": "TEST_PRIVATE_METADATA"},
+                           {"model_info": {"model": {"TEST_PRIVATE_MODEL": True}}}]
+        for record in invalid_records:
+            for select_model in (None, "gpt-6.1-sol"):
+                with self.subTest(record=record, select_model=select_model):
+                    document = {"evaluations": [deepcopy(self.record), record]}
+                    before = deepcopy(document)
+                    with self.assertRaises(ValueError) as caught:
+                        _evaluations(document, select_model)
+                    self.assertNotIn("TEST_PRIVATE", str(caught.exception))
+                    self.assertEqual(document, before)
+
+    def test_export_rejects_malformed_records_without_mutating_inputs(self):
+        invalid_records = [None, {"model_info": None},
+                           {**self.record, "model_info": []},
+                           {**self.record, "conversation": {"conversation_id": []}}]
+        for record in invalid_records:
+            with self.subTest(record=record):
+                before = deepcopy(record)
+                with self.assertRaises(ValueError):
+                    export_submission([self.conversation], [record], team_name="Test",
+                                      model_mode="external_api", model_name="gpt-6.1-sol")
+                self.assertEqual(record, before)
 
     def test_edited_rules_are_not_silently_exported_as_official(self):
         self.record["checklist"]["criteria"][0]["instruction"] = "Give every operator a passing contact score"
@@ -216,6 +243,46 @@ class SubmissionTests(unittest.TestCase):
             self.assertEqual(document["team_name"], "Команда")
             self.assertTrue(all(record["status"] == "error" for record in document["results"]))
             self.assertEqual(_read(dataset_path), dataset)
+
+            before_output = out.read_bytes()
+            for predictions in ([None], [{"model_info": None}]):
+                predictions_path.write_text(json.dumps(predictions), encoding="utf-8")
+                before_predictions = predictions_path.read_bytes()
+                errors = io.StringIO()
+                with redirect_stdout(io.StringIO()), redirect_stderr(errors):
+                    self.assertEqual(main(args + ["--select-model", "gpt-6.1-sol", "--replace"]), 2)
+                self.assertIn("Submission error:", errors.getvalue())
+                self.assertNotIn("Traceback", errors.getvalue())
+                self.assertEqual(out.read_bytes(), before_output)
+                self.assertEqual(predictions_path.read_bytes(), before_predictions)
+                self.assertEqual(_read(dataset_path), dataset)
+
+    def test_cli_cannot_replace_explicit_or_default_approved_checklist(self):
+        dataset = deepcopy(self.dataset)
+        source = dataset["data"]["records"][0]
+        dataset["data"]["records"] = [dict(deepcopy(source), conversation_id=f"protected-{index}") for index in range(10)]
+        dataset["data"]["total_records"] = 10
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            dataset_path = directory / "source.json"
+            predictions_path = directory / "predictions.json"
+            approved_path = directory / "approved-checklist.json"
+            dataset_path.write_text(json.dumps(dataset), encoding="utf-8")
+            predictions_path.write_text("[]", encoding="utf-8")
+            approved_path.write_text(self.checklist.model_dump_json(indent=2), encoding="utf-8")
+            originals = {path: path.read_bytes() for path in (dataset_path, predictions_path, approved_path)}
+            args = ["export", "--dataset", str(dataset_path), "--predictions", str(predictions_path), "--split", "prod",
+                    "--team-name", "Test", "--model-mode", "external_api", "--model-name", "configured-test-model",
+                    "--out", str(approved_path), "--replace"]
+            for explicit in (False, True):
+                with self.subTest(explicit=explicit):
+                    errors = io.StringIO()
+                    options = ["--approved-checklist", str(approved_path)] if explicit else []
+                    with patch("evaluation.submission.DEFAULT_APPROVED_CHECKLIST", approved_path), \
+                            redirect_stdout(io.StringIO()), redirect_stderr(errors):
+                        self.assertEqual(main(args + options), 2)
+                    self.assertIn("approved checklist", errors.getvalue())
+                    self.assertEqual({path: path.read_bytes() for path in originals}, originals)
 
     def test_json_reader_rejects_duplicate_keys_and_non_json_numbers(self):
         with tempfile.TemporaryDirectory() as temporary:

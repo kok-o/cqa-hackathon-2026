@@ -1,8 +1,12 @@
 from copy import deepcopy
+from contextlib import redirect_stderr, redirect_stdout
+import io
+import json
+import tempfile
 import unittest
 from pathlib import Path
 
-from evaluation.regression import compare
+from evaluation.regression import compare, main
 from evaluation.benchmark import fingerprint, read_json
 from backend.cqa.models import ChecklistVersion, DatasetExport
 
@@ -42,6 +46,68 @@ class AuthoredRegressionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "assistant-authored"):
             compare(expected, self.manifest, self.checkpoint)
 
+    def test_mixed_groups_require_explicit_filter_and_keep_all_48_assertions(self):
+        expected = read_json(ROOT / "fixtures/regression/expected.json")
+        group = expected["items"][0]["group_id"]
+        manifest = {"fingerprint": "mixed-run", "inputs": {"models": {"model": {}},
+            "checklist_sha256": expected["checklist_sha256"],
+            "datasets": [{"sha256": expected["dataset_sha256"]}, {"sha256": "dev-dataset"}]}, "tasks": []}
+        checkpoint = {"records": {}}
+        for index, item in enumerate(expected["items"]):
+            conversation = {k: item[k] for k in ("group_id", "conversation_id")}
+            manifest["tasks"].append({"model": "model", "conversation": conversation})
+            checkpoint["records"][f"synthetic-{index}"] = {"model": "model", "conversation": conversation,
+                "status": "completed", "original_results": deepcopy(item["expected_results"])}
+            dev_conversation = {"group_id": "DEV", "conversation_id": f"dev-{index}"}
+            manifest["tasks"].append({"model": "model", "conversation": dev_conversation})
+            checkpoint["records"][f"dev-{index}"] = {"model": "model", "conversation": dev_conversation,
+                "status": "completed", "original_results": []}
+        with self.assertRaisesRegex(ValueError, "no regression expectation"):
+            compare(expected, manifest, checkpoint)
+        snapshots = deepcopy((expected, manifest, checkpoint))
+        report = compare(expected, manifest, checkpoint, group=group)
+        self.assertEqual(report["filtered_group"], group)
+        self.assertEqual(report["skipped_planned_tasks"], 6)
+        self.assertEqual(report["skipped_records"], 6)
+        self.assertEqual(report["selected_records"], 6)
+        self.assertEqual(report["models"][0]["checked_decisions"], 48)
+        self.assertEqual(report["models"][0]["passed_decisions"], 48)
+        self.assertEqual((expected, manifest, checkpoint), snapshots)
+
+    def test_empty_or_unmatched_group_is_rejected(self):
+        for group in ("", "   ", "ABSENT"):
+            with self.subTest(group=group):
+                with self.assertRaisesRegex(ValueError, "group"):
+                    compare(self.expected, self.manifest, self.checkpoint, group=group)
+
+    def test_group_does_not_hide_unknown_planned_or_checkpoint_conversations(self):
+        unknown = {"group_id": "SYNTHETIC", "conversation_id": "missing-expectation"}
+        for location in ("planned", "checkpoint"):
+            with self.subTest(location=location):
+                manifest, checkpoint = deepcopy(self.manifest), deepcopy(self.checkpoint)
+                if location == "planned":
+                    manifest["tasks"].append({"model": "model", "conversation": unknown})
+                else:
+                    checkpoint["records"]["unknown"] = {"model": "model", "conversation": unknown, "status": "failed"}
+                with self.assertRaisesRegex(ValueError, "no regression expectation"):
+                    compare(self.expected, manifest, checkpoint, group="SYNTHETIC")
+
+    def test_group_with_no_predictions_still_counts_missing_assertions(self):
+        report = compare(self.expected, self.manifest, {"records": {}}, group="SYNTHETIC")
+        self.assertEqual(report["models"][0]["checked_decisions"], 1)
+        self.assertEqual(report["models"][0]["passed_decisions"], 0)
+
+    def test_cli_group_is_explicit_in_saved_report_and_summary(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            folder = Path(temporary)
+            for filename, document in (("expected.json", self.expected), ("manifest.json", self.manifest), ("checkpoint.json", self.checkpoint)):
+                (folder / filename).write_text(json.dumps(document), encoding="utf-8")
+            output = io.StringIO()
+            with redirect_stdout(output), redirect_stderr(io.StringIO()):
+                code = main(["--expected", str(folder / "expected.json"), "--run-dir", str(folder), "--group", "SYNTHETIC"])
+            self.assertEqual(code, 0)
+            self.assertEqual(json.loads(output.getvalue())["filtered_group"], "SYNTHETIC")
+            self.assertEqual(read_json(folder / "regression-report.json")["filtered_group"], "SYNTHETIC")
     def test_authored_fixture_matches_exact_official_rubric_and_balanced_dataset(self):
         dataset = read_json(ROOT / "fixtures/regression/dataset.json")
         export = DatasetExport.model_validate(dataset)

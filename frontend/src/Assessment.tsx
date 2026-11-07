@@ -1,33 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  ArrowUpRight,
-  ChevronDown,
-  ChevronRight,
-  MessageSquarePlus,
-  Check,
-  Gavel,
-  FileDown,
-  AlertTriangle,
-  CheckCheck,
-  CircleDashed,
-  Quote,
-  X,
-} from "lucide-react";
-import type {
-  Appeal,
-  Criterion,
-  CriterionResult,
-  Evaluation,
-} from "./contracts";
-import {
-  ApiError,
-  downloadJson,
-  errorText,
-  post,
-  q,
-  request,
-  uid,
-} from "./api";
+import { ArrowUpRight, ChevronDown, MessageSquarePlus, Check, Gavel, FileDown, AlertTriangle, CheckCheck, X } from "lucide-react";
+import type { Appeal, Criterion, CriterionResult, Evaluation } from "./contracts";
+import { ApiError, downloadJson, errorText, post, q, request, uid } from "./api";
 import { answerName, date, number, statusName } from "./format";
 import "./Assessment.css";
 
@@ -36,24 +10,12 @@ type Props = {
   onUpdated: (value: Evaluation) => void;
   onEvidence: (id: string, endId?: string, criterionId?: string) => void;
 };
-type AppealProps = Pick<Props, "evaluation" | "onUpdated"> & {
-  criterion: Criterion;
-  result: CriterionResult;
-};
-const motion = () =>
-  window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ? ("instant" as const)
-    : ("smooth" as const);
+type AppealProps = Pick<Props, "evaluation" | "onUpdated"> & { criterion: Criterion; result: CriterionResult; };
+const motion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" as const : "smooth" as const;
 
-export default function Assessment({
-  evaluation,
-  onUpdated,
-  onEvidence,
-}: Props) {
+export default function Assessment({ evaluation, onUpdated, onEvidence }: Props) {
   const [showOriginal, setShowOriginal] = useState(false);
-  const [selectedId, setSelectedId] = useState(
-    evaluation.checklist.criteria[0]?.criterion_id ?? "",
-  );
+  const [selectedId, setSelectedId] = useState(evaluation.checklist.criteria[0]?.criterion_id ?? "");
   const [saved, setSaved] = useState(false);
   const revisionRef = useRef(evaluation.revision);
   useEffect(() => {
@@ -65,355 +27,47 @@ export default function Assessment({
     }
   }, [evaluation.revision]);
   const metadata = evaluation.model_info;
-  const results = showOriginal
-    ? evaluation.original_results
-    : evaluation.results;
+  const results = showOriginal ? evaluation.original_results : evaluation.results;
   const score = showOriginal ? evaluation.original_score : evaluation.score;
-  const criterion =
-    evaluation.checklist.criteria.find(
-      (item) => item.criterion_id === selectedId,
-    ) ?? evaluation.checklist.criteria[0];
-  const result = results.find(
-    (item) => item.criterion_id === criterion?.criterion_id,
-  );
-  const calculated = score.criteria.find(
-    (item) => item.criterion_id === criterion?.criterion_id,
-  );
-  const position = (id: string) =>
-    evaluation.conversation.transcript.findIndex(
-      (item) => item.message_id === id,
-    ) + 1;
-  const tone = (value?: CriterionResult) =>
-    value?.gross_error
-      ? "bad"
-      : value?.status === "not_applicable"
-        ? "neutral"
-        : value?.status === "needs_review" || !value
-          ? "warning"
-          : score.criteria.find(
-                (item) => item.criterion_id === value.criterion_id,
-              )?.normalized_score === 1
-            ? "good"
-            : "neutral";
+  const criterion = evaluation.checklist.criteria.find(item => item.criterion_id === selectedId) ?? evaluation.checklist.criteria[0];
+  const result = results.find(item => item.criterion_id === criterion?.criterion_id);
+  const calculated = score.criteria.find(item => item.criterion_id === criterion?.criterion_id);
+  const position = (id: string) => evaluation.conversation.transcript.findIndex(item => item.message_id === id) + 1;
+  const tone = (value?: CriterionResult) => value?.gross_error ? "bad" : value?.status === "needs_review" || !value ? "warning" : value?.status === "not_applicable" ? "neutral" : score.criteria.find(item => item.criterion_id === value.criterion_id)?.normalized_score === 1 ? "good" : "neutral";
   function select(id: string) {
     setSelectedId(id);
-    window.requestAnimationFrame(() =>
-      document
-        .getElementById("assessment-criterion-detail")
-        ?.scrollIntoView({ behavior: motion(), block: "nearest" }),
-    );
+    window.requestAnimationFrame(() => document.getElementById(`criterion-${id}`)?.scrollIntoView({ behavior: motion(), block: "nearest" }));
   }
-  return (
-    <section className="assessment aq-panel" aria-labelledby="assessment-title">
-      <header className="aq-heading">
-        <div>
-          <span className="aq-eyebrow">РЕЗУЛЬТАТ АНАЛИЗА</span>
-          <h2 id="assessment-title">Оценка качества</h2>
-        </div>
-        <button
-          type="button"
-          className="icon-button aq-download"
-          aria-label="Скачать выбранную оценку"
-          title="Скачать историю оценки в JSON"
-          onClick={() =>
-            downloadJson(
-              evaluation,
-              `cqa-${evaluation.conversation.conversation_id}.json`,
-            )
-          }
-        >
-          <FileDown size={18} />
-        </button>
-      </header>
-      <div className={`aq-score ${saved ? "aq-score-saved" : ""}`}>
-        <div className="aq-score-top">
-          <span className="aq-score-label">
-            {showOriginal
-              ? "Исходный балл"
-              : evaluation.revision > 1
-                ? "После пересмотра"
-                : "Итоговый балл"}
-          </span>
-          <span
-            className={`badge ${score.status === "complete" ? "good" : "warning"}`}
-          >
-            {score.status === "complete" ? (
-              <Check size={12} />
-            ) : (
-              <CircleDashed size={12} />
-            )}
-            {statusName(score.status)}
-          </span>
-        </div>
-        <div className="aq-score-value">
-          <strong>{number(score.total, 2)}</strong>
-          <span>/ 100</span>
-        </div>
-        <div className="aq-meter" aria-hidden="true">
-          <span
-            style={{
-              width: `${Math.max(0, Math.min(100, score.total ?? 0))}%`,
-            }}
-          />
-        </div>
-        <div className="aq-score-foot">
-          <span>Проверено {number(score.coverage * 100, 0)}% критериев</span>
-          <span>Чек-лист v{evaluation.checklist.version}</span>
-        </div>
-        {score.gross_error ? (
-          <div className="aq-critical" role="status">
-            <AlertTriangle size={15} />
-            <span>
-              Грубая ошибка<span>Отдельный флаг, итог не обнуляется</span>
-            </span>
-          </div>
-        ) : null}
-        {score.status !== "complete" ? (
-          <p className="aq-note">
-            {score.status === "incomplete"
-              ? "Есть критерии, требующие проверки. Итог появится после их оценки; это не N/A."
-              : "Нет применимых критериев с положительным весом. Итог не рассчитывается."}
-          </p>
-        ) : null}
-      </div>
-      {saved ? (
-        <p className="aq-saved" role="status">
-          <CheckCheck size={15} /> Решение сохранено, итог пересчитан
-        </p>
-      ) : null}
-      {evaluation.revision > 1 ? (
-        <div className="aq-revision" aria-label="Версия результата">
-          <button
-            type="button"
-            aria-pressed={!showOriginal}
-            onClick={() => setShowOriginal(false)}
-          >
-            После пересмотра
-          </button>
-          <button
-            type="button"
-            aria-pressed={showOriginal}
-            onClick={() => setShowOriginal(true)}
-          >
-            Исходная · {number(evaluation.original_score.total, 2)}
-          </button>
-        </div>
-      ) : null}
-      <div className="aq-criteria-heading">
-        <h3>Критерии</h3>
-        <span>{evaluation.checklist.criteria.length} в чек-листе</span>
-      </div>
-      <div className="aq-criteria-list" aria-label="Критерии оценки">
-        {evaluation.checklist.criteria.map((item, index) => {
-          const value = results.find(
-            (entry) => entry.criterion_id === item.criterion_id,
-          );
-          const row = score.criteria.find(
-            (entry) => entry.criterion_id === item.criterion_id,
-          );
-          return (
-            <button
-              type="button"
-              className={`aq-criterion ${criterion?.criterion_id === item.criterion_id ? "aq-selected" : ""}`}
-              id={`criterion-${item.criterion_id}`}
-              aria-expanded={criterion?.criterion_id === item.criterion_id}
-              aria-controls="assessment-criterion-detail"
-              onClick={() => select(item.criterion_id)}
-              key={item.criterion_id}
-            >
-              <span className="aq-index">
-                {String(index + 1).padStart(2, "0")}
-              </span>
-              <span className="aq-criterion-name">{item.title}</span>
-              <span className={`aq-criterion-answer ${tone(value)}`}>
-                {value?.status === "not_applicable"
-                  ? "N/A"
-                  : value?.status === "needs_review"
-                    ? "Проверка"
-                    : !value
-                      ? "Нет ответа"
-                      : item.weight > 0 && row?.normalized_score != null
-                        ? `${number(row.normalized_score * item.weight, 2)} / ${number(item.weight)}`
-                        : answerName(value)}
-              </span>
-              <ChevronRight size={14} aria-hidden="true" />
-            </button>
-          );
-        })}
-      </div>
-      {criterion ? (
-        <div
-          className="aq-detail"
-          id="assessment-criterion-detail"
-          aria-labelledby={`criterion-name-${criterion.criterion_id}`}
-        >
-          <div className="aq-detail-heading">
-            <span className="aq-eyebrow">РАЗБОР КРИТЕРИЯ</span>
-            <span className={`badge ${tone(result)}`}>
-              {result?.status === "not_applicable"
-                ? "N/A · Не применимо"
-                : result
-                  ? answerName(result)
-                  : "Нет результата"}
-            </span>
-          </div>
-          <h3 id={`criterion-name-${criterion.criterion_id}`}>
-            {criterion.title}
-          </h3>
-          <div className="aq-detail-meta">
-            <span>Вес {number(criterion.weight)}</span>
-            {calculated?.contribution != null ? (
-              <span>Вклад в итог {number(calculated.contribution, 2)}</span>
-            ) : null}
-            {result?.gross_error ? (
-              <span className="aq-danger">Грубая ошибка</span>
-            ) : null}
-          </div>
-          <details className="aq-rule">
-            <summary>
-              Правило оценки <ChevronDown size={13} />
-            </summary>
-            <p>{criterion.instruction}</p>
-            {criterion.allowed_values?.length ? (
-              <p>Допустимые баллы: {criterion.allowed_values.join(" / ")}</p>
-            ) : null}
-          </details>
-          {result ? (
-            <>
-              <p className="aq-explanation">{result.explanation}</p>
-              {result.evidence.length ? (
-                <div className="aq-evidence-list">
-                  <h4>
-                    <Quote size={13} /> Основание в диалоге
-                  </h4>
-                  {result.evidence.map((evidence, index) => (
-                    <button
-                      type="button"
-                      className="aq-evidence"
-                      key={`${evidence.message_id}-${index}`}
-                      onClick={() =>
-                        onEvidence(
-                          evidence.message_id,
-                          undefined,
-                          criterion.criterion_id,
-                        )
-                      }
-                    >
-                      <span className="aq-quote">«{evidence.quote}»</span>
-                      <span className="aq-evidence-action">
-                        К реплике №{position(evidence.message_id)}
-                        <ArrowUpRight size={15} />
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-              {result.checked_span ? (
-                <button
-                  type="button"
-                  className="aq-span"
-                  onClick={() =>
-                    onEvidence(
-                      result.checked_span!.start_message_id,
-                      result.checked_span!.end_message_id,
-                      criterion.criterion_id,
-                    )
-                  }
-                >
-                  <span>
-                    <strong>Проверенный участок</strong>
-                    <small>
-                      Реплики №{position(result.checked_span.start_message_id)}–
-                      {position(result.checked_span.end_message_id)}
-                      {result.status === "applicable" ? " · действие отсутствует" : " · контекст проверки"}
-                    </small>
-                  </span>
-                  <ArrowUpRight size={17} />
-                </button>
-              ) : null}
-              {!showOriginal ? (
-                <CriterionAppeals
-                  key={criterion.criterion_id}
-                  evaluation={evaluation}
-                  criterion={criterion}
-                  result={result}
-                  onUpdated={onUpdated}
-                />
-              ) : (
-                <p className="aq-original-note">
-                  Исходный ответ модели сохранён. Для апелляции откройте
-                  результат после пересмотра.
-                </p>
-              )}
-            </>
-          ) : (
-            <p className="aq-note">
-              Ответ по этому критерию отсутствует в сохранённом запуске.
-            </p>
-          )}
-        </div>
-      ) : null}
-      {Object.keys(score.sections).length ? (
-        <details className="aq-run-details">
-          <summary>
-            Итоги по разделам
-            <ChevronDown size={15} />
-          </summary>
-          <dl>
-            {Object.entries(score.sections).map(([section, total]) => (
-              <div key={section}>
-                <dt>{section}</dt>
-                <dd>{number(total, 2)}</dd>
-              </div>
-            ))}
-          </dl>
-        </details>
-      ) : null}
-      <details className="aq-run-details">
-        <summary>
-          О запуске и правилах
-          <ChevronDown size={15} />
-        </summary>
-        <dl>
-          <div>
-            <dt>Модель</dt>
-            <dd>{String(metadata.model ?? "Не указана")}</dd>
-          </div>
-          <div>
-            <dt>Создано</dt>
-            <dd>{date(evaluation.created_at)}</dd>
-          </div>
-          <div>
-            <dt>Ревизия</dt>
-            <dd>{evaluation.revision}</dd>
-          </div>
-          {metadata.elapsed_ms != null ? (
-            <div>
-              <dt>Длительность</dt>
-              <dd>{number(Number(metadata.elapsed_ms) / 1000)} с</dd>
-            </div>
-          ) : null}
-          {metadata.prompt_version != null ? (
-            <div>
-              <dt>Инструкция</dt>
-              <dd>{String(metadata.prompt_version)}</dd>
-            </div>
-          ) : null}
-          <div>
-            <dt>ID запуска</dt>
-            <dd>{evaluation.evaluation_id}</dd>
-          </div>
-        </dl>
-        <p>
-          {evaluation.checklist.provenance === "synthetic_example"
-            ? "Демонстрационный чек-лист."
-            : "Чек-лист организаторов."}{" "}
-          Сохранены правила и исходный диалог этого запуска. N/A
-          перераспределяет вес между применимыми критериями.
-        </p>
-      </details>
-    </section>
-  );
+  const detail = criterion ? <div className="aq-detail" id="assessment-criterion-detail" aria-labelledby={`criterion-${criterion.criterion_id}`}>
+    <div className="aq-detail-meta"><span className={`aq-result-label ${tone(result)}`}>{result?.status === "not_applicable" ? "N/A · Не применимо" : result ? answerName(result) : "Нет результата"}</span>{calculated?.contribution != null ? <span>В итог: {number(calculated.contribution, 2)} из 100</span> : null}{result?.gross_error ? <span className="aq-danger">Грубая ошибка</span> : null}</div>
+    {result ? <>
+      <p className="aq-explanation">{result.explanation}</p>
+      {result.evidence.length ? <div className="aq-evidence-list">{result.evidence.map((evidence, index) => <button type="button" className="aq-evidence" key={`${evidence.message_id}-${index}`} onClick={() => onEvidence(evidence.message_id, undefined, criterion.criterion_id)}><span className="aq-quote">«{evidence.quote}»</span><span className="aq-evidence-action">К реплике №{position(evidence.message_id)}<ArrowUpRight size={14} /></span></button>)}</div> : null}
+      {result.checked_span ? <button type="button" className="aq-span" onClick={() => onEvidence(result.checked_span!.start_message_id, result.checked_span!.end_message_id, criterion.criterion_id)}><span><strong>Проверенный участок</strong><small>Реплики №{position(result.checked_span.start_message_id)}–{position(result.checked_span.end_message_id)}</small></span><ArrowUpRight size={15} /></button> : null}
+    </> : <p className="aq-note">Ответ по критерию отсутствует.</p>}
+    <details className="aq-rule"><summary>Условие критерия<ChevronDown size={13} /></summary><p>{criterion.instruction}</p>{criterion.allowed_values?.length ? <p>Шкала: {criterion.allowed_values.join(" / ")}</p> : null}</details>
+    {result && !showOriginal ? <CriterionAppeals key={criterion.criterion_id} evaluation={evaluation} criterion={criterion} result={result} onUpdated={onUpdated} /> : null}
+  </div> : null;
+  return <section className="assessment aq-panel" aria-label="Оценка диалога">
+    <header className="aq-heading"><span>Чек-лист v{evaluation.checklist.version}{evaluation.checklist.provenance === "synthetic_example" ? " · учебный" : ""}</span><button type="button" className="icon-button aq-download" aria-label="Скачать выбранную оценку" title="Скачать оценку в JSON" onClick={() => downloadJson(evaluation, `cqa-${evaluation.conversation.conversation_id}.json`)}><FileDown size={17} /></button></header>
+    <div className={`aq-score ${saved ? "aq-score-saved" : ""}`}>
+      <div className="aq-score-value" aria-label={`${showOriginal ? "Исходная оценка" : "Итоговая оценка"}: ${number(score.total, 2)} из 100`}><strong>{number(score.total, 2)}</strong><span>/ 100</span></div>
+      <span className={`aq-status ${score.status === "complete" ? "good" : "warning"}`}>{statusName(score.status)}</span>
+    </div>
+    {score.gross_error ? <p className="aq-critical" role="status"><AlertTriangle size={15} />Грубая ошибка</p> : null}
+    {score.status !== "complete" ? <p className="aq-note">{score.status === "incomplete" ? `Проверено ${number(score.coverage * 100, 0)}% критериев. Для итогового балла завершите проверку.` : "Нет применимых критериев с положительным весом."}</p> : null}
+    {saved ? <p className="aq-saved" role="status"><CheckCheck size={14} />Решение сохранено, итог пересчитан</p> : null}
+    {evaluation.revision > 1 ? <div className="aq-revision" aria-label="Версия результата"><button type="button" aria-pressed={!showOriginal} onClick={() => setShowOriginal(false)}>После пересмотра</button><button type="button" aria-pressed={showOriginal} onClick={() => setShowOriginal(true)}>Исходная · {number(evaluation.original_score.total, 2)}</button></div> : null}
+    <div className="aq-criteria-heading"><h3>Критерий</h3><span>Баллы / вес</span></div>
+    <div className="aq-criteria-list" aria-label="Критерии оценки">{evaluation.checklist.criteria.map(item => {
+      const value = results.find(entry => entry.criterion_id === item.criterion_id);
+      const row = score.criteria.find(entry => entry.criterion_id === item.criterion_id);
+      const selected = criterion?.criterion_id === item.criterion_id;
+      return <div className={`aq-ledger-entry ${selected ? "aq-ledger-open" : ""}`} key={item.criterion_id}><button type="button" className={`aq-criterion ${selected ? "aq-selected" : ""}`} id={`criterion-${item.criterion_id}`} aria-expanded={selected} aria-controls="assessment-criterion-detail" onClick={() => select(item.criterion_id)}><span className="aq-criterion-name">{item.title}</span><span className={`aq-criterion-answer ${tone(value)}`}>{value?.status === "not_applicable" ? "N/A" : value?.status === "needs_review" ? "Проверка" : !value ? "Нет ответа" : item.weight > 0 && row?.normalized_score != null ? `${number(row.normalized_score * item.weight, 2)} / ${number(item.weight)}` : answerName(value)}</span><ChevronDown size={13} aria-hidden="true" /></button>{selected ? detail : null}</div>;
+    })}</div>
+    {Object.keys(score.sections).length ? <details className="aq-run-details"><summary>По разделам<ChevronDown size={14} /></summary><dl>{Object.entries(score.sections).map(([section, total]) => <div key={section}><dt>{section}</dt><dd>{number(total, 2)}</dd></div>)}</dl></details> : null}
+    <details className="aq-run-details"><summary>Данные запуска<ChevronDown size={14} /></summary><dl><div><dt>Модель</dt><dd>{String(metadata.model ?? "Не указана")}</dd></div><div><dt>Создано</dt><dd>{date(evaluation.created_at)}</dd></div><div><dt>Ревизия</dt><dd>{evaluation.revision}</dd></div>{metadata.elapsed_ms != null ? <div><dt>Длительность</dt><dd>{number(Number(metadata.elapsed_ms) / 1000)} с</dd></div> : null}{metadata.prompt_version != null ? <div><dt>Инструкция</dt><dd>{String(metadata.prompt_version)}</dd></div> : null}<div><dt>ID запуска</dt><dd>{evaluation.evaluation_id}</dd></div></dl></details>
+  </section>;
 }
 
 function CriterionAppeals({
@@ -436,7 +90,7 @@ function CriterionAppeals({
   }, [adding]);
   function close() {
     setAdding(false);
-    window.requestAnimationFrame(() => trigger.current?.focus());
+    window.requestAnimationFrame(() => (trigger.current ?? document.getElementById(`criterion-${criterion.criterion_id}`))?.focus());
   }
   async function add() {
     setBusy(true);
@@ -567,7 +221,7 @@ function AppealItem({
   const trigger = useRef<HTMLButtonElement>(null);
   function close() {
     setReviewing(false);
-    window.requestAnimationFrame(() => trigger.current?.focus());
+    window.requestAnimationFrame(() => (trigger.current ?? document.getElementById(`criterion-${criterion.criterion_id}`))?.focus());
   }
   return (
     <div className="aq-appeal-item">

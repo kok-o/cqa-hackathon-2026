@@ -178,7 +178,12 @@ class Store:
                 if gross_error is not None and latest_gross_error is not gross_error:
                     continue
                 messages = conversation["transcript"]
-                preview = next((m["text"] for m in messages if m["speaker"] == "client" and m["text"].strip()), messages[0]["text"])
+                if row["channel"] == "voice call":
+                    preview = next((m["text"].strip() for speaker in ("client", "operator")
+                                    for m in messages if m["speaker"] == speaker
+                                    and any(char.isalpha() for char in m["text"])), "")
+                else:
+                    preview = next((m["text"] for m in messages if m["speaker"] == "client" and m["text"].strip()), messages[0]["text"])
                 summaries.append({
                     "conversation_id": row["conversation_id"], "group_id": row["group_id"],
                     "channel": row["channel"], "language": row["language"],

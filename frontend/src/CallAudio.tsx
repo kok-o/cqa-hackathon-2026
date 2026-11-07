@@ -33,7 +33,7 @@ export default function CallAudio({ groupId, conversationId, hasAudio, evaluatio
   return <section className="call-audio" aria-label="Аудиозапись звонка">
     <div className="audio-player"><Headphones size={16} />
       {url ? <audio key={url} controls preload="metadata" src={url} aria-label="Запись звонка" onError={() => { setError('Запись не воспроизводится. Обновите ссылку; если ошибка повторится, проверьте доступ к записи у организаторов.'); setUrl(''); }} />
-        : hasAudio ? <button className="button secondary small" disabled={loading} onClick={() => void load()}>{loading ? <LoaderCircle size={15} className="spin" /> : error ? <RefreshCw size={15} /> : null}{loading ? 'Подключаем запись…' : error ? 'Обновить ссылку на запись' : 'Открыть запись звонка'}</button>
+        : hasAudio ? <button className="button secondary small" disabled={loading} onClick={() => void load()}>{loading ? <span className="spin" aria-hidden="true"><LoaderCircle size={15} /></span> : error ? <RefreshCw size={15} aria-hidden="true" /> : null}{loading ? 'Подключаем запись…' : error ? 'Обновить ссылку на запись' : 'Открыть запись звонка'}</button>
           : <span className="no-audio-banner">Аудиозапись не предоставлена.</span>}
     </div>
     {error ? <p className="audio-error" role="alert">{error}</p> : null}

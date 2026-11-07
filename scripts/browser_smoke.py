@@ -94,6 +94,15 @@ def main() -> None:
             assert original["score"]["total"] < 100
             checks.append("real_job_endpoint_with_explicit_test_double")
 
+            page.get_by_role("button", name="Сводка", exact=True).click()
+            summary = page.get_by_role("region", name="Сводка по нарушениям")
+            summary.get_by_text("Приветствие", exact=True).click()
+            summary.get_by_role("button", name=conversation_id, exact=True).click()
+            expect(page.locator("#assessment-criterion-detail")).to_have_attribute("aria-labelledby", "criterion-example-greeting")
+            page.locator(".aq-evidence").first.click()
+            expect(page.locator(".message.highlighted")).to_have_attribute("id", f"message-{conversation_id}:0001")
+            checks.append("quality_summary_opens_matching_evaluation_and_evidence")
+
             quote_criterion = original["checklist"]["criteria"][1]["criterion_id"]
             page.locator(f'[id="criterion-{quote_criterion}"]').click()
             page.locator(".aq-evidence").first.click()

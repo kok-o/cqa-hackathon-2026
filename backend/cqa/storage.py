@@ -10,7 +10,7 @@ from uuid import uuid4
 
 from .evaluator.validation import validate_draft
 from .models import ChecklistVersion, Conversation, CriterionResult, EvaluationDraft
-from .scoring import calculate_score
+from .scoring import calculate_score, normalize_answer
 
 
 class NotFoundError(Exception):
@@ -349,6 +349,51 @@ class Store:
                 )
             ]
         return conversations, evaluations
+
+    def quality_summary(self, group_id: str, checklist: ChecklistVersion) -> dict:
+        conversations, history = self.submission_snapshot(group_id)
+        sources = {conversation.conversation_id: conversation.model_dump() for conversation in conversations}
+        rules = checklist.model_dump()
+        latest = {}
+        for evaluation in history:
+            source = evaluation["conversation"]
+            identifier = source["conversation_id"]
+            if evaluation["checklist"] == rules and source == sources.get(identifier):
+                latest.setdefault(identifier, evaluation)
+
+        weighted = {c.criterion_id: c for c in checklist.criteria if c.weight > 0}
+        criteria = {key: {"criterion_id": key, "title": c.title, "applicable": 0, "dialogs": []}
+                    for key, c in weighted.items()}
+        critical = []
+        affected = set()
+        complete = incomplete = critical_unknown = 0
+        for identifier, evaluation in latest.items():
+            score = evaluation["score"]
+            complete += score["status"] == "complete"
+            incomplete += score["status"] == "incomplete"
+            ref = {"conversation_id": identifier, "evaluation_id": evaluation["evaluation_id"]}
+            for result in evaluation["results"]:
+                criterion_id = result["criterion_id"]
+                if criterion_id not in criteria or result["status"] != "applicable":
+                    continue
+                entry = criteria[criterion_id]
+                entry["applicable"] += 1
+                if normalize_answer(weighted[criterion_id], result["answer"]) < 1:
+                    entry["dialogs"].append({**ref, "criterion_id": criterion_id})
+                    affected.add(identifier)
+            flag = gross_error_flag(evaluation)
+            if flag:
+                result = next(row for row in evaluation["results"] if row["gross_error"])
+                critical.append({**ref, "criterion_id": result["criterion_id"]})
+                affected.add(identifier)
+            critical_unknown += flag is None
+
+        violations = [entry for entry in criteria.values() if entry["dialogs"]]
+        violations.sort(key=lambda entry: (-len(entry["dialogs"]), entry["title"].casefold()))
+        return {"total": len(conversations), "complete": complete, "incomplete": incomplete,
+                "unrated": len(conversations) - len(latest), "without_points": len(latest) - complete - incomplete,
+                "affected": len(affected), "violations": violations, "critical": critical,
+                "critical_unknown": critical_unknown}
 
     @staticmethod
     def _replay(db, scope, key, request_hash):

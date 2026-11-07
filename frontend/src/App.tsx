@@ -35,6 +35,7 @@ import ChecklistEditor from "./ChecklistEditor";
 import ConversationQueue from "./ConversationQueue";
 import Transcript from "./Transcript";
 import Modal from "./Modal";
+import QualitySummary, { type SummaryFinding } from "./QualitySummary";
 
 const conversationKey = (value: {
   group_id: string;
@@ -79,7 +80,7 @@ type SubmissionForm = {
 };
 
 export default function App() {
-  const [tab, setTab] = useState<"review" | "checklist">("review");
+  const [tab, setTab] = useState<"review" | "checklist" | "summary">("review");
   const [config, setConfig] = useState<ProviderInfo | null>(null);
   const [showSetup, setShowSetup] = useState(false);
   const [submission, setSubmission] = useState<SubmissionForm | null>(null);
@@ -88,6 +89,7 @@ export default function App() {
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [checklists, setChecklists] = useState<ChecklistVersion[]>([]);
   const [selectedKey, setSelectedKey] = useState("");
+  const [summaryTarget, setSummaryTarget] = useState<(SummaryFinding & { group_id: string }) | null>(null);
   const [selectedChecklistKey, setSelectedChecklistKey] = useState("");
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
@@ -275,13 +277,30 @@ export default function App() {
     ]).then(([value, history]) => {
       if (!controller.signal.aborted) {
         assertEvaluationHistory(history);
+        const target = summaryTarget && conversationKey(summaryTarget) === selectedKey ? summaryTarget : null;
+        const fromSummary = target ? matchingEvaluation(history.filter(item => item.evaluation_id === target.evaluation_id), value) : "";
+        if (target && !fromSummary) {
+          setNoticeKind("warning");
+          setNotice("Источник изменился после построения сводки. Открыт текущий диалог.");
+        }
         setConversation(value);
         setEvaluations(current => mergeHistory(history, current, value));
-        setEvaluationId(current => current || matchingEvaluation(history, value));
+        setEvaluationId(current => fromSummary || current || matchingEvaluation(history, value));
       }
     }).catch(error => { if (!controller.signal.aborted) setError(errorText(error)); }).finally(() => { if (!controller.signal.aborted) setDetailLoading(false); });
     return () => controller.abort();
-  }, [selectedKey]);
+  }, [selectedKey, summaryTarget]);
+
+  function openSummaryFinding(groupId: string, finding: SummaryFinding) {
+    const target = { ...finding, group_id: groupId };
+    setSummaryTarget(target);
+    setSelectedKey(conversationKey(target));
+    resetFilters();
+    setGroup(groupId);
+    setQueueOpen(false);
+    setMobilePanel("assessment");
+    setTab("review");
+  }
 
   async function importDataset(value: unknown) {
     setImporting(true);
@@ -591,6 +610,13 @@ export default function App() {
           >
             Чек-листы
           </button>
+          <button
+            className={tab === "summary" ? "active" : ""}
+            onClick={() => setTab("summary")}
+            aria-current={tab === "summary" ? "page" : undefined}
+          >
+            Сводка
+          </button>
         </nav>
         <div className="header-actions">
           <button
@@ -694,7 +720,7 @@ export default function App() {
       <main id="main-content">
         <div className="workspace-toolbar">
           <h1 key={tab} className="page-title">
-            {tab === "review" ? "Диалоги" : "Чек-листы"}
+            {tab === "review" ? "Диалоги" : tab === "summary" ? "Сводка" : "Чек-листы"}
           </h1>
           <label className="checklist-select">
             <ClipboardList size={17} />
@@ -952,6 +978,16 @@ export default function App() {
             <LoaderCircle className="spin" size={30} />
             <h2>Открываем рабочую область</h2>
           </div>
+        ) : tab === "summary" ? (
+          selectedChecklist ? (
+            <QualitySummary
+              groups={groups}
+              initialGroup={group || selectedSummary?.group_id || ""}
+              checklistId={selectedChecklist.checklist_id}
+              version={selectedChecklist.version}
+              onOpen={openSummaryFinding}
+            />
+          ) : <p className="quality-summary">Сначала выберите чек-лист.</p>
         ) : tab === "checklist" ? (
           selectedChecklist ? (
             <ChecklistEditor
@@ -1128,6 +1164,7 @@ export default function App() {
                 onGrossError={setGrossError}
                 onFilters={() => setFiltersOpen((value) => !value)}
                 onSelect={(item) => {
+                  if (selectedKey !== conversationKey(item)) setSummaryTarget(null);
                   setSelectedKey(conversationKey(item));
                   setMobilePanel("transcript");
                   setQueueOpen(false);
@@ -1202,6 +1239,7 @@ export default function App() {
                   <Assessment
                     key={evaluation.evaluation_id}
                     evaluation={evaluation}
+                    initialCriterionId={evaluation.evaluation_id === summaryTarget?.evaluation_id ? summaryTarget.criterion_id : undefined}
                     onUpdated={onEvaluationUpdated}
                     onEvidence={openEvidence}
                   />

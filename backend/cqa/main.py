@@ -261,6 +261,10 @@ def create_app(database_path: str | Path | None = None, evaluator=None, evaluato
     def evaluation(evaluation_id: str):
         return store.evaluation(evaluation_id)
 
+    @application.get("/api/quality-summary")
+    def quality_summary(group_id: str, checklist_id: str, checklist_version: int = Query(..., ge=1)):
+        return store.quality_summary(group_id, store.checklist(checklist_id, checklist_version))
+
     @application.get("/api/submission/export")
     def official_submission(
         group_id: str,

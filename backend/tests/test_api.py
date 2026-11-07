@@ -22,6 +22,7 @@ class ApiTests(unittest.TestCase):
         self.calls = []
         self.test_gross_error = False
         self.unresolved_criterion = None
+        self.result_overrides = {}
         self.app = create_app(self.database, evaluator=self.evaluate, evaluator_info={"provider_configured": True, "provider": "test", "model": "test", "mode": "test", "prompt_version": "test-v1"}, checklist_path=ROOT / "fixtures/checklist.example.json")
         self.client = TestClient(self.app)
         self.client.__enter__()
@@ -43,7 +44,7 @@ class ApiTests(unittest.TestCase):
                                 "explanation": "Недостаточно материала для проверки"})
                 continue
             answer = criterion.positive_answer if criterion.answer_type == "boolean" else criterion.scale_max if criterion.answer_type == "scale" else max(criterion.choices, key=criterion.choices.get)
-            results.append({"criterion_id": criterion.criterion_id, "status": "applicable", "answer": answer, "explanation": "Изолированный тест API", "evidence": [{"message_id": message.message_id, "quote": message.text}], "gross_error": self.test_gross_error and bool(criterion.gross_error_rule)})
+            results.append({"criterion_id": criterion.criterion_id, "status": "applicable", "answer": answer, "explanation": "Изолированный тест API", "evidence": [{"message_id": message.message_id, "quote": message.text}], "gross_error": self.test_gross_error and bool(criterion.gross_error_rule), **self.result_overrides.get(criterion.criterion_id, {})})
         return SimpleNamespace(draft=EvaluationDraft(conversation_id=conversation.conversation_id, group_id=conversation.group_id, checklist_id=checklist.checklist_id, checklist_version=checklist.version, prompt_version="test-v1", results=results), model_info={"provider": "test", "model": "test"})
 
     def job_body(self, **changes):
@@ -196,6 +197,44 @@ class ApiTests(unittest.TestCase):
                 self.assertEqual(self.client.get(endpoint, params={"gross_error": negative}).json(), [])
         self.assertEqual(evaluation["revision"], 3)
         self.assertEqual(len(evaluation["appeals"]), 2)
+
+    def test_quality_summary_uses_current_source_selected_rules_and_reviewed_results(self):
+        version = self.gross_error_checklist_version()
+        ids = [item["conversation_id"] for item in self.dataset["data"]["records"]]
+        self.test_gross_error = True
+        self.result_overrides = {"example-next-step": {"answer": 1}}
+        flagged = self.evaluate_one(checklist_version=version)
+        self.test_gross_error = False
+        self.unresolved_criterion = "example-greeting"
+        self.result_overrides = {"example-next-step": {"status": "not_applicable", "answer": None}}
+        self.evaluate_one(conversation_id=ids[1], checklist_version=version)
+        self.unresolved_criterion = None
+        self.result_overrides = {}
+        self.evaluate_one(conversation_id=ids[2])
+
+        params = {"group_id": flagged["conversation"]["group_id"], "checklist_id": self.checklist["checklist_id"],
+                  "checklist_version": version}
+        summary = self.client.get("/api/quality-summary", params=params).raise_for_status().json()
+        self.assertEqual([summary[key] for key in ("total", "complete", "incomplete", "unrated", "affected", "critical_unknown")],
+                         [3, 1, 1, 1, 1, 1])
+        ref = {"conversation_id": ids[0], "evaluation_id": flagged["evaluation_id"]}
+        self.assertEqual(summary["violations"], [{"criterion_id": "example-next-step", "title": "Понятность следующего действия", "applicable": 1,
+            "dialogs": [{**ref, "criterion_id": "example-next-step"}]}])
+        self.assertEqual(summary["critical"], [{**ref, "criterion_id": "example-greeting"}])
+
+        appeal = self.appeal(flagged, criterion=1)
+        self.client.post(f"/api/appeals/{appeal['appeal_id']}/decision", json={"action": "replace",
+            "reason": "Уточнено после проверки", "replacement_result": {**flagged["results"][1], "answer": 2},
+            "expected_revision": flagged["revision"]}).raise_for_status()
+        revised = self.client.get("/api/quality-summary", params=params).raise_for_status().json()
+        self.assertEqual(revised["violations"], [])
+        self.assertEqual(revised["critical"], summary["critical"])
+
+        changed = deepcopy(self.dataset)
+        changed["data"]["records"][0]["transcript"][0]["text"] = "Источник обновлён после проверки"
+        self.client.post("/api/datasets/import", json={"dataset": changed}).raise_for_status()
+        current = self.client.get("/api/quality-summary", params=params).raise_for_status().json()
+        self.assertEqual((current["affected"], current["unrated"], current["critical"]), (0, 2, []))
 
     def test_gross_error_filter_excludes_stale_source_but_keeps_snapshot_history(self):
         version = self.gross_error_checklist_version()

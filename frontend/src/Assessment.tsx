@@ -32,6 +32,7 @@ import "./Assessment.css";
 
 type Props = {
   evaluation: Evaluation;
+  initialCriterionId?: string;
   onUpdated: (value: Evaluation) => void;
   onEvidence: (id: string, endId?: string, criterionId?: string) => void;
 };
@@ -105,15 +106,25 @@ const motion = () =>
 
 export default function Assessment({
   evaluation,
+  initialCriterionId,
   onUpdated,
   onEvidence,
 }: Props) {
   const [showOriginal, setShowOriginal] = useState(false);
-  const [selectedId, setSelectedId] = useState("");
+  const [selectedId, setSelectedId] = useState(initialCriterionId ?? "");
   const [saved, setSaved] = useState(false);
   const [appealDrafts, setAppealDrafts] = useState<Record<string, AppealDraft>>({});
   const [decisionDrafts, setDecisionDrafts] = useState<Record<string, DecisionDraft>>({});
   const revisionRef = useRef(evaluation.revision);
+  useEffect(() => {
+    if (!initialCriterionId) return;
+    const frame = window.requestAnimationFrame(() => {
+      const control = document.getElementById(`criterion-${initialCriterionId}`);
+      control?.focus({ preventScroll: true });
+      control?.scrollIntoView({ block: "nearest" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [initialCriterionId]);
   useEffect(() => {
     if (revisionRef.current !== evaluation.revision) {
       revisionRef.current = evaluation.revision;

@@ -1041,7 +1041,10 @@ export default function App() {
             </button>
           </section>
         ) : (
-          <>
+          <div
+            className={`review-workspace mobile-${mobilePanel} ${queueOpen ? "queue-open" : ""}`}
+            style={{ "--queue-width": `${queueWidth}px` } as CSSProperties}
+          >
             <div className="review-context">
               <button
                 ref={queueButton}
@@ -1132,10 +1135,6 @@ export default function App() {
                 ),
               )}
             </nav>
-            <div
-              className={`review-workspace mobile-${mobilePanel} ${queueOpen ? "queue-open" : ""}`}
-              style={{ "--queue-width": `${queueWidth}px` } as CSSProperties}
-            >
               {queueOpen && (
                 <button
                   className="queue-backdrop"
@@ -1264,8 +1263,7 @@ export default function App() {
                   </div>
                 )}
               </aside>
-            </div>
-          </>
+          </div>
         )}
       </main>
     </div>

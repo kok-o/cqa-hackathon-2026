@@ -398,15 +398,18 @@ main {
 .review-workspace {
   display: grid;
   grid-template-columns: 252px minmax(0, 1fr) 370px;
-  grid-template-rows: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
   flex: 1;
   min-height: 0;
   background: #fff;
   border: 1px solid var(--line);
-  border-top: 0;
-  border-radius: 0 0 6px 6px;
+  border-radius: 10px;
   overflow: hidden;
 }
+.review-workspace > .review-context { grid-column: 2 / -1; grid-row: 1; }
+.review-workspace > .conversation-sidebar { grid-column: 1; grid-row: 1 / 3; }
+.review-workspace > .transcript-pane { grid-column: 2; grid-row: 2; }
+.review-workspace > .assessment-pane { grid-column: 3; grid-row: 2; }
 .page-title,
 .review-context,
 .review-workspace,
@@ -1207,6 +1210,7 @@ main {
   }
   .queue-open .conversation-sidebar {
     display: flex;
+    grid-area: auto;
     position: absolute;
     inset: 0 auto 0 0;
     width: 280px;
@@ -1386,13 +1390,15 @@ main {
     border-radius: 50%;
   }
   .review-workspace {
-    display: block;
+    display: flex;
+    flex-direction: column;
   }
   .review-workspace > .conversation-sidebar,
   .review-workspace > .transcript-pane,
   .review-workspace > .assessment-pane {
     display: none;
-    height: 100%;
+    height: auto;
+    flex: 1;
     border-right: 0;
     animation: workspace-enter 220ms var(--motion-ease);
   }
@@ -1609,7 +1615,7 @@ main {
 /* Selected conversation, source roles and filters carry the visual hierarchy. */
 .page-title { font-size:24px; font-weight:600; letter-spacing:-.035em; }
 .workspace-toolbar { min-height:76px; }
-.review-context { min-height:70px; border-left:4px solid var(--primary); background:linear-gradient(100deg,var(--selected) 0%,#fff 65%); padding:14px 20px; }
+.review-context { min-height:64px; border:0; border-bottom:1px solid var(--line); border-radius:0; background:#fff; padding:14px 24px; }
 .conversation-context { gap:10px; }
 .conversation-context strong { font-size:20px; font-weight:600; margin-right:9px; }
 .conversation-context > span { padding:5px 9px; border:1px solid var(--line); border-radius:6px; color:var(--text); background:#ffffffb8; font-size:12px; }
@@ -1643,6 +1649,11 @@ main {
 .message.highlighted { border-color:var(--primary); background:#e6f6eb; }
 @media(min-width:1600px) { .review-workspace { --assessment-width:400px; } }
 @media(min-width:701px) and (max-width:1199px) { .review-workspace { grid-template-columns:minmax(0,1fr) 355px; } .queue-open .conversation-sidebar { width:340px; max-width:85%; } .transcript-content { padding-inline:18px; } }
+@media(min-width:701px) and (max-width:1199px) {
+  .review-workspace > .review-context { grid-column:1 / -1; }
+  .review-workspace > .transcript-pane { grid-column:1; }
+  .review-workspace > .assessment-pane { grid-column:2; }
+}
 @media(min-width:701px) and (max-width:900px) { .review-workspace { grid-template-columns:minmax(0,1fr) 330px; } }
 @media(max-width:700px) { .page-title { font-size:21px; } .workspace-toolbar { min-height:68px; } .review-context { padding:12px 14px; } .conversation-context strong { font-size:17px; width:100%; } .conversation-context>span { padding:3px 6px; font-size:11px; } .transcript-content { padding-inline:14px; } .message { padding:13px 14px; } .message p { font-size:16px; } .panel-heading { padding-inline:16px; } .no-audio-banner { margin-inline:14px; } .filters { grid-template-columns:1fr; } }
 .notice.warning { background:#fff5df; color:#875313; }

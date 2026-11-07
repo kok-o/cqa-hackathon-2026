@@ -1,7 +1,7 @@
 .editor-workspace.editor-v2 {
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 4px 0 20px;
+  width: 100%;
+  margin: 0;
+  padding: 0 0 20px;
   color: var(--text);
 }
 
@@ -13,8 +13,11 @@
   display: grid;
   grid-template-columns: minmax(200px, 1fr) 230px auto;
   align-items: end;
-  gap: 20px;
-  padding: 0 0 22px;
+  gap: 16px;
+  padding: 18px 20px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px 10px 0 0;
 }
 
 .editor-meta .field {
@@ -24,17 +27,20 @@
 
 .editor-body {
   display: grid;
-  grid-template-columns: 265px minmax(0, 1fr);
+  grid-template-columns: 280px minmax(0, 1fr);
   align-items: start;
   background: #fff;
-  border-block: 1px solid var(--line);
+  border: 1px solid var(--line);
+  border-top: 0;
+  border-radius: 0 0 10px 10px;
 }
 
 .editor-index {
   position: sticky;
   top: 16px;
   min-width: 0;
-  padding: 16px 0;
+  padding: 0 0 18px;
+  background: #f8f9fa;
 }
 
 .editor-index-heading {
@@ -42,7 +48,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 0 18px 14px;
+  padding: 16px 18px;
+  min-height: 64px;
   font-size: 12px;
 }
 
@@ -60,7 +67,10 @@
 }
 .editor-criterion-list {
   display: grid;
+  gap: 3px;
+  padding: 0 10px;
 }
+.editor-mobile-picker { display:none; }
 
 .editor-criterion-button {
   display: flex;
@@ -68,10 +78,10 @@
   gap: 12px;
   width: 100%;
   min-height: 58px;
-  padding: 11px 18px;
+  padding: 12px;
   border: 0;
   border-left: 2px solid transparent;
-  border-radius: 0;
+  border-radius: 7px;
   background: transparent;
   text-align: left;
   color: var(--text);
@@ -83,8 +93,9 @@
   background: var(--canvas);
 }
 .editor-criterion-button.is-selected {
-  border-left-color: var(--primary);
-  background: var(--selected);
+  border-left-color: transparent;
+  box-shadow: inset 3px 0 var(--primary);
+  background: #e6eee8;
 }
 .editor-criterion-label {
   display: grid;
@@ -93,7 +104,7 @@
   gap: 4px;
 }
 .editor-criterion-label strong {
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.4;
   font-weight: 500;
   overflow-wrap: anywhere;
@@ -106,6 +117,11 @@
   font-size: 12px;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
+  min-width: 27px;
+  padding: 4px 5px;
+  border-radius: 5px;
+  background: #edf0f2;
+  text-align: center;
 }
 .editor-add.button {
   margin: 14px 16px 0;
@@ -124,8 +140,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  min-height: 67px;
-  padding: 15px 28px;
+  min-height: 64px;
+  padding: 15px 24px;
   border-bottom: 1px solid var(--line);
 }
 
@@ -143,7 +159,7 @@
 .editor-fieldset {
   min-width: 0;
   margin: 0;
-  padding: 22px 28px 24px;
+  padding: 20px 24px 24px;
   border: 0;
   border-top: 1px solid var(--line);
 }
@@ -282,8 +298,8 @@
   }
   .editor-meta {
     grid-template-columns: minmax(0, 1fr) 44px;
-    gap: 16px;
-    padding-bottom: 20px;
+    gap: 14px;
+    padding: 16px 14px;
   }
   .editor-name {
     grid-column: 1 / -1;
@@ -295,18 +311,16 @@
   }
   .editor-index {
     position: static;
-    padding: 15px 0;
+    padding: 0 0 14px;
     border-bottom: 1px solid var(--line);
   }
   .editor-index-heading {
     padding-inline: 14px;
   }
   .editor-criterion-list {
-    display: flex;
-    overflow-x: auto;
-    padding: 0 8px 8px;
-    scrollbar-width: thin;
+    display: none;
   }
+  .editor-mobile-picker { display:block; padding:0 14px; }
   .editor-criterion-button {
     width: 170px;
     flex: 0 0 170px;

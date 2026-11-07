@@ -346,6 +346,19 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
               }).format(weight)}
             </span>
           </div>
+          <div className="editor-mobile-picker">
+            <Select
+              aria-label="Выбрать критерий"
+              value={criterion.criterion_id}
+              onChange={(event) => setSelectedId(event.target.value)}
+            >
+              {draft.criteria.map((item) => (
+                <option key={item.criterion_id} value={item.criterion_id}>
+                  {item.title || "Новый критерий"}
+                </option>
+              ))}
+            </Select>
+          </div>
           <div className="editor-criterion-list">
             {draft.criteria.map((item, index) => (
               <button

@@ -1,3 +1,5 @@
+import { UserRound } from "lucide-react";
+
 import { ArrowLeft, Headphones, MessageSquare } from "lucide-react";
 import type { Conversation, Evaluation, Speaker } from "./contracts";
 const names: Record<Speaker, string> = {
@@ -114,9 +116,7 @@ export default function Transcript({
                 aria-label={`Реплика ${i + 1}, ${names[message.speaker]}`}
               >
                 <div className="message-meta">
-                  <span className="message-position">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
+                  <span className="speaker-mark" aria-hidden="true">{message.speaker === "operator" ? <Headphones size={17} /> : <UserRound size={17} />}</span>
                   <strong>{names[message.speaker]}</strong>
                   <time title={message.timestamp}>
                     {message.timestamp.includes("T")

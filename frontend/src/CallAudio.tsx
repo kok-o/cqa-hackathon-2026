@@ -35,6 +35,5 @@ export default function CallAudio({ groupId, conversationId, hasAudio, evaluatio
           : <span className="no-audio-banner">Аудиозапись не предоставлена.</span>}
     </div>
     {error ? <p className="audio-error" role="alert">{error}</p> : null}
-    <p className="audio-note">AI оценивает звонки по транскрипту. Запись служит для ручной проверки; точная привязка реплик ко времени не предоставлена.</p>
   </section>;
 }

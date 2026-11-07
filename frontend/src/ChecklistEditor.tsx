@@ -310,7 +310,7 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
             }}
             disabled={busy}
           >
-            <option value="synthetic_example">Учебный чек-лист</option>
+            <option value="synthetic_example">Пользовательский чек-лист</option>
             <option value="organizer">Правила организаторов</option>
           </Select>
         </label>

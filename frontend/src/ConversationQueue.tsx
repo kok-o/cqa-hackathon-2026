@@ -39,7 +39,6 @@ type Props = {
   onReset: () => void;
   onImport: () => void;
   onRun: () => void;
-  onDemo: () => void;
   onSubmission: () => void;
   onClose: () => void;
 };
@@ -225,13 +224,6 @@ export default function ConversationQueue(p: Props) {
         >
           <Play size={15} /> Оценить выборку{" "}
           <span className="button-count">{p.items.length}</span>
-        </button>
-        <button
-          className="text-button demo-link"
-          disabled={p.importing}
-          onClick={p.onDemo}
-        >
-          Учебный набор
         </button>
       </footer>
     </aside>

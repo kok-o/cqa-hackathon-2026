@@ -1034,7 +1034,7 @@ export default function App() {
               onClick={() => void importDataset({ source: "demo" })}
               disabled={importing}
             >
-              Открыть 3 учебных диалога
+              Открыть пример диалогов
             </button>
           </section>
         ) : (
@@ -1167,7 +1167,6 @@ export default function App() {
                 onReset={resetFilters}
                 onImport={() => inputRef.current?.click()}
                 onRun={() => void run(filtered)}
-                onDemo={() => void importDataset({ source: "demo" })}
                 onSubmission={openSubmission}
                 onClose={closeQueue}
               />
@@ -1243,9 +1242,6 @@ export default function App() {
                       {selectedChecklist?.criteria.length ?? 0} критериев,
                       версия {selectedChecklist?.version}.
                     </p>
-                    {selectedChecklist?.provenance === "synthetic_example" && (
-                      <span className="badge warning">Учебный чек-лист</span>
-                    )}
                     {!config?.provider_configured && (
                       <button
                         className="connection-hint"

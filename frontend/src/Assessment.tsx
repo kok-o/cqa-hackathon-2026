@@ -196,12 +196,6 @@ export default function Assessment({
   return (
     <section className="assessment aq-panel" aria-label="Оценка диалога">
       <header className="aq-heading">
-        <span>
-          Чек-лист v{evaluation.checklist.version}
-          {evaluation.checklist.provenance === "synthetic_example"
-            ? " · учебный"
-            : ""}
-        </span>
         <button
           type="button"
           className="icon-button aq-download"

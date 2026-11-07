@@ -9,7 +9,7 @@
 .aq-heading {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 12px;
   padding: 14px 20px 0;
   color: var(--aq-muted);

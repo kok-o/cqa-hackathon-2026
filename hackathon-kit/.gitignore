@@ -1,0 +1,11 @@
+__pycache__/
+.ipynb_checkpoints/
+.venv/
+wheelhouse/
+raw/
+stage/
+scratch/
+out/
+catboost_info/
+*.duckdb
+*.duckdb.wal

@@ -1,0 +1,27 @@
+{
+  "checklist_id": "synthetic-checklist",
+  "version": 1,
+  "title": "Учебный пример формата, заменить официальными критериями",
+  "provenance": "synthetic_example",
+  "criteria": [
+    {
+      "criterion_id": "example-greeting",
+      "title": "Приветствие",
+      "instruction": "Определите, приветствовал ли operator клиента в начале диалога.",
+      "weight": 1,
+      "answer_type": "boolean",
+      "positive_answer": true,
+      "na_allowed": false
+    },
+    {
+      "criterion_id": "example-next-step",
+      "title": "Понятность следующего действия",
+      "instruction": "Оцените понятность инструкции от 0 до 2. 0 — инструкция отсутствует, 1 — частичная, 2 — понятное действие.",
+      "weight": 2,
+      "answer_type": "scale",
+      "scale_min": 0,
+      "scale_max": 2,
+      "na_allowed": true
+    }
+  ]
+}

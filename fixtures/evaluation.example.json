@@ -1,0 +1,27 @@
+{
+  "conversation_id": "demo-ru-001",
+  "group_id": "SYNTHETIC",
+  "checklist_id": "synthetic-checklist",
+  "checklist_version": 1,
+  "prompt_version": "synthetic-fixture-v1",
+  "results": [
+    {
+      "criterion_id": "example-greeting",
+      "status": "applicable",
+      "answer": true,
+      "explanation": "Учебная оценка. Оператор поздоровался.",
+      "evidence": [{"message_id": "demo-ru-001:0001", "quote": "Здравствуйте!"}],
+      "checked_span": null,
+      "gross_error": false
+    },
+    {
+      "criterion_id": "example-next-step",
+      "status": "applicable",
+      "answer": 2,
+      "explanation": "Учебная оценка. Указаны раздел и действие с периодом.",
+      "evidence": [{"message_id": "demo-ru-001:0003", "quote": "Откройте раздел «История» и выберите нужный период."}],
+      "checked_span": null,
+      "gross_error": false
+    }
+  ]
+}

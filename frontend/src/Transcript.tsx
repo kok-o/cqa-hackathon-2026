@@ -67,7 +67,7 @@ export default function Transcript({
           )}
         </div>
       )}
-      {source?.channel === 'voice call' && <CallAudio key={`${source.group_id}:${source.conversation_id}:${evaluation?.evaluation_id ?? ''}`} groupId={source.group_id} conversationId={source.conversation_id} evaluationId={evaluation?.evaluation_id} hasAudio={Boolean(source.audio_url)} />}
+      {source?.channel === 'voice call' && <CallAudio key={JSON.stringify([source.group_id, source.conversation_id, evaluation?.evaluation_id ?? '', source.audio_url ?? ''])} groupId={source.group_id} conversationId={source.conversation_id} evaluationId={evaluation?.evaluation_id} hasAudio={Boolean(source.audio_url)} />}
       <div className="transcript-content">
         {loading ? (
           <div

@@ -21,7 +21,7 @@ from .provider import ProviderOutputError, TokenUsage, estimate_cost, extract_co
 from .validation import validate_draft
 
 ROOT = Path(__file__).resolve().parents[3]
-PROMPT_VERSION = "cqa-evaluator-v3"
+PROMPT_VERSION = "cqa-evaluator-v5"
 PROMPT_PATH = ROOT / "prompts" / "evaluator.md"
 
 
@@ -147,7 +147,8 @@ def output_schema() -> dict[str, Any]:
         "criterion_id": {"type": "string"},
         "status": {"type": "string", "enum": ["applicable", "not_applicable", "needs_review"]},
         "answer": {"anyOf": [{"type": "boolean"}, {"type": "number"}, {"type": "string"}, {"type": "null"}]},
-        "explanation": {"type": "string"}, "evidence": {"type": "array", "items": evidence},
+        "explanation": {"type": "string", "description": "Краткое обоснование на русском языке, обычно 1–2 предложения. Согласуйте его с ответом, контекстом и порядком реплик."},
+        "evidence": {"type": "array", "items": evidence},
         "checked_span": {"anyOf": [span, {"type": "null"}]}, "gross_error": {"type": "boolean"},
     }
     return {"type": "object", "additionalProperties": False,
@@ -159,7 +160,8 @@ def output_schema() -> dict[str, Any]:
 def build_messages(conversation: Conversation, checklist: ChecklistVersion) -> list[dict[str, str]]:
     content = {"checklist": checklist.model_dump(mode="json"),
         "conversation": conversation.model_dump(mode="json", exclude={"audio_url"}),
-        "available_materials": {"transcript": True, "audio": False}, "output_schema": output_schema()}
+        "available_materials": {"transcript": True, "audio": False}, "output_schema": output_schema(),
+        "required_output_language": "Russian (ru) for every explanation; verbatim evidence quotes keep their original language."}
     return [{"role": "system", "content": PROMPT_PATH.read_text(encoding="utf-8")},
             {"role": "user", "content": json.dumps(content, ensure_ascii=False, allow_nan=False)}]
 

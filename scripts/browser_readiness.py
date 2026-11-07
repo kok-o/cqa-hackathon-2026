@@ -8,6 +8,7 @@ import base64
 from copy import deepcopy
 import io
 import json
+import re
 from pathlib import Path
 import sys
 from urllib.parse import urlsplit
@@ -56,14 +57,14 @@ def main():
             assert upload(dataset)['imported'] == 10
             cid = dataset['data']['records'][0]['conversation_id']
             page.locator('.conversation-item').filter(has_text=cid).click()
-            expect(page.get_by_role('heading',name=cid,exact=True)).to_be_visible()
+            expect(page.locator('.conversation-context strong')).to_have_text(cid)
             expect(page.locator('.transcript-content .message')).to_have_count(5)
             checks.append('unicode_and_reserved_character_id_opens_in_ui')
             partial = deepcopy(dataset)
             partial['data']['records'] = partial['data']['records'][:1]
             partial['data']['total_records'] = 1
             assert upload(partial)['retained_from_previous_import'] == 9
-            expect(page.get_by_role('status').filter(has_text='из прошлых импортов')).to_be_visible()
+            expect(page.get_by_role('status').filter(has_text='из предыдущих импортов')).to_be_visible()
             assert upload(dataset)['unchanged'] == 10
             bad = deepcopy(partial)
             bad['data']['records'][0]['transcript'] = [{'speaker':'client','timestamp':'00:00','text':'   '}]
@@ -72,7 +73,7 @@ def main():
             page.get_by_role('button', name='Закрыть сообщение об ошибке').click()
             checks.extend(['upsert_residual_group_warning','invalid_empty_transcript_error_visible'])
 
-            page.get_by_role('button',name='Оценить выборку (10)',exact=True).click()
+            page.get_by_role('button',name=re.compile(r'^Оценить выборку\s*10$')).click()
             expect(page.locator('.batch-banner')).to_contain_text('Обработка завершена',timeout=60000)
             expect(page.locator('.batch-banner')).to_contain_text('Обработано 10 из 10')
             expect(page.locator('.job-errors')).to_have_count(0)
@@ -84,7 +85,7 @@ def main():
             upload(voices)
             first = voices['data']['records'][0]['conversation_id']
             page.locator('.conversation-item').filter(has_text=first).click()
-            expect(page.locator('.audio-note')).to_contain_text('по транскрипту')
+            expect(page.get_by_role('region', name='Аудиозапись звонка')).to_be_visible()
             page.route('**/api/audio-source?*', lambda route: route.fulfill(status=502,json={'detail':'Тест: источник временно недоступен.'}))
             page.get_by_role('button',name='Открыть запись звонка',exact=True).click()
             expect(page.locator('.audio-error')).to_contain_text('временно недоступен')

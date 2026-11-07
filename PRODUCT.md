@@ -16,19 +16,22 @@ Read a conversation in RU, KZ or EN, apply the selected version of a checklist, 
 
 ## Operating Context
 
-Local React/TypeScript/Vite application served by FastAPI, with SQLite persistence. No sign-in is required. The supplied dataset contains 65 conversations; synthetic fixtures are clearly labeled. The official eight-criterion rubric is unavailable, so the starter checklist is explicitly illustrative.
+Local React/TypeScript/Vite application served by FastAPI, with SQLite persistence. No sign-in is required. The supplied dataset contains 65 conversations; synthetic fixtures are clearly labeled. The official eight-criterion Freedom Broker rubric is available, including discrete scales and the separate critical flag. Synthetic fixtures and the isolated UI evaluator remain explicitly labeled.
 
 ## Capabilities and Constraints
 
-Dataset JSON import, versioned editable criteria, asynchronous real model assessment, exact evidence links, audio playback when available, appeals, revisions, history and export. Unconfigured AI and unresolved criteria must remain visible. No invented model outputs or official scoring claims. Primary selection criterion is accuracy against organizer Ground Truth on ten unseen transcripts; no quality result has yet been measured.
+Dataset JSON import, versioned editable criteria, asynchronous real model assessment, exact evidence links and checked ranges, audio playback when available, appeals, revisions, history, internal export and the official submission JSON 1.0. Unconfigured AI and unresolved criteria must remain visible. No invented model outputs or official scoring claims. Primary selection criterion is accuracy against organizer Ground Truth on ten unseen transcripts; no quality result has yet been measured.
 
 ## Product Principles
 
-- Keep the source conversation next to the assessment.
+- Use compact controls and direct labels; keep explanatory text where it affects a decision.
+- Keep the source conversation next to the assessment on desktop; use Queue, Conversation and Assessment panels on mobile.
+- Preserve the selected criterion and review context when opening evidence and returning.
+- Edit one criterion at a time; retain draft changes while switching criteria and save a new checklist version explicitly.
 - Make uncertainty and source provenance explicit.
 - Preserve prior versions and original scores.
 - Make all essential workflows available without developer tools.
 
 ## Context source
 
-Confirmed task, repository documentation and parent implementation brief. Visual implementation choices are delegated; this subagent did not run a separate user interview.
+GitHub issues #3 and #5, the official-rubric implementation in PR #4, and the repository product and scoring contracts.

@@ -2,6 +2,8 @@
 
 Методика, результаты и ограничения: [FAULT_REHEARSAL.md](../FAULT_REHEARSAL.md).
 
+Повторные проверки после объединения интерфейса и атомарного экспорта: [PR_INTEGRATION_CHECK.md](../PR_INTEGRATION_CHECK.md), артефакты в [pr-integration/summary.json](pr-integration/summary.json). Прежние свидетельства ниже сохранены без перезаписи.
+
 | Файлы | Содержание |
 |---|---|
 | `verification-summary.json` | Выполненные команды, число backend-тестов, hashes проверенного кода, сохранность рабочей БД |

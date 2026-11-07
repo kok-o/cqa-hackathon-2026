@@ -7,6 +7,7 @@ import argparse
 from datetime import datetime, timezone
 from copy import deepcopy
 import json
+import re
 import time
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -46,7 +47,7 @@ def main():
             for i,row in enumerate(dataset['data']['records']):row['conversation_id']=group+'-'+str(i)
             page.get_by_label('Выбрать JSON с диалогами').set_input_files({'name':'fault.json','mimeType':'application/json','buffer':json.dumps(dataset,ensure_ascii=False).encode()})
             expect(page.locator('.conversation-item')).to_have_count(count)
-            expect(page.get_by_role('heading',name=dataset['data']['records'][0]['conversation_id'],exact=True)).to_be_visible()
+            expect(page.locator('.conversation-context strong')).to_have_text(dataset['data']['records'][0]['conversation_id'])
             return group
 
         def finished():
@@ -54,7 +55,7 @@ def main():
             expect(page.locator('.job-errors')).to_have_count(0)
             expect(page.locator('.queue-recovery')).to_have_count(0)
 
-        def start_run(name='Оценить'):
+        def start_run(name='Оценить диалог'):
             # Wait through the fresh-config preflight; a previous completed banner
             # can still be visible until the new queue actually starts dispatching.
             with page.expect_request(lambda request: request.method=='POST' and request.url.endswith('/api/evaluation-jobs')):
@@ -62,6 +63,12 @@ def main():
 
         def evaluations(group):
             return client.get('/api/evaluations',params={'group_id':group}).raise_for_status().json()
+
+        def assert_history(evaluation_id):
+            page.get_by_role('combobox',name='История оценок',exact=True).click()
+            option=page.locator('[role="option"][data-select-value='+json.dumps(evaluation_id)+']')
+            expect(option).to_have_attribute('aria-selected','true')
+            page.keyboard.press('Escape')
 
         def force_poll(route):
             # A fast mechanical evaluator can finish before the browser reads 202.
@@ -108,9 +115,11 @@ def main():
                 response=route.fetch(); accepted.append(response.json()['job_id'])
                 keys.append(route.request.post_data_json['idempotency_key']);route.abort('failed')
             page.route('**/api/evaluation-jobs',lose_all)
-            start_run('Оценить выборку (3)')
+            start_run('Оценить выборку 3')
             expect(page.locator('.queue-recovery')).to_be_visible()
             assert len(accepted)==3 and len(set(accepted))==len(set(keys))==1
+            expect(page.get_by_role('button',name='Повторить с ошибками',exact=True)).to_have_count(0)
+            expect(page.get_by_role('button',name='Оценить выборку 3',exact=True)).to_be_disabled()
             assert len(evaluations(group))==1
             page.unroute('**/api/evaluation-jobs')
             page.reload(wait_until='networkidle')
@@ -122,7 +131,7 @@ def main():
             checks.append({'case':'all_POST_responses_lost_then_reload_resume','passed':True,'lost_posts':3,'first_unique_jobs':1,'final_evaluations':3})
 
             group=seed('reload-active',3)
-            start_run('Оценить выборку (3)')
+            start_run('Оценить выборку 3')
             page.wait_for_function('(key)=>JSON.parse(sessionStorage.getItem(key))?.items.some(x=>x.job_id)',arg=QUEUE_KEY)
             page.reload(wait_until='networkidle')
             expect(page.locator('.queue-recovery')).to_be_visible()
@@ -132,7 +141,7 @@ def main():
             checks.append({'case':'reload_during_active_queue_resumes_once','passed':True,'final_evaluations':3})
 
             group=seed('stop-resume',3)
-            start_run('Оценить выборку (3)')
+            start_run('Оценить выборку 3')
             page.get_by_role('button',name='Остановить очередь').click()
             expect(page.locator('.queue-recovery')).to_be_visible()
             assert 1<=len(evaluations(group))<3
@@ -184,7 +193,7 @@ def main():
 
             group=seed('null-config')
             page.route('**/api/config',lambda route: route.fulfill(status=200,body='null',content_type='application/json'))
-            page.get_by_role('button',name='Оценить',exact=True).click()
+            page.get_by_role('button',name=re.compile(r'^Оценить (диалог|снова)$')).click()
             expect(page.locator('.notice.error')).to_be_visible()
             assert not evaluations(group)
             page.unroute('**/api/config')
@@ -221,13 +230,13 @@ def main():
                 response=route.fetch();held_history.append((route,response))
             page.route('**/api/evaluations?*',hold_history)
             group=seed('delayed-history')
-            start_run('Оценить выборку (1)');finished()
+            start_run('Оценить выборку 1');finished()
             assert held_history
             for route,response in held_history:route.fulfill(response=response)
             page.unroute('**/api/evaluations?*')
-            expect(page.get_by_role('button',name='Оценить',exact=True)).to_be_enabled()
+            expect(page.get_by_role('button',name=re.compile(r'^Оценить (диалог|снова)$'))).to_be_enabled()
             stored=evaluations(group);assert len(stored)==1
-            expect(page.get_by_role('combobox',name='История',exact=True)).to_have_value(stored[0]['evaluation_id'])
+            assert_history(stored[0]['evaluation_id'])
             checks.append({'case':'delayed_old_history_keeps_fresh_result','passed':True})
 
             group=seed('late-old-snapshot')
@@ -251,7 +260,7 @@ def main():
             client.post('/api/datasets/import',json={'dataset':newer}).raise_for_status()
             page.reload(wait_until='networkidle')
             page.locator('.conversation-item').filter(has_text=cid).click()
-            expect(page.get_by_role('combobox',name='История',exact=True)).to_have_value(current_id)
+            assert_history(current_id)
             assert current_id!=stale_id
             checks.append({'case':'current_source_selected_over_late_old_evaluation','passed':True})
 

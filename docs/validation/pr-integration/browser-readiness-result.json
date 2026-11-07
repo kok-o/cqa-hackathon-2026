@@ -1,0 +1,14 @@
+{
+  "status": "passed",
+  "mode": "isolated_test_double_not_AI_quality",
+  "checks": [
+    "unicode_and_reserved_character_id_opens_in_ui",
+    "upsert_residual_group_warning",
+    "invalid_empty_transcript_error_visible",
+    "ui_batch_of_ten_new_chats_completes_with_test_double",
+    "audio_resolution_error_retry_and_success_decoding",
+    "desktop_tablet_mobile_no_horizontal_overflow"
+  ],
+  "page_errors": [],
+  "paid_model_calls": 0
+}

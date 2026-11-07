@@ -1,1 +1,52 @@
-{"schemaVersion":1,"colors":{"canvas":"#f3f6f5","surface":"#ffffff","text":"#1e3029","muted":"#53665d","border":"#dce5df","primary":"#216447","nav":"#173d2d","selected":"#e8f3ec","warning":"#875313","danger":"#a03434"},"typography":{"family":"Manrope Variable, sans-serif","body":14,"heading":24,"lineHeight":1.55},"spacing":[4,8,12,16,24,32],"radii":{"control":8,"sheet":12}}
+{
+  "schemaVersion": 1,
+  "colors": {
+    "canvas": "#f4f5f3",
+    "surface": "#ffffff",
+    "text": "#25312a",
+    "muted": "#667169",
+    "border": "#e4e8e2",
+    "primary": "#216447",
+    "nav": "#ffffff",
+    "selected": "#e8f3ec",
+    "warning": "#875313",
+    "danger": "#a03434"
+  },
+  "typography": {
+    "family": "IBM Plex Sans, sans-serif",
+    "body": 14,
+    "heading": 20,
+    "lineHeight": 1.5
+  },
+  "spacing": [
+    4,
+    8,
+    12,
+    16,
+    24,
+    32
+  ],
+  "radii": {
+    "control": 4,
+    "sheet": 0
+  },
+  "interaction": {
+    "mobileTouchTarget": 44,
+    "evidenceTransitionMs": 160,
+    "resultTransitionMs": 180,
+    "panelTransitionMs": 220,
+    "reducedMotion": "instant; keep focus and selection visible"
+  },
+  "layout": {
+    "desktop": "queue, transcript, assessment",
+    "tablet": "queue on demand, transcript and assessment",
+    "mobile": "single pane with Queue/Conversation/Assessment tabs",
+    "editor": "criterion index and single detail form"
+  },
+  "principles": [
+    "Compact review tool",
+    "Functional labels without repeated explanations",
+    "Dividers and alignment instead of decorative cards",
+    "Visible focus and explicit validation"
+  ]
+}

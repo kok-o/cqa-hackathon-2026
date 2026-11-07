@@ -1,7 +1,7 @@
 .select-trigger { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; min-width:0; min-height:42px; padding:10px 12px; border:1px solid var(--line); border-radius:9px; background:#fff; color:var(--text); font:inherit; text-align:left; cursor:pointer; }
 .select-trigger > span:first-child { min-width:0; flex:1; white-space:normal; overflow-wrap:anywhere; line-height:1.45; }
 .select-trigger:hover { border-color:#a6afb8; background:var(--canvas); }
-.select-trigger[data-state=open] { border-color:var(--primary); box-shadow:0 0 0 3px #02b14014; }
+.select-trigger[data-state=open] { border-color:var(--primary); box-shadow:0 0 0 3px #14543114; }
 .select-trigger:focus-visible { outline:2px solid var(--primary); outline-offset:3px; }
 .select-trigger:disabled { opacity:.5; cursor:not-allowed; }
 .select-chevron { display:flex; color:var(--muted); flex-shrink:0; transition:transform 140ms; }

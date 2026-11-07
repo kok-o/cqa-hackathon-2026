@@ -1,5 +1,5 @@
-/* Freedom Bank logo: #0E151C ink, #02B140 green, white surface.
-   Source: https://freedombank.kz/images/logo.svg */
+/* Green shield supplied by the user: #4FAF3D leaf, #145431 deep green.
+   Keep the #0E151C bank ink and white working surfaces. */
 .app-header {
   background: var(--brand-black);
   border-bottom-color: #28333d;
@@ -14,8 +14,8 @@
 .connected .status-dot { background: var(--brand-green); }
 .review-context { background: #fff; border-left-color: var(--brand-black); }
 .conversation-context > span { color: var(--muted); border-color: var(--line); background: var(--canvas); }
-.button.primary { background: var(--brand-green); color: var(--brand-black); }
-.button.primary:hover:not(:disabled) { background: #15c453; }
+.button.primary { background: var(--brand-deep-green); color: #fff; }
+.button.primary:hover:not(:disabled) { background: #1d6840; }
 .button.secondary { color: var(--text); }
 .list-score { color: var(--text); }
 

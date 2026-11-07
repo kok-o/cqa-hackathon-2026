@@ -6,13 +6,14 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   --brand-black: #0e151c;
-  --brand-green: #02b140;
+  --brand-green: #4faf3d;
+  --brand-deep-green: #145431;
   --surface: #fff;
   --canvas: #f5f6f7;
   --text: #0e151c;
   --muted: #626a72;
   --line: #e2e5e8;
-  --primary: #087a31;
+  --primary: var(--brand-deep-green);
   --selected: #edf0f2;
   --danger: #a03434;
   --warning: #875313;

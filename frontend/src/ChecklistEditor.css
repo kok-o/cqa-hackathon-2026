@@ -2,7 +2,7 @@
   max-width: 1180px;
   margin: 0 auto;
   padding: 4px 0 20px;
-  color: #25312a;
+  color: var(--text);
 }
 
 .editor-feedback {
@@ -27,7 +27,7 @@
   grid-template-columns: 265px minmax(0, 1fr);
   align-items: start;
   background: #fff;
-  border-block: 1px solid #e4e8e2;
+  border-block: 1px solid var(--line);
 }
 
 .editor-index {
@@ -51,11 +51,11 @@
 }
 .editor-index-heading strong span {
   margin-left: 4px;
-  color: #667169;
+  color: var(--muted);
   font-weight: 400;
 }
 .editor-index-heading > span {
-  color: #667169;
+  color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
 .editor-criterion-list {
@@ -74,17 +74,17 @@
   border-radius: 0;
   background: transparent;
   text-align: left;
-  color: #25312a;
+  color: var(--text);
   cursor: pointer;
   transition: background 120ms;
 }
 
 .editor-criterion-button:hover {
-  background: #f4f5f3;
+  background: var(--canvas);
 }
 .editor-criterion-button.is-selected {
-  border-left-color: #216447;
-  background: #edf3ee;
+  border-left-color: var(--primary);
+  background: var(--selected);
 }
 .editor-criterion-label {
   display: grid;
@@ -100,11 +100,11 @@
 }
 .editor-criterion-label small {
   font-size: 11px;
-  color: #667169;
+  color: var(--muted);
 }
 .editor-weight {
   font-size: 12px;
-  color: #667169;
+  color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
 .editor-add.button {
@@ -115,7 +115,7 @@
 
 .editor-detail {
   min-width: 0;
-  border-left: 1px solid #e4e8e2;
+  border-left: 1px solid var(--line);
   scroll-margin-top: 20px;
 }
 
@@ -126,7 +126,7 @@
   gap: 16px;
   min-height: 67px;
   padding: 15px 28px;
-  border-bottom: 1px solid #e4e8e2;
+  border-bottom: 1px solid var(--line);
 }
 
 .editor-detail-heading h3 {
@@ -145,7 +145,7 @@
   margin: 0;
   padding: 22px 28px 24px;
   border: 0;
-  border-top: 1px solid #e4e8e2;
+  border-top: 1px solid var(--line);
 }
 
 .editor-fieldset:first-of-type {
@@ -189,7 +189,7 @@
   margin-top: 2px;
   font-size: 12px;
   line-height: 1.5;
-  color: #667169;
+  color: var(--muted);
 }
 .editor-wide {
   grid-column: 1 / -1;
@@ -208,7 +208,7 @@
   width: 16px;
   height: 16px;
   margin: 2px 0;
-  accent-color: #216447;
+  accent-color: var(--primary);
 }
 .editor-toggle > span {
   display: grid;
@@ -221,7 +221,7 @@
 .editor-toggle small {
   font-size: 12px;
   line-height: 1.5;
-  color: #667169;
+  color: var(--muted);
 }
 .editor-inline-note {
   margin: 0;
@@ -242,14 +242,14 @@
   align-items: center;
   gap: 16px;
   padding: 14px 0;
-  border-top: 1px solid #e4e8e2;
-  background: #f4f5f3;
+  border-top: 1px solid var(--line);
+  background: var(--canvas);
 }
 
 .editor-save-status {
   min-width: 0;
   font-size: 12px;
-  color: #667169;
+  color: var(--muted);
 }
 .editor-save-actions {
   display: flex;
@@ -296,7 +296,7 @@
   .editor-index {
     position: static;
     padding: 15px 0;
-    border-bottom: 1px solid #e4e8e2;
+    border-bottom: 1px solid var(--line);
   }
   .editor-index-heading {
     padding-inline: 14px;

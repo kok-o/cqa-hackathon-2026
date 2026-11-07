@@ -1,0 +1,58 @@
+/* Freedom Bank logo: #0E151C ink, #02B140 green, white surface.
+   Source: https://freedombank.kz/images/logo.svg */
+.app-header {
+  background: var(--brand-black);
+  border-bottom-color: #28333d;
+}
+.brand { color: var(--brand-green); }
+.main-nav button { color: #b9c1ca; }
+.main-nav button.active,
+.main-nav button:hover { color: #fff; }
+.main-nav button::after { background: var(--brand-green); }
+.provider-button { color: #d3d9df; background: #1b2630; }
+.provider-button:hover { background: #293640; }
+.connected .status-dot { background: var(--brand-green); }
+.review-context { background: #fff; border-left-color: var(--brand-black); }
+.conversation-context > span { color: var(--muted); border-color: var(--line); background: var(--canvas); }
+.button.primary { background: var(--brand-green); color: var(--brand-black); }
+.button.primary:hover:not(:disabled) { background: #15c453; }
+.button.secondary { color: var(--text); }
+.list-score { color: var(--text); }
+
+.conversation-sidebar {
+  --text: #fff;
+  --muted: #afb8c2;
+  --line: #2b3640;
+  background: var(--brand-black);
+  color: var(--text);
+  scrollbar-color: #48545f transparent;
+}
+.conversation-sidebar .search-field,
+.conversation-sidebar .filters {
+  --text: #0e151c;
+  --muted: #626a72;
+  --line: #d5dbe0;
+}
+.conversation-sidebar .search-field { background: #fff; }
+.conversation-sidebar .conversation-item { color: #fff; }
+.conversation-sidebar .conversation-item:hover { background: #1a2631; }
+.conversation-sidebar .conversation-item.selected { background: #24333f; }
+.conversation-sidebar .conversation-item.selected::before { background: var(--brand-green); }
+.conversation-sidebar .list-score { color: #fff; }
+.conversation-sidebar .sidebar-footer { background: var(--brand-black); }
+.conversation-sidebar .icon-button:hover,
+.conversation-sidebar .filter-toggle.active { background: #283640; color: #fff; }
+.conversation-sidebar .filter-count { background: var(--brand-green); color: var(--brand-black); }
+.conversation-sidebar .filters { color: var(--text); }
+.queue-resize-handle::after { background: #9ca7b1; }
+.queue-resize-handle:hover::after,
+.queue-resize-handle:focus-visible::after,
+.queue-resize-handle[data-resizing=true]::after { background: var(--brand-green); }
+
+.message.operator { background: #f1f3f5; border-color: #dbe0e5; }
+.message.operator .message-meta strong { color: var(--brand-black); }
+.operator .speaker-mark { background: var(--brand-black); color: #fff; }
+.editor-criterion-button.is-selected { color: #fff; background: var(--brand-black); border-left-color: var(--brand-green); }
+.editor-criterion-button.is-selected small,
+.editor-criterion-button.is-selected .editor-weight { color: #c5cdd5; }
+.aq-selected { box-shadow: inset 2px 0 var(--brand-black); }

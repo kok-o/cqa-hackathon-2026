@@ -84,7 +84,7 @@ def main():
             upload(voices)
             first = voices['data']['records'][0]['conversation_id']
             page.locator('.conversation-item').filter(has_text=first).click()
-            expect(page.locator('.audio-note')).to_contain_text('по транскрипту')
+            expect(page.get_by_role('region', name='Аудиозапись звонка')).to_be_visible()
             page.route('**/api/audio-source?*', lambda route: route.fulfill(status=502,json={'detail':'Тест: источник временно недоступен.'}))
             page.get_by_role('button',name='Открыть запись звонка',exact=True).click()
             expect(page.locator('.audio-error')).to_contain_text('временно недоступен')

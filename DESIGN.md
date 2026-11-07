@@ -4,8 +4,8 @@ A compact review tool for checking an assessment against its conversation. The i
 
 ## Tokens
 
-- Background `#f4f5f3`, surface `#ffffff`, ink `#25312a`, divider `#e4e8e2`.
-- Primary `#216447`; selected rows use a pale green surface and a clear edge.
+- Freedom Bank logo colors from its [official SVG](https://freedombank.kz/images/logo.svg): ink `#0E151C`, green `#02B140`, white surface. Canvas `#F5F6F7`, dividers `#E2E5E8`, muted type `#626A72`.
+- Dark header and queue, white document and assessment surfaces. Green identifies primary actions and meaningful states; ordinary panels and transcript roles use neutral fills. Bright green buttons carry dark labels for contrast.
 - IBM Plex Sans, bundled locally. Body 14px, source messages 14–15px, metadata 12px; tabular numerals for scores and weights.
 - Compact controls with 4px corners. Regions are separated by alignment and thin rules, without decorative shadows.
 - Mobile touch targets are at least 44px. Focus remains visible for every action.
@@ -13,6 +13,8 @@ A compact review tool for checking an assessment against its conversation. The i
 ## Review
 
 Desktop keeps queue, conversation and assessment together. Tablet opens the queue on demand. Mobile uses Queue, Conversation and Assessment tabs. Evidence opens the exact message or checked range, and the return action restores the selected criterion. Audio seeking requires verified timestamps.
+
+The desktop queue resizes from 240 to 560 px while preserving at least 320 px for the transcript. Drag the divider or use Left/Right (Shift for a larger step), Home/End; double-click resets. Width persists locally. Mobile and tablet retain their existing full-width panel and drawer.
 
 ## Rules
 

@@ -1,8 +1,8 @@
 .aq-panel {
-  --aq-ink: #25312a;
-  --aq-muted: #6a756d;
-  --aq-green: #216447;
-  --aq-line: #e4e8e2;
+  --aq-ink: var(--text);
+  --aq-muted: var(--muted);
+  --aq-green: var(--primary);
+  --aq-line: var(--line);
   color: var(--aq-ink);
   min-width: 0;
 }
@@ -27,7 +27,7 @@
   transition: background 180ms ease;
 }
 .aq-score-saved {
-  background: #edf3ed;
+  background: var(--selected);
 }
 .aq-score-value {
   display: flex;
@@ -148,10 +148,10 @@
   transition: background 160ms ease;
 }
 .aq-criterion:hover {
-  background: #f5f6f3;
+  background: var(--canvas);
 }
 .aq-criterion.aq-selected {
-  background: #edf2ec;
+  background: var(--selected);
   box-shadow: inset 2px 0 var(--aq-green);
 }
 .aq-criterion-name {
@@ -170,7 +170,7 @@
   white-space: nowrap;
 }
 .aq-criterion-answer.good {
-  color: #405a47;
+  color: var(--muted);
 }
 .aq-criterion-answer.bad {
   color: #a13d36;
@@ -182,7 +182,7 @@
   color: var(--aq-muted);
 }
 .aq-criterion > svg {
-  color: #899289;
+  color: #a6afb8;
   transition: transform 160ms ease;
 }
 .aq-selected > svg {
@@ -211,7 +211,7 @@
   font-size: 13px;
   line-height: 1.65;
   margin: 0 0 14px;
-  color: #435348;
+  color: var(--text);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
@@ -227,7 +227,7 @@
   width: 100%;
   gap: 6px;
   border: 0;
-  border-left: 2px solid #91ad97;
+  border-left: 2px solid var(--primary);
   padding: 1px 0 1px 11px;
   background: transparent;
   color: var(--aq-green);
@@ -239,7 +239,7 @@
 .aq-quote {
   font-size: 13px;
   line-height: 1.6;
-  color: #56645a;
+  color: var(--muted);
   overflow-wrap: anywhere;
   white-space: pre-wrap;
 }
@@ -360,7 +360,7 @@
   gap: 7px;
   font-size: 12px;
   font-weight: 400;
-  color: #536157;
+  color: var(--text);
 }
 .aq-panel .field input,
 .aq-panel .field select,
@@ -426,7 +426,7 @@
 .aq-decision-summary {
   margin-top: 10px;
   padding: 0 0 0 10px;
-  border-left: 2px solid #9ab59e;
+  border-left: 2px solid var(--primary);
   color: var(--aq-green);
 }
 .aq-decision-summary > strong {
@@ -453,7 +453,7 @@
 .aq-decision-form blockquote {
   margin: 0;
   padding: 0 0 0 10px;
-  border-left: 2px solid #9ab59e;
+  border-left: 2px solid var(--primary);
   font-size: 12px;
   line-height: 1.6;
   max-height: 160px;

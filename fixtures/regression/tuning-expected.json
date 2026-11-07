@@ -1,0 +1,204 @@
+{
+  "schema_version": 1,
+  "provenance": "synthetic_regression_authored_by_assistant",
+  "not_ground_truth": true,
+  "purpose": "prompt_development_after_observing_DEV",
+  "created_at": "2026-11-07",
+  "checklist_sha256": "9264b4d2099685078769691b7f72ef1fcb1befe19ec6c9ad94e69a6531cedfaf",
+  "dataset_sha256": "b72b35c242ed70db8ee4a40d706fc3767b364a3dacec706883374eeee9540033",
+  "limitations": "New, invented assistant-authored tuning assertions written after inspecting DEV model outputs. These are prompt-development examples, not an independent test, human labels, organizer GT, or evidence of general accuracy. No real transcript text or personal data was copied.",
+  "items": [
+    {
+      "group_id": "SYNTHETIC-PROMPT-TUNING-v1",
+      "conversation_id": "tune-ru-repaired-directions",
+      "language": "RU",
+      "scenario": "Operator causes explicit confusion between two known buttons, then repairs the guidance; successful resolution does not erase the earlier dialogue failure.",
+      "expected_results": [
+        {
+          "criterion_id": "contact",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "The first operator message greets the client in Russian and gives a name."
+        },
+        {
+          "criterion_id": "discovery",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "The client supplies the desired outcome and both button labels before the operator answers; no missing detail needs clarification."
+        },
+        {
+          "criterion_id": "identification",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "Saving a public timetable requires no identity check or protected access."
+        },
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 20,
+          "gross_error": false,
+          "rationale": "The corrected specific instruction achieves the sole requested outcome, confirmed by the client."
+        },
+        {
+          "criterion_id": "empathy",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "The operator acknowledges and apologizes for the specific confusing direction, then clarifies it politely."
+        },
+        {
+          "criterion_id": "dialogue",
+          "status": "applicable",
+          "answer": 4,
+          "gross_error": false,
+          "rationale": "The client explicitly has to ask which button the operator means because the initial wording is vague. The later repair does not erase this event; the configured 4 anchor describes it."
+        },
+        {
+          "criterion_id": "closure",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "The operator recaps the saved copy, offers further help, and says farewell."
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "No operator insult, private paid offer or confidential disclosure occurs."
+        }
+      ]
+    },
+    {
+      "group_id": "SYNTHETIC-PROMPT-TUNING-v1",
+      "conversation_id": "tune-kz-neutral-inconvenience",
+      "language": "KZ",
+      "scenario": "A neutrally phrased failure of a public download is an inconvenience; a polite refusal to help contains no specific response to that difficulty.",
+      "expected_results": [
+        {
+          "criterion_id": "contact",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "The first operator message greets in Kazakh and introduces the operator."
+        },
+        {
+          "criterion_id": "discovery",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "The client gives the goal, the failed download control and the active online-reading option; the request needs no missing detail."
+        },
+        {
+          "criterion_id": "identification",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "The request concerns reading a public guide, not protected information or an account action."
+        },
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 0,
+          "gross_error": false,
+          "rationale": "The operator explicitly offers nothing: no substantive answer or next step is given."
+        },
+        {
+          "criterion_id": "empathy",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "The client describes an unavailable operation without emotional language. The operator uses a greeting and a generic refusal, with no acknowledgment or helpful response to the concrete inconvenience."
+        },
+        {
+          "criterion_id": "dialogue",
+          "status": "applicable",
+          "answer": 10,
+          "gross_error": false,
+          "rationale": "The refusal is unambiguous and directly connected to the request. There is no confusing wording, repetition or waiting; lack of a solution is assessed separately."
+        },
+        {
+          "criterion_id": "closure",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "The operator says farewell but neither recaps an outcome nor offers further help, then voluntarily closes; this is not a disconnection."
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "Unhelpful service alone is not any of the three defined gross violations."
+        }
+      ]
+    },
+    {
+      "group_id": "SYNTHETIC-PROMPT-TUNING-v1",
+      "conversation_id": "tune-en-attributed-paraphrase",
+      "language": "EN",
+      "scenario": "Operator explicitly attributes a failure report to the client and disclaims account access; only a public contact-form instruction follows.",
+      "expected_results": [
+        {
+          "criterion_id": "contact",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "The first operator message greets in English and introduces the operator."
+        },
+        {
+          "criterion_id": "discovery",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "The client supplies the exact public button, desired form and scope of the request from the outset."
+        },
+        {
+          "criterion_id": "identification",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "Only navigation to a public form is requested and performed; the operator explicitly does not inspect an account, consistent with the session event."
+        },
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 20,
+          "gross_error": false,
+          "rationale": "The operator identifies the correct button; the client confirms that the requested form opens."
+        },
+        {
+          "criterion_id": "empathy",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "The operator acknowledges the concrete difficulty completing the notification-setting change and provides the requested public route."
+        },
+        {
+          "criterion_id": "dialogue",
+          "status": "applicable",
+          "answer": 10,
+          "gross_error": false,
+          "rationale": "The operator distinguishes the client report from personal access clearly, gives a specific instruction, and the client proceeds without confusion."
+        },
+        {
+          "criterion_id": "closure",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "The operator recaps the reached form, offers further assistance and says goodbye."
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "The operator attributes the already supplied failure report to the client, explicitly disclaims account access and adds no protected account fact. No other defined gross violation occurs."
+        }
+      ]
+    }
+  ]
+}

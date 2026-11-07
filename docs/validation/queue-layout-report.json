@@ -1,0 +1,21 @@
+{
+  "status": "passed",
+  "paid_calls": 0,
+  "checks": [
+    {
+      "viewport_width": 1440,
+      "horizontal_overflow": false,
+      "resume_visible": true
+    },
+    {
+      "viewport_width": 768,
+      "horizontal_overflow": false,
+      "resume_visible": true
+    },
+    {
+      "viewport_width": 390,
+      "horizontal_overflow": false,
+      "resume_visible": true
+    }
+  ]
+}

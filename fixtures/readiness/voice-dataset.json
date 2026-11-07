@@ -1,0 +1,114 @@
+{
+  "error": "",
+  "isSuccess": true,
+  "data": {
+    "dataset_group_id": "SYNTHETIC-READINESS-VOICE-v1",
+    "total_records": 3,
+    "records": [
+      {
+        "conversation_id": "ready-voice-ru-cropped-asr",
+        "channel": "voice call",
+        "language": "RU",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "system",
+            "text": "Запись начинается посреди разговора. Начальное приветствие отсутствует в записи; распознавание местами неуверенное."
+          },
+          {
+            "timestamp": "00:05",
+            "speaker": "operator",
+            "text": "Да, откройте [неразборчиво] публичную памятку."
+          },
+          {
+            "timestamp": "00:10",
+            "speaker": "client",
+            "text": "Не расслышал последнее слово."
+          },
+          {
+            "timestamp": "00:15",
+            "speaker": "operator",
+            "text": "Публичную памятку. [неразборчиво]"
+          },
+          {
+            "timestamp": "00:20",
+            "speaker": "system",
+            "text": "Запись обрезана до окончания разговора."
+          }
+        ],
+        "audio_url": "https://example.invalid/synthetic/ready-voice-ru-cropped-asr.ogg"
+      },
+      {
+        "conversation_id": "ready-voice-kz-unverified-disclosure",
+        "channel": "voice call",
+        "language": "KZ",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "Сәлеметсіз бе. Менің оқу шотымдағы қалдықты айтыңыз."
+          },
+          {
+            "timestamp": "00:05",
+            "speaker": "system",
+            "text": "Жеке басты тексеру сәтсіз аяқталды. Клиент расталмаған."
+          },
+          {
+            "timestamp": "00:10",
+            "speaker": "operator",
+            "text": "Сәлеметсіз бе, менің атым Әлия. Сіздің оқу шотыңыздағы қалдық 900 шартты бірлік."
+          },
+          {
+            "timestamp": "00:15",
+            "speaker": "client",
+            "text": "Бірақ мен тексеруден өтпедім ғой."
+          },
+          {
+            "timestamp": "00:20",
+            "speaker": "system",
+            "text": "Клиент байланысы кенет үзілді; оператор жауап бере алмады."
+          }
+        ],
+        "audio_url": "https://example.invalid/synthetic/ready-voice-kz-unverified-disclosure.ogg"
+      },
+      {
+        "conversation_id": "ready-voice-mixed-client-quotation",
+        "channel": "voice call",
+        "language": "KZ",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "Сәлеметсіз бе. Мен тек ашық анықтамадағы «Іздеу» батырмасын таба алмай тұрмын."
+          },
+          {
+            "timestamp": "00:05",
+            "speaker": "operator",
+            "text": "Сәлеметсіз бе, менің атым Самал. Кнопка «Іздеу» находится над публичным списком."
+          },
+          {
+            "timestamp": "00:10",
+            "speaker": "client",
+            "text": "Басқа біреу маған «ақымақ» деді, бұл сіздің сөзіңіз емес. Батырманы көрдім."
+          },
+          {
+            "timestamp": "00:15",
+            "speaker": "operator",
+            "text": "Егер тағы [неразборчиво]"
+          },
+          {
+            "timestamp": "00:20",
+            "speaker": "client",
+            "text": "Спасибо, заканчиваю звонок."
+          },
+          {
+            "timestamp": "00:25",
+            "speaker": "system",
+            "text": "Клиент завершил звонок; последняя реплика оператора записана частично."
+          }
+        ],
+        "audio_url": "https://example.invalid/synthetic/ready-voice-mixed-client-quotation.ogg"
+      }
+    ]
+  }
+}

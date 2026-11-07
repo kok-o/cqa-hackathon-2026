@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "not_ground_truth": true,
+  "source_runs": {
+    "adversarial-20261107-live-v1": {
+      "fingerprint": "d2f314e6af69e6a88a900e756c35df42f3769f22e8902cb970bd8e9196cec140",
+      "authored_checks": {
+        "passed": 21,
+        "checked": 25
+      },
+      "relation_checks": {
+        "passed": 8,
+        "checked": 12
+      },
+      "evidence_anchor_checks": {
+        "passed": 4,
+        "checked": 4
+      },
+      "metrics": {
+        "model": "gpt-6-luna",
+        "planned": 12,
+        "dispatched": 12,
+        "completed": 10,
+        "failed": 2,
+        "budget_skipped": 0,
+        "configuration_skipped": 0,
+        "technical_completion_rate": 0.8333333333333334,
+        "mean_latency_ms": 25968.166666666668,
+        "p50_latency_ms": 20820.5,
+        "max_latency_ms": 70526,
+        "retries": 1,
+        "known_cost_usd": 0.024395589999999998,
+        "total_cost_usd": null,
+        "unknown_cost_requests": 2,
+        "budget_charged_or_reserved_usd": 0.07204509,
+        "tokens_observed": {
+          "input_tokens": 113178,
+          "output_tokens": 28886,
+          "cached_input_tokens": 36468,
+          "cache_write_input_tokens": 76677,
+          "reasoning_tokens": 19398
+        },
+        "usage_incomplete_requests": 2,
+        "quote_existence": {
+          "valid": 107,
+          "checked": 107
+        },
+        "span_existence": {
+          "valid": 11,
+          "checked": 11
+        },
+        "needs_review_fraction": 0.0
+      }
+    },
+    "adversarial-20261107-live-v2": {
+      "fingerprint": "bc455cfc00a33435c5891c532f1646948575442d24e5a3feacc023d71be0e3e9",
+      "authored_checks": {
+        "passed": 25,
+        "checked": 25
+      },
+      "relation_checks": {
+        "passed": 12,
+        "checked": 12
+      },
+      "evidence_anchor_checks": {
+        "passed": 4,
+        "checked": 4
+      },
+      "metrics": {
+        "model": "gpt-6-luna",
+        "planned": 12,
+        "dispatched": 12,
+        "completed": 12,
+        "failed": 0,
+        "budget_skipped": 0,
+        "configuration_skipped": 0,
+        "technical_completion_rate": 1.0,
+        "mean_latency_ms": 24052.75,
+        "p50_latency_ms": 17789.5,
+        "max_latency_ms": 62864,
+        "retries": 0,
+        "known_cost_usd": 0.017296,
+        "total_cost_usd": 0.017296,
+        "unknown_cost_requests": 0,
+        "budget_charged_or_reserved_usd": 0.017296,
+        "tokens_observed": {
+          "input_tokens": 106127,
+          "output_tokens": 31813,
+          "cached_input_tokens": 103265,
+          "cache_write_input_tokens": 2826,
+          "reasoning_tokens": 21058
+        },
+        "usage_incomplete_requests": 0,
+        "quote_existence": {
+          "valid": 142,
+          "checked": 142
+        },
+        "span_existence": {
+          "valid": 13,
+          "checked": 13
+        },
+        "needs_review_fraction": 0.0
+      }
+    }
+  },
+  "same_initial_request_hashes": 12,
+  "source_conversations_and_checklist_identical": true,
+  "frozen_fixture_json_unchanged": true,
+  "changed_frozen_implementation_files": [
+    "scripts/adversarial_rehearsal.py",
+    "evaluation/benchmark.py"
+  ],
+  "v1_misses": {
+    "authored_missing_decisions": 4,
+    "authored_wrong_available_decisions": 0,
+    "relations_unavailable": 4,
+    "relations_wrong_available": 0
+  },
+  "observed_technical_retry_issues": [
+    {
+      "run": "adversarial-20261107-live-v1",
+      "conversation_id": "adv-long-kz-control",
+      "status": "invalid_response",
+      "validation_error": {
+        "code": "quote_not_exact",
+        "path": [
+          "results",
+          3,
+          "evidence",
+          2,
+          "quote"
+        ],
+        "criterion_id": "consultation",
+        "message_id": "adv-long-kz-control:0256"
+      },
+      "estimated_cost": 0.002938355
+    }
+  ],
+  "unknown_usage_evaluations": [
+    {
+      "run": "adversarial-20261107-live-v1",
+      "conversation_id": "adv/қайта?x#%25",
+      "status": "interrupted_unknown",
+      "preserved_reservation_usd": 0.023795
+    },
+    {
+      "run": "adversarial-20261107-live-v1",
+      "conversation_id": "adv-ru-quoted-abuse",
+      "status": "interrupted_unknown",
+      "preserved_reservation_usd": 0.0238545
+    }
+  ],
+  "v2_export_empty_evidence_warnings": [
+    {
+      "conversation_id": "adv-long-ru-control",
+      "criterion_id": "discovery",
+      "value": null
+    }
+  ],
+  "accounting": {
+    "authorized_cumulative_cap_usd": 0.25,
+    "v2_authorized_cap_usd": 0.17795491,
+    "known_standard_subtotal_usd": 0.04169159,
+    "combined_total_standard_estimate_usd": null,
+    "combined_charged_or_reserved_usd": 0.08934109,
+    "preserved_unknown_reservations_usd": 0.0476495,
+    "invoice_verified": false
+  },
+  "notes": [
+    "V1 outputs and interrupted-unknown reservations were preserved; V2 is a separately paid full confirmation, not replacement of history.",
+    "V2 follows a console-output fix only; all 12 initial model request hashes match V1.",
+    "Strict cp1251 regression tests exercise fallback; live runs use -X utf8 as an additional environment setting.",
+    "Pair and anchor checks overlap individual authored assertions; they are not independent observations or GT accuracy.",
+    "V2 observed 103265 cached input tokens out of 106127; costs and latency are observations of this project/cache state, not a general ranking."
+  ]
+}

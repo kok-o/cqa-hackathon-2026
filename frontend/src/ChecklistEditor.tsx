@@ -1,84 +1,707 @@
-import { useState } from 'react';
-import { Plus, Save, Trash2, Copy, FileDown } from 'lucide-react';
-import type { ChecklistVersion, Criterion } from './contracts';
-import { downloadJson, errorText, post, q, uid } from './api';
+import Select from "./Select";
+import { useRef, useState, type KeyboardEvent } from "react";
+import {
+  Plus,
+  Save,
+  Trash2,
+  Copy,
+  FileDown,
+  Check,
+  AlertCircle,
+} from "lucide-react";
+import type { ChecklistVersion, Criterion } from "./contracts";
+import { downloadJson, errorText, post, q, uid } from "./api";
+import "./ChecklistEditor.css";
 
-type Props = { checklist: ChecklistVersion; onSaved: (value: ChecklistVersion) => void };
-const freshCriterion = (): Criterion => ({ criterion_id: `criterion-${uid().slice(0, 8)}`, title: '', instruction: '', weight: 1, answer_type: 'boolean', na_allowed: false, requires_audio: false, scale_min: null, scale_max: null, higher_is_better: true, positive_answer: true, choices: {}, section_id: null, gross_error_rule: null });
+type Props = {
+  checklist: ChecklistVersion;
+  onSaved: (value: ChecklistVersion) => void;
+};
+const answerNames = { boolean: "Да / нет", scale: "Шкала", choice: "Варианты" };
+const freshCriterion = (): Criterion => ({
+  criterion_id: `criterion-${uid().slice(0, 8)}`,
+  title: "",
+  instruction: "",
+  weight: 1,
+  answer_type: "boolean",
+  na_allowed: false,
+  requires_audio: false,
+  scale_min: null,
+  scale_max: null,
+  allowed_values: null,
+  higher_is_better: true,
+  positive_answer: true,
+  choices: {},
+  section_id: null,
+  gross_error_rule: null,
+  critical_answer: null,
+});
 
 export default function ChecklistEditor({ checklist, onSaved }: Props) {
-  const [draft, setDraft] = useState<ChecklistVersion>(() => structuredClone(checklist));
+  const [draft, setDraft] = useState<ChecklistVersion>(() =>
+    structuredClone(checklist),
+  );
+  const [selectedId, setSelectedId] = useState(
+    checklist.criteria[0]?.criterion_id ?? "",
+  );
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  const [notice, setNotice] = useState('');
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [dirty, setDirty] = useState(false);
   const [choiceText, setChoiceText] = useState<Record<string, string>>({});
-  const change = (index: number, values: Partial<Criterion>) => setDraft(current => ({ ...current, criteria: current.criteria.map((criterion, i) => i === index ? { ...criterion, ...values } : criterion) }));
+  const [scaleText, setScaleText] = useState<Record<string, string>>({});
+  const titleRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLDivElement>(null);
+  const selectedIndex = Math.max(
+    0,
+    draft.criteria.findIndex((item) => item.criterion_id === selectedId),
+  );
+  const criterion = draft.criteria[selectedIndex];
+  const weight = draft.criteria.reduce((sum, item) => sum + item.weight, 0);
+  const markChanged = () => {
+    setDirty(true);
+    setNotice("");
+  };
+  const change = (values: Partial<Criterion>) => {
+    markChanged();
+    setDraft((current) => ({
+      ...current,
+      criteria: current.criteria.map((item) =>
+        item.criterion_id === criterion.criterion_id
+          ? { ...item, ...values }
+          : item,
+      ),
+    }));
+  };
 
-  async function save(asNew: boolean) {
-    setError(''); setNotice('');
-    const criteria = draft.criteria.map(criterion => {
-      if (criterion.answer_type !== 'choice') return criterion;
-      const text = choiceText[criterion.criterion_id];
-      if (text == null) return criterion;
-      const entries = text.split('\n').filter(line => line.trim()).map(line => {
-        const separator = line.lastIndexOf('=');
-        if (separator < 1) throw new Error('Варианты указываются по одному в строке: ответ = балл от 0 до 1.');
-        const label = line.slice(0, separator).trim();
-        const score = Number(line.slice(separator + 1).trim().replace(',', '.'));
-        if (!label || !Number.isFinite(score) || score < 0 || score > 1) throw new Error('Баллы вариантов должны быть числами от 0 до 1.');
-        return [label, score] as const;
-      });
-      if (new Set(entries.map(([label]) => label)).size !== entries.length) throw new Error('Названия вариантов не должны повторяться.');
-      return { ...criterion, choices: Object.fromEntries(entries) };
+  function preparedCriteria() {
+    return draft.criteria.map((item) => {
+      const fail = (message: string): never => {
+        setSelectedId(item.criterion_id);
+        throw new Error(
+          `«${item.title.trim() || "Новый критерий"}»: ${message}`,
+        );
+      };
+      if (!item.title.trim() || !item.instruction.trim())
+        fail("заполните название и инструкцию.");
+      if (!Number.isFinite(item.weight) || item.weight < 0)
+        fail("вес должен быть неотрицательным числом.");
+      const clean = {
+        ...item,
+        title: item.title.trim(),
+        instruction: item.instruction.trim(),
+      };
+      if (item.answer_type === "scale") {
+        if (
+          item.scale_min == null ||
+          item.scale_max == null ||
+          !Number.isFinite(item.scale_min) ||
+          !Number.isFinite(item.scale_max) ||
+          item.scale_min >= item.scale_max
+        )
+          fail("максимум шкалы должен быть больше минимума.");
+        const text = scaleText[item.criterion_id];
+        const values =
+          text == null
+            ? (item.allowed_values ?? null)
+            : text.trim()
+              ? text
+                  .split(/[\s,;]+/)
+                  .filter(Boolean)
+                  .map(Number)
+              : null;
+        if (
+          values != null &&
+          (!values.length ||
+            values.some(
+              (value) =>
+                !Number.isFinite(value) ||
+                value < item.scale_min! ||
+                value > item.scale_max!,
+            ) ||
+            new Set(values).size !== values.length)
+        )
+          fail("укажите неповторяющиеся ступени в пределах шкалы.");
+        return { ...clean, allowed_values: values };
+      }
+      if (item.answer_type !== "choice") return clean;
+      const text =
+        choiceText[item.criterion_id] ??
+        Object.entries(item.choices)
+          .map(([label, score]) => `${label} = ${score}`)
+          .join("\n");
+      const entries = text
+        .split("\n")
+        .filter((line) => line.trim())
+        .map((line) => {
+          const separator = line.lastIndexOf("=");
+          if (separator < 1)
+            fail("укажите каждый вариант в формате «ответ = балл от 0 до 1».");
+          const label = line.slice(0, separator).trim();
+          const scoreText = line.slice(separator + 1).trim();
+          const score = Number(scoreText.replace(",", "."));
+          if (
+            !label ||
+            !scoreText ||
+            !Number.isFinite(score) ||
+            score < 0 ||
+            score > 1
+          )
+            fail("баллы вариантов должны быть числами от 0 до 1.");
+          return [label, score] as const;
+        });
+      if (!entries.length) fail("добавьте хотя бы один вариант ответа.");
+      if (new Set(entries.map(([label]) => label)).size !== entries.length)
+        fail("названия вариантов не должны повторяться.");
+      return { ...clean, choices: Object.fromEntries(entries) };
     });
-    if (!draft.title.trim() || !criteria.length || criteria.some(criterion => !criterion.title.trim() || !criterion.instruction.trim())) {
-      setError('Заполните название чек-листа, названия и инструкции всех критериев.'); return;
-    }
-    setBusy(true);
-    try {
-      const body = { title: draft.title.trim(), provenance: draft.provenance, criteria };
-      const saved = asNew
-        ? await post<ChecklistVersion>('/checklists', { ...body, checklist_id: `checklist-${uid().slice(0, 8)}`, version: 1 })
-        : await post<ChecklistVersion>(`/checklists/${q(checklist.checklist_id)}/versions`, body);
-      setNotice(`Сохранена версия ${saved.version}. Теперь её можно применить к диалогам.`);
-      onSaved(saved);
-    } catch (error) { setError(errorText(error)); } finally { setBusy(false); }
   }
 
-  function submit(asNew: boolean) { void save(asNew).catch(error => setError(errorText(error))); }
+  async function save(asNew: boolean) {
+    setError("");
+    setNotice("");
+    try {
+      if (!draft.title.trim()) throw new Error("Укажите название чек-листа.");
+      const criteria = preparedCriteria();
+      setBusy(true);
+      const body = {
+        title: draft.title.trim(),
+        provenance: draft.provenance,
+        criteria,
+      };
+      const saved = asNew
+        ? await post<ChecklistVersion>("/checklists", {
+            ...body,
+            checklist_id: `checklist-${uid().slice(0, 8)}`,
+            version: 1,
+          })
+        : await post<ChecklistVersion>(
+            `/checklists/${q(checklist.checklist_id)}/versions`,
+            body,
+          );
+      setDirty(false);
+      setNotice(`Версия ${saved.version} сохранена.`);
+      onSaved(saved);
+    } catch (err) {
+      setError(errorText(err));
+    } finally {
+      setBusy(false);
+    }
+  }
 
-  return <section className="editor-workspace" aria-labelledby="editor-heading">
-    <header className="workspace-title"><div><h2 id="editor-heading">Редактор чек-листа</h2><p>Изменения сохраняются в новой версии. Прошлые оценки остаются неизменными.</p></div><button className="button ghost" onClick={() => downloadJson(draft, 'cqa-checklist.json')}><FileDown size={17} /> Скачать</button></header>
-    {error ? <div className="notice error" role="alert">{error}</div> : null}
-    {notice ? <div className="notice success" role="status">{notice}</div> : null}
-    <div className="checklist-meta form-grid">
-      <label className="field span-2">Название<input value={draft.title} onChange={event => setDraft({ ...draft, title: event.target.value })} maxLength={200} /></label>
-      <label className="field">Источник<select value={draft.provenance} onChange={event => setDraft({ ...draft, provenance: event.target.value as ChecklistVersion['provenance'] })}><option value="synthetic_example">Демонстрационные правила</option><option value="organizer">Правила организаторов</option></select></label>
-      <p className="form-help span-3">Отмечайте правила организаторов только после переноса официального чек-листа. Текущая формула — взвешенное среднее; флаг грубой ошибки не задаёт штраф автоматически.</p>
-    </div>
-    <div className="criteria-editor-list">
-      {draft.criteria.map((criterion, index) => <section className="criterion-editor" key={criterion.criterion_id}>
-        <header><div className="criterion-number">{index + 1}</div><h2>{criterion.title || 'Новый критерий'}</h2><button className="icon-button danger-text" aria-label={`Удалить критерий ${criterion.title || index + 1}`} disabled={draft.criteria.length === 1 || busy} onClick={() => setDraft(current => ({ ...current, criteria: current.criteria.filter((_, i) => i !== index) }))}><Trash2 size={17} /></button></header>
-        <div className="form-grid">
-          <label className="field span-2">Название критерия<input value={criterion.title} onChange={event => change(index, { title: event.target.value })} placeholder="Например, понятность следующего действия" required /></label>
-          <label className="field">Вес<input type="number" min="0" step="0.1" value={criterion.weight} onChange={event => change(index, { weight: Number(event.target.value) })} /></label>
-          <label className="field span-3">Инструкция для оценки<textarea rows={3} value={criterion.instruction} onChange={event => change(index, { instruction: event.target.value })} placeholder="Что проверять, какие ответы допустимы и когда критерий не применим" required /></label>
-          <label className="field">Тип ответа<select value={criterion.answer_type} onChange={event => {
-            const type = event.target.value as Criterion['answer_type'];
-            change(index, { answer_type: type, scale_min: type === 'scale' ? criterion.scale_min ?? 0 : null, scale_max: type === 'scale' ? criterion.scale_max ?? 2 : null, choices: type === 'choice' ? Object.keys(criterion.choices).length ? criterion.choices : { 'Нет': 0, 'Частично': 0.5, 'Да': 1 } : {} });
-          }}><option value="boolean">Да / нет</option><option value="scale">Числовая шкала</option><option value="choice">Варианты ответа</option></select></label>
-          <label className="field">Раздел<input value={criterion.section_id ?? ''} onChange={event => change(index, { section_id: event.target.value.trim() || null })} placeholder="Необязательно" /></label>
-          {criterion.answer_type === 'boolean' ? <label className="field">Положительный ответ<select value={String(criterion.positive_answer)} onChange={event => change(index, { positive_answer: event.target.value === 'true' })}><option value="true">Да</option><option value="false">Нет</option></select></label> : null}
-          {criterion.answer_type === 'scale' ? <><label className="field">Минимум<input type="number" step="any" value={criterion.scale_min ?? 0} onChange={event => change(index, { scale_min: Number(event.target.value) })} /></label><label className="field">Максимум<input type="number" step="any" value={criterion.scale_max ?? 2} onChange={event => change(index, { scale_max: Number(event.target.value) })} /></label><label className="field">Направление шкалы<select value={String(criterion.higher_is_better)} onChange={event => change(index, { higher_is_better: event.target.value === 'true' })}><option value="true">Больше — лучше</option><option value="false">Меньше — лучше</option></select></label></> : null}
-          {criterion.answer_type === 'choice' ? <label className="field span-3">Варианты и нормализованные баллы<textarea rows={3} value={choiceText[criterion.criterion_id] ?? Object.entries(criterion.choices).map(([label, score]) => `${label} = ${score}`).join('\n')} onChange={event => setChoiceText(current => ({ ...current, [criterion.criterion_id]: event.target.value }))} /><span className="form-help">Одна строка на вариант: «Частично = 0.5». Баллы от 0 до 1.</span></label> : null}
-          <label className="check-field"><input type="checkbox" checked={criterion.na_allowed} onChange={event => change(index, { na_allowed: event.target.checked })} /> Допускается N/A</label>
-          <label className="check-field"><input type="checkbox" checked={criterion.requires_audio} onChange={event => change(index, { requires_audio: event.target.checked })} /> Требуется аудио</label>
-          <label className="field span-3">Условие грубой ошибки<textarea rows={2} value={criterion.gross_error_rule ?? ''} onChange={event => change(index, { gross_error_rule: event.target.value || null })} placeholder="Необязательно. Опишите, какое нарушение нужно отмечать отдельно." /></label>
-          {criterion.requires_audio ? <p className="form-help span-3">Текстовый оценщик не проверяет интонацию и дикцию: критерий будет отмечен как требующий проверки.</p> : null}
+  function addCriterion() {
+    const next = freshCriterion();
+    setDraft((current) => ({
+      ...current,
+      criteria: [...current.criteria, next],
+    }));
+    setSelectedId(next.criterion_id);
+    markChanged();
+    requestAnimationFrame(() => {
+      formRef.current?.scrollIntoView({ block: "nearest" });
+      titleRef.current?.focus({ preventScroll: true });
+    });
+  }
+
+  function deleteCriterion() {
+    const next = draft.criteria.filter(
+      (item) => item.criterion_id !== criterion.criterion_id,
+    );
+    setDraft((current) => ({ ...current, criteria: next }));
+    const selected = next[Math.min(selectedIndex, next.length - 1)];
+    setSelectedId(selected.criterion_id);
+    markChanged();
+    requestAnimationFrame(() =>
+      document
+        .getElementById(`editor-select-${selected.criterion_id}`)
+        ?.focus(),
+    );
+  }
+
+  function navigateCriteria(
+    event: KeyboardEvent<HTMLButtonElement>,
+    index: number,
+  ) {
+    let next = index;
+    if (event.key === "ArrowDown")
+      next = Math.min(draft.criteria.length - 1, index + 1);
+    else if (event.key === "ArrowUp") next = Math.max(0, index - 1);
+    else if (event.key === "Home") next = 0;
+    else if (event.key === "End") next = draft.criteria.length - 1;
+    else return;
+    event.preventDefault();
+    setSelectedId(draft.criteria[next].criterion_id);
+    document
+      .getElementById(`editor-select-${draft.criteria[next].criterion_id}`)
+      ?.focus();
+  }
+
+  function setType(type: Criterion["answer_type"]) {
+    setScaleText((current) => {
+      const next = { ...current };
+      delete next[criterion.criterion_id];
+      return next;
+    });
+    setChoiceText((current) => {
+      const next = { ...current };
+      delete next[criterion.criterion_id];
+      return next;
+    });
+    change({
+      answer_type: type,
+      scale_min: type === "scale" ? (criterion.scale_min ?? 0) : null,
+      scale_max: type === "scale" ? (criterion.scale_max ?? 2) : null,
+      allowed_values:
+        type === "scale" ? (criterion.allowed_values ?? null) : null,
+      critical_answer:
+        type === "boolean" ? (criterion.critical_answer ?? null) : null,
+      choices:
+        type === "choice"
+          ? Object.keys(criterion.choices).length
+            ? criterion.choices
+            : { Нет: 0, Частично: 0.5, Да: 1 }
+          : {},
+    });
+  }
+
+  return (
+    <section
+      className="editor-workspace editor-v2"
+      aria-labelledby="editor-heading"
+      aria-busy={busy}
+    >
+      <h2 id="editor-heading" className="sr-only">Чек-лист</h2>
+      {error ? (
+        <div className="notice error editor-feedback" role="alert">
+          <AlertCircle size={18} />
+          <span>{error}</span>
         </div>
-      </section>)}
-    </div>
-    <button className="button secondary add-criterion" onClick={() => setDraft(current => ({ ...current, criteria: [...current.criteria, freshCriterion()] }))} disabled={busy}><Plus size={17} /> Добавить критерий</button>
-    <footer className="editor-footer"><span>{draft.criteria.length} критериев • исходная версия {checklist.version}</span><div className="button-row"><button className="button secondary" onClick={() => submit(true)} disabled={busy}><Copy size={16} /> Сохранить как новый</button><button className="button primary" onClick={() => submit(false)} disabled={busy}><Save size={16} /> {busy ? 'Сохраняем…' : 'Сохранить новую версию'}</button></div></footer>
-  </section>;
+      ) : null}
+      {notice ? (
+        <div className="notice success editor-feedback" role="status">
+          <Check size={18} />
+          {notice}
+        </div>
+      ) : null}
+      <div className="editor-meta">
+        <label className="field editor-name">
+          Название
+          <input
+            value={draft.title}
+            onChange={(event) => {
+              setDraft({ ...draft, title: event.target.value });
+              markChanged();
+            }}
+            maxLength={200}
+            disabled={busy}
+          />
+        </label>
+        <label className="field">
+          Источник
+          <Select
+            value={draft.provenance}
+            onChange={(event) => {
+              setDraft({
+                ...draft,
+                provenance: event.target
+                  .value as ChecklistVersion["provenance"],
+              });
+              markChanged();
+            }}
+            disabled={busy}
+          >
+            <option value="synthetic_example">Пользовательский чек-лист</option>
+            <option value="organizer">Правила организаторов</option>
+          </Select>
+        </label>
+        <button
+          className="button secondary editor-download"
+          aria-label="Скачать чек-лист"
+          disabled={busy}
+          onClick={() => {
+            try {
+              downloadJson(
+                { ...draft, criteria: preparedCriteria() },
+                "cqa-checklist.json",
+              );
+            } catch (err) {
+              setError(errorText(err));
+            }
+          }}
+        >
+          <FileDown size={16} /><span className="editor-download-label">Скачать</span>
+        </button>
+
+      </div>
+      <div className="editor-body">
+        <aside className="editor-index" aria-label="Критерии чек-листа">
+          <div className="editor-index-heading">
+            <strong>
+              Критерии <span>{draft.criteria.length}</span>
+            </strong>
+            <span>
+              Вес{" "}
+              {new Intl.NumberFormat("ru-RU", {
+                maximumFractionDigits: 2,
+              }).format(weight)}
+            </span>
+          </div>
+          <div className="editor-mobile-picker">
+            <Select
+              aria-label="Выбрать критерий"
+              value={criterion.criterion_id}
+              onChange={(event) => setSelectedId(event.target.value)}
+            >
+              {draft.criteria.map((item) => (
+                <option key={item.criterion_id} value={item.criterion_id}>
+                  {item.title || "Новый критерий"}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="editor-criterion-list">
+            {draft.criteria.map((item, index) => (
+              <button
+                type="button"
+                key={item.criterion_id}
+                id={`editor-select-${item.criterion_id}`}
+                className={`editor-criterion-button ${item.criterion_id === criterion.criterion_id ? "is-selected" : ""}`}
+                aria-current={
+                  item.criterion_id === criterion.criterion_id
+                    ? "true"
+                    : undefined
+                }
+                aria-controls="editor-detail"
+                onClick={() => setSelectedId(item.criterion_id)}
+                onKeyDown={(event) => navigateCriteria(event, index)}
+              >
+                <span className="editor-criterion-label">
+                  <strong>{item.title || "Новый критерий"}</strong>
+                  <small>
+                    {answerNames[item.answer_type]}
+                    {item.na_allowed ? " · N/A" : ""}
+                  </small>
+                </span>
+                <span className="editor-weight">{item.weight}</span>
+              </button>
+            ))}
+          </div>
+          <button
+            className="button secondary editor-add"
+            onClick={addCriterion}
+            disabled={busy}
+          >
+            <Plus size={16} /> Добавить критерий
+          </button>
+        </aside>
+        <div
+          className="editor-detail"
+          id="editor-detail"
+          ref={formRef}
+          aria-labelledby="editor-selected-heading"
+        >
+          <header className="editor-detail-heading">
+            <div>
+              <h3 id="editor-selected-heading">
+                {criterion.title || "Новый критерий"}
+              </h3>
+            </div>
+            <button
+              className="icon-button danger-text"
+              aria-label={`Удалить критерий ${criterion.title || selectedIndex + 1}`}
+              disabled={draft.criteria.length === 1 || busy}
+              title={
+                draft.criteria.length === 1
+                  ? "В чек-листе должен остаться хотя бы один критерий"
+                  : "Удалить критерий"
+              }
+              onClick={deleteCriterion}
+            >
+              <Trash2 size={17} />
+            </button>
+          </header>
+          <fieldset className="editor-fieldset" disabled={busy}>
+            <legend>Инструкция</legend>
+            <div className="editor-field-grid">
+              <label className="field editor-wide">
+                Название критерия
+                <input
+                  ref={titleRef}
+                  value={criterion.title}
+                  onChange={(event) => change({ title: event.target.value })}
+                  placeholder="Например, понятность следующего действия"
+                  maxLength={200}
+                  required
+                />
+              </label>
+              <label className="field editor-wide">
+                Инструкция для оценки
+                <textarea
+                  rows={5}
+                  value={criterion.instruction}
+                  onChange={(event) =>
+                    change({ instruction: event.target.value })
+                  }
+                  placeholder="Что проверять и какие условия соответствуют каждому ответу"
+                  required
+                />
+              </label>
+              <label className="field editor-wide">
+                Раздел
+                <input
+                  value={criterion.section_id ?? ""}
+                  onChange={(event) =>
+                    change({
+                      section_id: event.target.value.trim()
+                        ? event.target.value
+                        : null,
+                    })
+                  }
+                  placeholder="Необязательно"
+                />
+              </label>
+            </div>
+          </fieldset>
+          <fieldset className="editor-fieldset" disabled={busy}>
+            <legend>Вес и шкала</legend>
+            <div className="editor-field-grid">
+              <label className="field">
+                Тип ответа
+                <Select
+                  value={criterion.answer_type}
+                  onChange={(event) =>
+                    setType(event.target.value as Criterion["answer_type"])
+                  }
+                >
+                  <option value="boolean">Да / нет</option>
+                  <option value="scale">Числовая шкала</option>
+                  <option value="choice">Варианты ответа</option>
+                </Select>
+              </label>
+              <label className="field">
+                Вес
+                <input
+                  type="number"
+                  min="0"
+                  step="any"
+                  value={criterion.weight}
+                  onChange={(event) =>
+                    change({ weight: Number(event.target.value) })
+                  }
+                />
+                {criterion.weight === 0 ? (
+                  <span className="form-help">Не влияет на итоговый балл.</span>
+                ) : null}
+              </label>
+              {criterion.answer_type === "boolean" ? (
+                <label className="field editor-wide">
+                  Положительный ответ
+                  <Select
+                    value={String(criterion.positive_answer)}
+                    onChange={(event) =>
+                      change({ positive_answer: event.target.value === "true" })
+                    }
+                  >
+                    <option value="true">Да</option>
+                    <option value="false">Нет</option>
+                  </Select>
+                </label>
+              ) : null}
+              {criterion.answer_type === "scale" ? (
+                <>
+                  <label className="field">
+                    Минимум
+                    <input
+                      type="number"
+                      step="any"
+                      value={criterion.scale_min ?? 0}
+                      onChange={(event) =>
+                        change({ scale_min: Number(event.target.value) })
+                      }
+                    />
+                  </label>
+                  <label className="field">
+                    Максимум
+                    <input
+                      type="number"
+                      step="any"
+                      value={criterion.scale_max ?? 2}
+                      onChange={(event) =>
+                        change({ scale_max: Number(event.target.value) })
+                      }
+                    />
+                  </label>
+                  <label className="field editor-wide">
+                    Направление шкалы
+                    <Select
+                      value={String(criterion.higher_is_better)}
+                      onChange={(event) =>
+                        change({
+                          higher_is_better: event.target.value === "true",
+                        })
+                      }
+                    >
+                      <option value="true">Больше — лучше</option>
+                      <option value="false">Меньше — лучше</option>
+                    </Select>
+                  </label>
+                  <label className="field editor-wide">
+                    Допустимые ступени
+                    <input
+                      value={
+                        scaleText[criterion.criterion_id] ??
+                        criterion.allowed_values?.join(", ") ??
+                        ""
+                      }
+                      onChange={(event) => {
+                        setScaleText((current) => ({
+                          ...current,
+                          [criterion.criterion_id]: event.target.value,
+                        }));
+                        markChanged();
+                      }}
+                      placeholder="Например: 0, 4, 7, 10"
+                    />
+                    <span className="form-help">
+                      Через запятую, дробные — с точкой. Пусто — любое значение
+                      в диапазоне.
+                    </span>
+                  </label>
+                </>
+              ) : null}
+              {criterion.answer_type === "choice" ? (
+                <label className="field editor-wide">
+                  Варианты и нормализованные баллы
+                  <textarea
+                    rows={4}
+                    value={
+                      choiceText[criterion.criterion_id] ??
+                      Object.entries(criterion.choices)
+                        .map(([label, score]) => `${label} = ${score}`)
+                        .join("\n")
+                    }
+                    onChange={(event) => {
+                      setChoiceText((current) => ({
+                        ...current,
+                        [criterion.criterion_id]: event.target.value,
+                      }));
+                      markChanged();
+                    }}
+                  />
+                  <span className="form-help">
+                    По одному варианту на строку: «Частично = 0.5». Баллы от 0
+                    до 1.
+                  </span>
+                </label>
+              ) : null}
+            </div>
+          </fieldset>
+          <fieldset className="editor-fieldset" disabled={busy}>
+            <legend>Применимость</legend>
+            <div className="editor-field-grid">
+              <label className="editor-toggle">
+                <input
+                  type="checkbox"
+                  checked={criterion.na_allowed}
+                  onChange={(event) =>
+                    change({ na_allowed: event.target.checked })
+                  }
+                />
+                <span>
+                  <strong>Допускается N/A</strong>
+                  <small>Условие N/A — в инструкции.</small>
+                </span>
+              </label>
+              <label className="editor-toggle">
+                <input
+                  type="checkbox"
+                  checked={criterion.requires_audio}
+                  onChange={(event) =>
+                    change({ requires_audio: event.target.checked })
+                  }
+                />
+                <span>
+                  <strong>Требуется аудио</strong>
+                </span>
+              </label>
+              {criterion.requires_audio ? (
+                <p className="editor-inline-note editor-wide">
+                  Текстовый оценщик не проверяет аудио. Критерий потребует
+                  ручной проверки.
+                </p>
+              ) : null}
+              <label className="field editor-wide">
+                Условие грубой ошибки
+                <textarea
+                  rows={3}
+                  value={criterion.gross_error_rule ?? ""}
+                  onChange={(event) => {
+                    const rule = event.target.value.trim()
+                      ? event.target.value
+                      : null;
+                    change({
+                      gross_error_rule: rule,
+                      critical_answer: rule
+                        ? (criterion.critical_answer ?? null)
+                        : null,
+                    });
+                  }}
+                  placeholder="Какое нарушение нужно отмечать отдельно"
+                />
+                <span className="form-help">
+                  Отдельный флаг; итоговый балл не обнуляется.
+                </span>
+              </label>
+              {criterion.answer_type === "boolean" &&
+              criterion.gross_error_rule ? (
+                <label className="field editor-wide">
+                  Ответ, означающий грубую ошибку
+                  <Select
+                    value={
+                      criterion.critical_answer == null
+                        ? ""
+                        : String(criterion.critical_answer)
+                    }
+                    onChange={(event) =>
+                      change({
+                        critical_answer:
+                          event.target.value === ""
+                            ? null
+                            : event.target.value === "true",
+                      })
+                    }
+                  >
+                    <option value="">Определяется отдельно</option>
+                    <option value="true">Да означает нарушение</option>
+                    <option value="false">Нет означает нарушение</option>
+                  </Select>
+                </label>
+              ) : null}
+            </div>
+          </fieldset>
+        </div>
+      </div>
+      <footer className="editor-save-bar">
+        {dirty && (
+          <div className="editor-save-status">Изменения не сохранены</div>
+        )}
+        <div className="editor-save-actions">
+          <button
+            className="button secondary"
+            onClick={() => void save(true)}
+            disabled={busy}
+          >
+            <Copy size={16} /> Сохранить как новый
+          </button>
+          <button
+            className="button primary"
+            onClick={() => void save(false)}
+            disabled={busy}
+          >
+            <Save size={16} /> {busy ? "Сохраняем…" : "Сохранить новую версию"}
+          </button>
+        </div>
+      </footer>
+    </section>
+  );
 }

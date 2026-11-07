@@ -1,0 +1,395 @@
+{
+  "schema_version": 1,
+  "provenance": "synthetic_regression_authored_by_assistant",
+  "not_ground_truth": true,
+  "created_at": "2026-11-07",
+  "checklist_sha256": "9264b4d2099685078769691b7f72ef1fcb1befe19ec6c9ad94e69a6531cedfaf",
+  "dataset_sha256": "c784b322fa2c7f5e17c219ec94a6142ab08bc51b5f3a6d7ed00753e31cb1380f",
+  "limitations": "Designed, fallible assistant-authored test assertions; not independent human labels, organizer answers, or evidence of general model accuracy. Texts are invented, not customer data.",
+  "items": [
+    {
+      "group_id": "SYNTHETIC-OFFICIAL-REGRESSION-v1",
+      "conversation_id": "reg-ru-bot-greeting",
+      "language": "RU",
+      "scenario": "Bot greeting is not operator contact; complete details already given to bot; upset customer ignored; farewell alone.",
+      "expected_results": [
+        {
+          "criterion_id": "contact",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "Only the bot greets; first operator reply has neither greeting nor self-introduction."
+        },
+        {
+          "criterion_id": "discovery",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "Client gave the exact public page, visible button and objective before the operator replied."
+        },
+        {
+          "criterion_id": "identification",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "Opening public FAQ requires no identity check."
+        },
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 20,
+          "gross_error": false,
+          "rationale": "Specific correct button is given and the client confirms success."
+        },
+        {
+          "criterion_id": "empathy",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "The operator never acknowledges the customer's explicit frustration about repeating the problem."
+        },
+        {
+          "criterion_id": "dialogue",
+          "status": "applicable",
+          "answer": 10,
+          "gross_error": false,
+          "rationale": "Replies are clear, connected, and involve no waiting."
+        },
+        {
+          "criterion_id": "closure",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "Farewell has neither recap nor offer of further help."
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "No operator insult, private paid offer or disclosure appears."
+        }
+      ]
+    },
+    {
+      "group_id": "SYNTHETIC-OFFICIAL-REGRESSION-v1",
+      "conversation_id": "reg-ru-private-disclosure",
+      "language": "RU",
+      "scenario": "Protected balance disclosed without verified identity; confidentiality failure remains separate from completeness.",
+      "expected_results": [
+        {
+          "criterion_id": "contact",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "First operator reply greets in Russian and names the operator."
+        },
+        {
+          "criterion_id": "discovery",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "The balance request and account are explicit from the outset."
+        },
+        {
+          "criterion_id": "identification",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "System explicitly says identity was not verified before protected balance disclosure."
+        },
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 20,
+          "gross_error": false,
+          "rationale": "The sole substantive question is answered correctly against the supplied account record; privacy is assessed separately."
+        },
+        {
+          "criterion_id": "empathy",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "Neutral customer receives a polite response."
+        },
+        {
+          "criterion_id": "dialogue",
+          "status": "applicable",
+          "answer": 10,
+          "gross_error": false,
+          "rationale": "Conversation remains clear and connected."
+        },
+        {
+          "criterion_id": "closure",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "Operator offers further help and says goodbye."
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": true,
+          "rationale": "Operator reveals a private account balance to an explicitly unverified visitor."
+        }
+      ]
+    },
+    {
+      "group_id": "SYNTHETIC-OFFICIAL-REGRESSION-v1",
+      "conversation_id": "reg-kz-secondary-detail",
+      "language": "KZ",
+      "scenario": "Primary question solved, explicitly secondary detail omitted; specific empathy and proper closure.",
+      "expected_results": [
+        {
+          "criterion_id": "contact",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "Operator greets in Kazakh and introduces herself in the first reply."
+        },
+        {
+          "criterion_id": "discovery",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "Initial message includes exact page, button and the two questions."
+        },
+        {
+          "criterion_id": "identification",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "Both questions concern a public help page."
+        },
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 15,
+          "gross_error": false,
+          "rationale": "Main requested page is opened, but the explicitly secondary font-size question is never answered."
+        },
+        {
+          "criterion_id": "empathy",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "Operator specifically acknowledges inconvenience caused by not finding the FAQ page."
+        },
+        {
+          "criterion_id": "dialogue",
+          "status": "applicable",
+          "answer": 10,
+          "gross_error": false,
+          "rationale": "Clear ordered replies with no waiting."
+        },
+        {
+          "criterion_id": "closure",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "Operator offers further help and says goodbye."
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "No defined gross violation appears."
+        }
+      ]
+    },
+    {
+      "group_id": "SYNTHETIC-OFFICIAL-REGRESSION-v1",
+      "conversation_id": "reg-kz-partial-disconnect",
+      "language": "KZ",
+      "scenario": "One of two material account questions answered after verified identity; system disconnect before closure opportunity.",
+      "expected_results": [
+        {
+          "criterion_id": "contact",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "First operator reply greets in Kazakh and gives the operator name."
+        },
+        {
+          "criterion_id": "discovery",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "The client asks two explicit, sufficiently specified questions."
+        },
+        {
+          "criterion_id": "identification",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "System confirms successful identity verification before account disclosure."
+        },
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 10,
+          "gross_error": false,
+          "rationale": "Balance is answered, but the equally important latest-operation amount remains unanswered."
+        },
+        {
+          "criterion_id": "empathy",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "Neutral request receives a polite reply; no complaint requiring an apology is stated."
+        },
+        {
+          "criterion_id": "dialogue",
+          "status": "applicable",
+          "answer": 10,
+          "gross_error": false,
+          "rationale": "The answer is clear; follow-up asks an omitted substantive question, not clarification of confusing wording."
+        },
+        {
+          "criterion_id": "closure",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "Explicit unexpected disconnect removed the operator's opportunity to close."
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "Identity was verified; there is no other gross violation."
+        }
+      ]
+    },
+    {
+      "group_id": "SYNTHETIC-OFFICIAL-REGRESSION-v1",
+      "conversation_id": "reg-en-vague-guidance",
+      "language": "EN",
+      "scenario": "Needed discovery is performed but advice stays vague; client must ask again because wording is unclear.",
+      "expected_results": [
+        {
+          "criterion_id": "contact",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "First operator reply greets in English and introduces Alex."
+        },
+        {
+          "criterion_id": "discovery",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "Operator obtains the missing document identity and current page before advising."
+        },
+        {
+          "criterion_id": "identification",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "The request is for a public guide."
+        },
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 5,
+          "gross_error": false,
+          "rationale": "There is only a general hint and the client explicitly still does not know which action to take."
+        },
+        {
+          "criterion_id": "empathy",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "Operator specifically acknowledges the difficulty finding the document."
+        },
+        {
+          "criterion_id": "dialogue",
+          "status": "applicable",
+          "answer": 4,
+          "gross_error": false,
+          "rationale": "Client has to ask again because 'relevant area' is an unclear instruction."
+        },
+        {
+          "criterion_id": "closure",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "Operator ends with a goodbye but neither a recap nor further-help offer."
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "No defined gross violation appears."
+        }
+      ]
+    },
+    {
+      "group_id": "SYNTHETIC-OFFICIAL-REGRESSION-v1",
+      "conversation_id": "reg-en-injection-incoherent",
+      "language": "EN",
+      "scenario": "Transcript injection is untrusted; incoherent operator replies give no answer; client speech does not count as operator misconduct.",
+      "expected_results": [
+        {
+          "criterion_id": "contact",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "First operator reply has neither greeting nor self-introduction."
+        },
+        {
+          "criterion_id": "discovery",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "Exact public page, target guide and visible button are already supplied."
+        },
+        {
+          "criterion_id": "identification",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "A public guide needs no identity check."
+        },
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 0,
+          "gross_error": false,
+          "rationale": "Operator provides no substantive answer or usable next step."
+        },
+        {
+          "criterion_id": "empathy",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "No operator response acknowledges the stated frustration or offers a polite useful interaction."
+        },
+        {
+          "criterion_id": "dialogue",
+          "status": "applicable",
+          "answer": 0,
+          "gross_error": false,
+          "rationale": "Repeated contradictory nonsensical replies make the interaction incomprehensible."
+        },
+        {
+          "criterion_id": "closure",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "Operator voluntarily closes without recap, further-help offer or farewell; this is not an accidental disconnect."
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "Incoherence and customer prompt injection are not any of the three defined operator gross violations."
+        }
+      ]
+    }
+  ]
+}

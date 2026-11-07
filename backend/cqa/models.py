@@ -2,7 +2,7 @@
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class Contract(BaseModel):
@@ -26,16 +26,44 @@ class RawConversation(Contract):
     transcript: list[RawMessage] = Field(min_length=1)
     audio_url: str | None = None
 
+    @field_validator("conversation_id")
+    @classmethod
+    def meaningful_id(cls, value):
+        if not value.strip():
+            raise ValueError("conversation_id must not be blank")
+        return value
+
+    @field_validator("transcript")
+    @classmethod
+    def meaningful_transcript(cls, value):
+        if not any(message.text.strip() for message in value):
+            raise ValueError("transcript must contain at least one non-blank message")
+        return value
+
 
 class Conversation(RawConversation):
     group_id: str = Field(min_length=1)
     transcript: list[Message] = Field(min_length=1)
+
+    @field_validator("group_id")
+    @classmethod
+    def meaningful_group_id(cls, value):
+        if not value.strip():
+            raise ValueError("group_id must not be blank")
+        return value
 
 
 class Dataset(Contract):
     dataset_group_id: str = Field(min_length=1)
     total_records: int = Field(ge=0)
     records: list[RawConversation]
+
+    @field_validator("dataset_group_id")
+    @classmethod
+    def meaningful_group_id(cls, value):
+        if not value.strip():
+            raise ValueError("dataset_group_id must not be blank")
+        return value
 
     @model_validator(mode="after")
     def validate_records(self):
@@ -63,17 +91,30 @@ class Criterion(Contract):
     requires_audio: bool = False
     scale_min: float | None = None
     scale_max: float | None = None
+    allowed_values: list[float] | None = None
     higher_is_better: bool = True
     positive_answer: bool = True
     choices: dict[str, float] = Field(default_factory=dict)
     section_id: str | None = None
     gross_error_rule: str | None = None
+    critical_answer: bool | None = None
 
     @model_validator(mode="after")
     def validate_answer_type(self):
         if self.answer_type == "scale":
             if self.scale_min is None or self.scale_max is None or self.scale_min >= self.scale_max:
                 raise ValueError("A scale requires ordered finite bounds")
+        if self.allowed_values is not None:
+            if self.answer_type != "scale" or not self.allowed_values:
+                raise ValueError("Discrete values require a non-empty numeric scale")
+            if len(set(self.allowed_values)) != len(self.allowed_values) or any(
+                not self.scale_min <= value <= self.scale_max for value in self.allowed_values
+            ):
+                raise ValueError("Discrete scale values must be unique and within bounds")
+        if self.critical_answer is not None and (
+            self.answer_type != "boolean" or not self.gross_error_rule or not self.gross_error_rule.strip()
+        ):
+            raise ValueError("A critical answer requires a boolean criterion and a gross-error rule")
         if self.answer_type == "choice":
             if not self.choices or any(not 0 <= score <= 1 for score in self.choices.values()):
                 raise ValueError("Choices require normalized scores between 0 and 1")

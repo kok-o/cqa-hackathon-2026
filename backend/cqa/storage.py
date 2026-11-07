@@ -67,7 +67,7 @@ class Store:
         finally:
             connection.close()
 
-    def initialize(self, seed: ChecklistVersion):
+    def initialize(self, seed: ChecklistVersion, *, recover_jobs: bool = True):
         if self.memory:
             self.keeper = self.connect()
         else:
@@ -114,7 +114,8 @@ class Store:
             """)
         with self.transaction() as db:
             db.execute("INSERT OR IGNORE INTO checklist_versions VALUES(?,?,?,?)", (seed.checklist_id, seed.version, dumps(seed.model_dump()), now()))
-            db.execute("UPDATE evaluation_jobs SET status='failed', error=?, updated_at=? WHERE status IN ('queued','running')", ("Сервер перезапущен до завершения оценки. Запустите новую проверку.", now()))
+            if recover_jobs:
+                db.execute("UPDATE evaluation_jobs SET status='failed', error=?, updated_at=? WHERE status IN ('queued','running')", ("Сервер перезапущен до завершения оценки. Запустите новую проверку.", now()))
 
     def close(self):
         if self.keeper is not None:
@@ -122,6 +123,11 @@ class Store:
             self.keeper = None
 
     def import_conversations(self, conversations: list[Conversation], group_id: str) -> dict:
+        identities = {conversation.conversation_id for conversation in conversations}
+        if any(conversation.group_id != group_id for conversation in conversations):
+            raise ValueError("Imported conversations must belong to the selected group")
+        if len(identities) != len(conversations):
+            raise ValueError("Duplicate conversation_id inside the imported group")
         counts = {"group_id": group_id, "imported": 0, "updated": 0, "unchanged": 0, "total": len(conversations)}
         with self.transaction() as db:
             for conversation in conversations:
@@ -136,9 +142,18 @@ class Store:
                     ON CONFLICT(group_id,conversation_id) DO UPDATE SET language=excluded.language,
                     channel=excluded.channel,content_hash=excluded.content_hash,payload=excluded.payload,imported_at=excluded.imported_at""",
                     (conversation.group_id, conversation.conversation_id, conversation.language, conversation.channel, content_hash, dumps(payload), now()))
+            counts["current_group_total"] = db.execute(
+                "SELECT COUNT(*) FROM conversations WHERE group_id=?", (group_id,)
+            ).fetchone()[0]
+            counts["retained_from_previous_import"] = counts["current_group_total"] - len(identities)
         return counts
 
-    def list_conversations(self, group_id=None, language=None, channel=None):
+    def list_conversations(self, group_id=None, language=None, channel=None, gross_error=None):
+        """Filter the latest reviewed result only when its source is still current.
+
+        Unassessed or changed conversations have an unknown flag (None), so they
+        match neither gross_error=True nor gross_error=False.
+        """
         conditions, params = [], []
         for name, value in (("group_id", group_id), ("language", language), ("channel", channel)):
             if value is not None:
@@ -150,11 +165,18 @@ class Store:
             summaries = []
             for row in rows:
                 conversation = json.loads(row["payload"])
-                latest = db.execute("SELECT evaluation_id,payload FROM evaluations WHERE group_id=? AND conversation_id=? ORDER BY created_at DESC LIMIT 1", (row["group_id"], row["conversation_id"])).fetchone()
-                latest_payload = json.loads(latest["payload"]) if latest else None
-                # A previously evaluated version must not label imported new content as assessed.
-                if latest_payload and digest(latest_payload["conversation"]) != row["content_hash"]:
-                    latest_payload = None
+                candidates = db.execute("SELECT payload FROM evaluations WHERE group_id=? AND conversation_id=? ORDER BY created_at DESC,rowid DESC", (row["group_id"], row["conversation_id"]))
+                latest_payload = None
+                # A slow old-snapshot job may finish after the current snapshot's
+                # evaluation. Select the newest matching source, not just newest job.
+                for candidate in candidates:
+                    payload = json.loads(candidate["payload"])
+                    if digest(payload["conversation"]) == row["content_hash"]:
+                        latest_payload = payload
+                        break
+                latest_gross_error = bool(latest_payload["score"].get("gross_error", False)) if latest_payload else None
+                if gross_error is not None and latest_gross_error is not gross_error:
+                    continue
                 messages = conversation["transcript"]
                 preview = next((m["text"] for m in messages if m["speaker"] == "client" and m["text"].strip()), messages[0]["text"])
                 summaries.append({
@@ -164,6 +186,7 @@ class Store:
                     "latest_evaluation_id": latest_payload["evaluation_id"] if latest_payload else None,
                     "latest_score": latest_payload["score"]["total"] if latest_payload else None,
                     "latest_status": latest_payload["score"]["status"] if latest_payload else None,
+                    "latest_gross_error": latest_gross_error,
                 })
         return summaries
 
@@ -204,7 +227,11 @@ class Store:
 
     @staticmethod
     def _public_job(row):
-        return {key: row[key] for key in ("job_id", "status", "error", "evaluation_id")}
+        result = {key: row[key] for key in ("job_id", "status", "error", "evaluation_id")}
+        failure = json.loads(row["payload"]).get("failure")
+        if failure is not None:
+            result.update(error_code=failure["error_code"], model_info=failure["model_info"])
+        return result
 
     def create_job(self, conversation: Conversation, checklist: ChecklistVersion, idempotency_key=None):
         payload = {"conversation": conversation.model_dump(), "checklist": checklist.model_dump()}
@@ -236,9 +263,17 @@ class Store:
             db.execute("UPDATE evaluation_jobs SET status='running',updated_at=? WHERE job_id=?", (now(), job_id))
             return json.loads(row["payload"])
 
-    def fail_job(self, job_id, error):
+    def fail_job(self, job_id, error, *, error_code=None, model_info=None):
         with self.transaction() as db:
-            db.execute("UPDATE evaluation_jobs SET status='failed',error=?,updated_at=? WHERE job_id=? AND status IN ('queued','running')", (error, now(), job_id))
+            row = db.execute("SELECT payload,status FROM evaluation_jobs WHERE job_id=?", (job_id,)).fetchone()
+            if row is None or row["status"] not in {"queued", "running"}:
+                return
+            payload = json.loads(row["payload"])
+            if error_code is not None or model_info is not None:
+                # Evaluator diagnostics contain only validated counters and safe codes.
+                # Store them beside the immutable request without changing its hash.
+                payload["failure"] = {"error_code": error_code, "model_info": model_info}
+            db.execute("UPDATE evaluation_jobs SET status='failed',error=?,payload=?,updated_at=? WHERE job_id=?", (error, dumps(payload), now(), job_id))
 
     def complete_job(self, job_id: str, conversation: Conversation, checklist: ChecklistVersion, draft: EvaluationDraft, model_info: dict):
         validate_draft(conversation, checklist, draft)
@@ -272,7 +307,8 @@ class Store:
         with self.read() as db:
             return self._evaluation(db, evaluation_id)
 
-    def list_evaluations(self, group_id=None, conversation_id=None):
+    def list_evaluations(self, group_id=None, conversation_id=None, gross_error=None):
+        """Filter each historical evaluation's current score, including appeals."""
         conditions, params = [], []
         for name, value in (("group_id", group_id), ("conversation_id", conversation_id)):
             if value is not None:
@@ -280,7 +316,28 @@ class Store:
                 params.append(value)
         where = " WHERE " + " AND ".join(conditions) if conditions else ""
         with self.read() as db:
-            return [self._evaluation(db, row["evaluation_id"]) for row in db.execute("SELECT evaluation_id FROM evaluations" + where + " ORDER BY created_at DESC", params).fetchall()]
+            evaluations = [self._evaluation(db, row["evaluation_id"]) for row in db.execute("SELECT evaluation_id FROM evaluations" + where + " ORDER BY created_at DESC,rowid DESC", params).fetchall()]
+        return [evaluation for evaluation in evaluations if gross_error is None or bool(evaluation["score"].get("gross_error", False)) is gross_error]
+
+    def submission_snapshot(self, group_id: str) -> tuple[list[Conversation], list[dict]]:
+        """Read the source set and its evaluation history at the same point in time."""
+        with self.read() as db:
+            db.execute("BEGIN")
+            conversations = [
+                Conversation.model_validate_json(row["payload"])
+                for row in db.execute(
+                    "SELECT payload FROM conversations WHERE group_id=? ORDER BY conversation_id",
+                    (group_id,),
+                )
+            ]
+            evaluations = [
+                self._evaluation(db, row["evaluation_id"])
+                for row in db.execute(
+                    "SELECT evaluation_id FROM evaluations WHERE group_id=? ORDER BY created_at DESC,rowid DESC",
+                    (group_id,),
+                )
+            ]
+        return conversations, evaluations
 
     @staticmethod
     def _replay(db, scope, key, request_hash):

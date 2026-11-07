@@ -1,0 +1,330 @@
+{
+  "schema_version": 1,
+  "provenance": "synthetic_regression_authored_by_assistant",
+  "not_ground_truth": true,
+  "created_at": "2026-11-07",
+  "frozen_before_live_model_run": true,
+  "checklist_sha256": "9264b4d2099685078769691b7f72ef1fcb1befe19ec6c9ad94e69a6531cedfaf",
+  "dataset_sha256": "9426474dd247b986960a34d53e5cdc65e30ef2aae337537395428ef7267972d6",
+  "limitations": "New invented rehearsal cases with narrow fallible assistant-authored assertions. Not human/organizer GT, not proof of accuracy. Unasserted criteria intentionally remain unlabelled. No real customer data.",
+  "items": [
+    {
+      "group_id": "SYNTHETIC-READINESS-CHAT-v1",
+      "conversation_id": "ready-ru-verified-balance",
+      "language": "RU",
+      "scenario": "Explicit system verification precedes private disclosure; invented account and amounts.",
+      "expected_results": [
+        {
+          "criterion_id": "contact",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "First operator turn greets in Russian and introduces the operator."
+        },
+        {
+          "criterion_id": "identification",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "System explicitly confirms successful verification before disclosure."
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "Verified disclosure is permitted; no insult or private paid-service offer."
+        }
+      ]
+    },
+    {
+      "group_id": "SYNTHETIC-READINESS-CHAT-v1",
+      "conversation_id": "ready-kz-two-public-questions",
+      "language": "KZ",
+      "scenario": "One of two explicitly material public-information questions is answered; operator ends with farewell only.",
+      "expected_results": [
+        {
+          "criterion_id": "contact",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "First operator turn greets and introduces in Kazakh."
+        },
+        {
+          "criterion_id": "identification",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "Both questions concern a public guide, not protected operations."
+        },
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 10,
+          "gross_error": false,
+          "rationale": "One material question is solved and the repeated second question remains unanswered."
+        },
+        {
+          "criterion_id": "closure",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "Farewell only; no summary or further-help offer."
+        }
+      ]
+    },
+    {
+      "group_id": "SYNTHETIC-READINESS-CHAT-v1",
+      "conversation_id": "ready-mixed-untrusted-instructions",
+      "language": "RU",
+      "scenario": "RU metadata with initial Kazakh client language; bot injection and bot insult are untrusted and not operator conduct.",
+      "expected_results": [
+        {
+          "criterion_id": "contact",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "The operator greets only in Russian despite initial Kazakh client language."
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "Injection and insult belong to bot; operator neither insults nor discloses or proposes private service."
+        },
+        {
+          "criterion_id": "identification",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "Only a public contact page is opened."
+        }
+      ]
+    },
+    {
+      "group_id": "SYNTHETIC-READINESS-CHAT-v1",
+      "conversation_id": "ready-ru-private-paid-offer",
+      "language": "RU",
+      "scenario": "Unaccepted offer of personal paid consultation explicitly outside the company.",
+      "expected_results": [
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": true,
+          "rationale": "The offer itself explicitly requests payment personally outside the company; acceptance is unnecessary."
+        },
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 0,
+          "gross_error": false,
+          "rationale": "No instruction or substantive next step is supplied."
+        },
+        {
+          "criterion_id": "closure",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "Operator ends with neither farewell nor summary/help."
+        }
+      ]
+    },
+    {
+      "group_id": "SYNTHETIC-READINESS-CHAT-v1",
+      "conversation_id": "ready-kz-operator-insult",
+      "language": "KZ",
+      "scenario": "Operator directly insults the client and refuses to answer a public-information question.",
+      "expected_results": [
+        {
+          "criterion_id": "contact",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "First operator turn contains neither greeting nor introduction."
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": true,
+          "rationale": "Direct operator insult."
+        },
+        {
+          "criterion_id": "empathy",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "Operator is explicitly insulting."
+        },
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 0,
+          "gross_error": false,
+          "rationale": "Operator explicitly refuses to provide any answer."
+        }
+      ]
+    },
+    {
+      "group_id": "SYNTHETIC-READINESS-CHAT-v1",
+      "conversation_id": "ready-ru-vague-unrepaired",
+      "language": "RU",
+      "scenario": "Advice remains vague after an explicit request to clarify operator wording.",
+      "expected_results": [
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 5,
+          "gross_error": false,
+          "rationale": "Only a general hint is given; the client still has no concrete action."
+        },
+        {
+          "criterion_id": "dialogue",
+          "status": "applicable",
+          "answer": 4,
+          "gross_error": false,
+          "rationale": "Client explicitly asks again because the operator wording is unclear."
+        },
+        {
+          "criterion_id": "closure",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "Operator terminates without summary/help and farewell."
+        }
+      ]
+    },
+    {
+      "group_id": "SYNTHETIC-READINESS-CHAT-v1",
+      "conversation_id": "ready-mixed-specific-empathy-wait",
+      "language": "KZ",
+      "scenario": "Mixed conversation: specific acknowledgement and explicit warning before a six-minute wait; public text works.",
+      "expected_results": [
+        {
+          "criterion_id": "empathy",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "Operator specifically acknowledges two failed openings and their effect."
+        },
+        {
+          "criterion_id": "dialogue",
+          "status": "applicable",
+          "answer": 10,
+          "gross_error": false,
+          "rationale": "Instructions are coherent and explicit wait is announced; do not invent a duration penalty."
+        },
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 20,
+          "gross_error": false,
+          "rationale": "Concrete alternative is given and client confirms success."
+        },
+        {
+          "criterion_id": "closure",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "Summary plus further help and farewell are all present."
+        }
+      ]
+    },
+    {
+      "group_id": "SYNTHETIC-READINESS-CHAT-v1",
+      "conversation_id": "ready-ru-client-partial-disconnect",
+      "language": "RU",
+      "scenario": "Schema-valid partial client utterance with explicit disconnect before any formulated request or operator.",
+      "expected_results": [
+        {
+          "criterion_id": "consultation",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "No request was formulated before disconnection."
+        },
+        {
+          "criterion_id": "closure",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "System explicitly records loss before operator connection."
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "No operator utterance and no operator violation exists."
+        }
+      ]
+    },
+    {
+      "group_id": "SYNTHETIC-READINESS-CHAT-v1",
+      "conversation_id": "ready-kz-system-only",
+      "language": "KZ",
+      "scenario": "Schema-valid meaningful system-only transcript, no client request or operator.",
+      "expected_results": [
+        {
+          "criterion_id": "consultation",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "System explicitly says no question was asked."
+        },
+        {
+          "criterion_id": "closure",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "Session ended before operator connection."
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "No operator act establishing any configured violation."
+        }
+      ]
+    },
+    {
+      "group_id": "SYNTHETIC-READINESS-CHAT-v1",
+      "conversation_id": "ready-ru-empty-turn-then-request",
+      "language": "RU",
+      "scenario": "An empty individual message is followed by meaningful context; bot history supplies all needed details.",
+      "expected_results": [
+        {
+          "criterion_id": "contact",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "First operator reply has neither greeting nor introduction."
+        },
+        {
+          "criterion_id": "discovery",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "All needed public navigation details precede the operator."
+        },
+        {
+          "criterion_id": "identification",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "Public opening hours need no protected operation."
+        },
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 20,
+          "gross_error": false,
+          "rationale": "Exact action is supplied and success confirmed."
+        }
+      ]
+    }
+  ]
+}

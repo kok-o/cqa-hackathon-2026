@@ -1,0 +1,52 @@
+{
+  "isSuccess": true,
+  "error": "",
+  "data": {
+    "dataset_group_id": "SYNTHETIC-SPECULATION-GUARD-v1",
+    "total_records": 1,
+    "records": [
+      {
+        "conversation_id": "guard-ru-retracted-guess",
+        "language": "RU",
+        "channel": "agent chat",
+        "transcript": [
+          {
+            "timestamp": "2026-01-01T12:00:00+00:00",
+            "speaker": "client",
+            "text": "Заявка на перевод не меняет статус. Можно узнать причину?"
+          },
+          {
+            "timestamp": "2026-01-01T12:00:05+00:00",
+            "speaker": "operator",
+            "text": "Здравствуйте! Меня зовут Дина."
+          },
+          {
+            "timestamp": "2026-01-01T12:00:10+00:00",
+            "speaker": "operator",
+            "text": "Причина точно в дополнительной проверке вашей личной операции."
+          },
+          {
+            "timestamp": "2026-01-01T12:00:15+00:00",
+            "speaker": "client",
+            "text": "Вы сейчас открывали мою заявку и проверяли это?"
+          },
+          {
+            "timestamp": "2026-01-01T12:00:20+00:00",
+            "speaker": "operator",
+            "text": "Нет, заявку я не открывала. Это была моя неподтверждённая догадка; я забираю это утверждение. Причину не знаю."
+          },
+          {
+            "timestamp": "2026-01-01T12:00:25+00:00",
+            "speaker": "client",
+            "text": "Точного ответа пока нет, понятно."
+          },
+          {
+            "timestamp": "2026-01-01T12:00:30+00:00",
+            "speaker": "operator",
+            "text": "До свидания."
+          }
+        ]
+      }
+    ]
+  }
+}

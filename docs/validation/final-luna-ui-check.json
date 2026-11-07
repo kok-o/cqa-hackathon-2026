@@ -1,0 +1,15 @@
+{
+  "model": "gpt-6-luna",
+  "prompt": "v6",
+  "effort": "high",
+  "records": 65,
+  "ok": 65,
+  "download_equals_saved": true,
+  "history_models_distinct": true,
+  "js_errors": [],
+  "no_horizontal_overflow": [
+    "1440x1000",
+    "390x844"
+  ],
+  "paid_calls": 0
+}

@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@fontsource/ibm-plex-sans": "^5.2.8",
+    "@radix-ui/react-select": "2.2.6",
     "lucide-react": "1.70.0",
     "react": "19.3.1",
     "react-dom": "19.3.1"

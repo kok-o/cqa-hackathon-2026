@@ -1,0 +1,20 @@
+.select-trigger { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; min-width:0; min-height:42px; padding:10px 12px; border:1px solid #ced8cf; border-radius:9px; background:#fff; color:#25312a; font:inherit; text-align:left; cursor:pointer; }
+.select-trigger > span:first-child { min-width:0; flex:1; white-space:normal; overflow-wrap:anywhere; line-height:1.45; }
+.select-trigger:hover { border-color:#99b09d; background:#fbfdf9; }
+.select-trigger[data-state=open] { border-color:#216447; box-shadow:0 0 0 3px #21644714; }
+.select-trigger:focus-visible { outline:2px solid #216447; outline-offset:3px; }
+.select-trigger:disabled { opacity:.5; cursor:not-allowed; }
+.select-chevron { display:flex; color:#71806e; flex-shrink:0; transition:transform 140ms; }
+.select-trigger[data-state=open] .select-chevron { transform:rotate(180deg); }
+.select-menu { z-index:100; max-width:calc(100vw - 24px); width:max(var(--radix-select-trigger-width),260px); max-height:min(var(--radix-select-content-available-height),360px); border:1px solid #dce5d9; border-radius:12px; background:#fff; color:#25312a; box-shadow:0 12px 36px #173f2520,0 2px 5px #173f2510; overflow:hidden; }
+.select-options { padding:5px; }
+.select-option { position:relative; display:flex; align-items:center; min-height:42px; padding:10px 36px 10px 12px; border-radius:7px; font-size:14px; line-height:1.5; cursor:pointer; outline:none; user-select:none; overflow-wrap:anywhere; }
+.select-option[data-highlighted] { background:#edf5e8; color:#1b5336; }
+.select-option[data-state=checked] { color:#216447; font-weight:500; }
+.select-option[data-disabled] { opacity:.4; pointer-events:none; }
+.select-check { position:absolute; right:12px; display:flex; }
+.checklist-select { max-width:440px; }
+.checklist-select .select-trigger { min-height:42px; font-size:13px; }
+.history-select .select-trigger { min-height:36px; padding:7px 9px; font-size:12px; background:transparent; }
+@media(max-width:700px) { .select-trigger,.select-option { min-height:44px; font-size:15px; } .select-menu { width:var(--radix-select-trigger-width); min-width:min(280px,calc(100vw - 24px)); } .checklist-select .select-trigger { font-size:12px; } }
+@media(prefers-reduced-motion:reduce) { .select-chevron { transition:none; } }

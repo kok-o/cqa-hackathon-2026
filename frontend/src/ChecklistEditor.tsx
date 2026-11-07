@@ -1,3 +1,4 @@
+import Select from "./Select";
 import { useRef, useState, type KeyboardEvent } from "react";
 import {
   Plus,
@@ -297,7 +298,7 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
         </label>
         <label className="field">
           Источник
-          <select
+          <Select
             value={draft.provenance}
             onChange={(event) => {
               setDraft({
@@ -311,7 +312,7 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
           >
             <option value="synthetic_example">Учебный чек-лист</option>
             <option value="organizer">Правила организаторов</option>
-          </select>
+          </Select>
         </label>
         <button
           className="button secondary editor-download"
@@ -453,7 +454,7 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
             <div className="editor-field-grid">
               <label className="field">
                 Тип ответа
-                <select
+                <Select
                   value={criterion.answer_type}
                   onChange={(event) =>
                     setType(event.target.value as Criterion["answer_type"])
@@ -462,7 +463,7 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
                   <option value="boolean">Да / нет</option>
                   <option value="scale">Числовая шкала</option>
                   <option value="choice">Варианты ответа</option>
-                </select>
+                </Select>
               </label>
               <label className="field">
                 Вес
@@ -482,7 +483,7 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
               {criterion.answer_type === "boolean" ? (
                 <label className="field editor-wide">
                   Положительный ответ
-                  <select
+                  <Select
                     value={String(criterion.positive_answer)}
                     onChange={(event) =>
                       change({ positive_answer: event.target.value === "true" })
@@ -490,7 +491,7 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
                   >
                     <option value="true">Да</option>
                     <option value="false">Нет</option>
-                  </select>
+                  </Select>
                 </label>
               ) : null}
               {criterion.answer_type === "scale" ? (
@@ -519,7 +520,7 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
                   </label>
                   <label className="field editor-wide">
                     Направление шкалы
-                    <select
+                    <Select
                       value={String(criterion.higher_is_better)}
                       onChange={(event) =>
                         change({
@@ -529,7 +530,7 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
                     >
                       <option value="true">Больше — лучше</option>
                       <option value="false">Меньше — лучше</option>
-                    </select>
+                    </Select>
                   </label>
                   <label className="field editor-wide">
                     Допустимые ступени
@@ -642,7 +643,7 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
               criterion.gross_error_rule ? (
                 <label className="field editor-wide">
                   Ответ, означающий грубую ошибку
-                  <select
+                  <Select
                     value={
                       criterion.critical_answer == null
                         ? ""
@@ -660,7 +661,7 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
                     <option value="">Определяется отдельно</option>
                     <option value="true">Да означает нарушение</option>
                     <option value="false">Нет означает нарушение</option>
-                  </select>
+                  </Select>
                 </label>
               ) : null}
             </div>

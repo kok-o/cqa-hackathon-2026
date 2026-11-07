@@ -1,3 +1,4 @@
+import Select from "./Select";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowUpRight,
@@ -612,7 +613,7 @@ function DecisionForm({
   const [error, setError] = useState("");
   const [isConflict, setIsConflict] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const firstField = useRef<HTMLSelectElement>(null);
+  const firstField = useRef<HTMLButtonElement>(null);
   useEffect(() => firstField.current?.focus(), []);
   const message = transcript.find((item) => item.message_id === messageId);
   const grossError =
@@ -728,7 +729,7 @@ function DecisionForm({
       ) : null}
       <label className="field">
         Решение
-        <select
+        <Select
           ref={firstField}
           value={action}
           onChange={(event) =>
@@ -737,13 +738,13 @@ function DecisionForm({
         >
           <option value="uphold">Подтвердить оценку</option>
           <option value="replace">Изменить оценку</option>
-        </select>
+        </Select>
       </label>
       {action === "replace" ? (
         <>
           <label className="field">
             Применимость
-            <select
+            <Select
               value={replacement.status}
               onChange={(event) => {
                 const status = event.target.value as CriterionResult["status"];
@@ -768,13 +769,13 @@ function DecisionForm({
                 <option value="not_applicable">Не применим (N/A)</option>
               ) : null}
               <option value="needs_review">Нужна проверка</option>
-            </select>
+            </Select>
           </label>
           {replacement.status === "applicable" ? (
             <label className="field">
               Новый ответ
               {criterion.answer_type === "boolean" ? (
-                <select
+                <Select
                   value={String(replacement.answer ?? false)}
                   onChange={(event) =>
                     setReplacement({
@@ -785,10 +786,10 @@ function DecisionForm({
                 >
                   <option value="true">Да</option>
                   <option value="false">Нет</option>
-                </select>
+                </Select>
               ) : criterion.answer_type === "scale" ? (
                 criterion.allowed_values?.length ? (
-                  <select
+                  <Select
                     value={String(
                       replacement.answer ?? criterion.allowed_values[0],
                     )}
@@ -804,7 +805,7 @@ function DecisionForm({
                         {value}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 ) : (
                   <input
                     type="number"
@@ -825,7 +826,7 @@ function DecisionForm({
                   />
                 )
               ) : (
-                <select
+                <Select
                   value={String(replacement.answer ?? "")}
                   onChange={(event) =>
                     setReplacement({
@@ -837,7 +838,7 @@ function DecisionForm({
                   {Object.keys(criterion.choices).map((choice) => (
                     <option key={choice}>{choice}</option>
                   ))}
-                </select>
+                </Select>
               )}
             </label>
           ) : null}
@@ -857,7 +858,7 @@ function DecisionForm({
           </label>
           <label className="field">
             Доказательство
-            <select
+            <Select
               value={evidenceMode}
               onChange={(event) =>
                 setEvidenceMode(event.target.value as typeof evidenceMode)
@@ -868,13 +869,13 @@ function DecisionForm({
               <option value="span">
                 Проверен весь диалог (действие отсутствует)
               </option>
-            </select>
+            </Select>
           </label>
           {evidenceMode === "quote" ? (
             <>
               <label className="field">
                 Реплика
-                <select
+                <Select
                   value={messageId}
                   onChange={(event) => setMessageId(event.target.value)}
                 >
@@ -883,7 +884,7 @@ function DecisionForm({
                       {i + 1}. {entry.speaker}: {entry.text.slice(0, 65)}
                     </option>
                   ))}
-                </select>
+                </Select>
               </label>
               {message ? <blockquote>{message.text}</blockquote> : null}
             </>

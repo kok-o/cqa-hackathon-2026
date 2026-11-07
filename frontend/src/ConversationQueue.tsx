@@ -1,3 +1,4 @@
+import Select from "./Select";
 import {
   Headphones,
   ListFilter,
@@ -108,7 +109,7 @@ export default function ConversationQueue(p: Props) {
         <div id="queue-filters" className="filters">
           <label className="field">
             Язык
-            <select
+            <Select
               value={p.language}
               onChange={(e) => p.onLanguage(e.target.value)}
             >
@@ -116,38 +117,38 @@ export default function ConversationQueue(p: Props) {
               <option>RU</option>
               <option>KZ</option>
               <option>EN</option>
-            </select>
+            </Select>
           </label>
           <label className="field">
             Канал
-            <select
+            <Select
               value={p.channel}
               onChange={(e) => p.onChannel(e.target.value)}
             >
               <option value="">Все каналы</option>
               <option value="agent chat">Чаты</option>
               <option value="voice call">Звонки</option>
-            </select>
+            </Select>
           </label>
           <label className="field full-width">
             Набор
-            <select value={p.group} onChange={(e) => p.onGroup(e.target.value)}>
+            <Select value={p.group} onChange={(e) => p.onGroup(e.target.value)}>
               <option value="">Все наборы</option>
               {p.groups.map((value) => (
                 <option key={value}>{value}</option>
               ))}
-            </select>
+            </Select>
           </label>
           <label className="field full-width">
             Грубые ошибки в последней оценке
-            <select
+            <Select
               value={p.grossError}
               onChange={(e) => p.onGrossError(e.target.value)}
             >
               <option value="">Все результаты</option>
               <option value="true">С грубой ошибкой</option>
               <option value="false">Без грубых ошибок</option>
-            </select>
+            </Select>
           </label>
           {filterCount > 0 && (
             <button className="text-button full-width" onClick={p.onReset}>

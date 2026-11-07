@@ -1,3 +1,4 @@
+import Select from "./Select";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertCircle,
@@ -729,7 +730,7 @@ export default function App() {
           <label className="checklist-select">
             <ClipboardList size={17} />
             <span className="sr-only">Версия чек-листа</span>
-            <select
+            <Select
               value={selectedChecklist ? checklistKey(selectedChecklist) : ""}
               onChange={(event) => setSelectedChecklistKey(event.target.value)}
               disabled={!checklists.length}
@@ -739,7 +740,7 @@ export default function App() {
                   {item.title} — v{item.version}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
         </div>
         <input
@@ -783,7 +784,7 @@ export default function App() {
               </label>
               <label className="field">
                 Набор для сдачи
-                <select
+                <Select
                   value={submission.group}
                   required
                   disabled={exportingSubmission}
@@ -801,11 +802,11 @@ export default function App() {
                   {groups.map((value) => (
                     <option key={value}>{value}</option>
                   ))}
-                </select>
+                </Select>
               </label>
               <label className="field">
                 Раздел сдачи
-                <select
+                <Select
                   value={submission.split}
                   disabled={exportingSubmission}
                   onChange={(event) =>
@@ -817,7 +818,7 @@ export default function App() {
                 >
                   <option value="dev">DEV — 65 диалогов</option>
                   <option value="prod">PROD — 10 чатов</option>
-                </select>
+                </Select>
               </label>
               <label className="field span-2">
                 Модель для сдачи
@@ -832,7 +833,7 @@ export default function App() {
               </label>
               <label className="field">
                 Режим модели
-                <select
+                <Select
                   value={submission.mode}
                   disabled={exportingSubmission}
                   onChange={(event) =>
@@ -845,7 +846,7 @@ export default function App() {
                   <option value="external_api">Внешний API</option>
                   <option value="local">Локальная модель</option>
                   <option value="hybrid">Гибридный</option>
-                </select>
+                </Select>
               </label>
               {submissionError ? (
                 <p className="notice error span-3" role="alert">
@@ -1196,7 +1197,7 @@ export default function App() {
                 {evaluations.length > 0 && (
                   <label className="history-select">
                     Запуск
-                    <select
+                    <Select
                       aria-label="История оценок"
                       value={evaluationId}
                       onChange={(event) => setEvaluationId(event.target.value)}
@@ -1210,7 +1211,7 @@ export default function App() {
                           {number(item.score.total, 2)}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                   </label>
                 )}
                 {evaluation ? (

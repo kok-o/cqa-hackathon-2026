@@ -1,4 +1,6 @@
 import Select from "./Select";
+import QueueResize, { savedQueueWidth } from "./QueueResize";
+import type { CSSProperties } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertCircle,
@@ -76,6 +78,7 @@ export default function App() {
     "queue" | "transcript" | "assessment"
   >("queue");
   const [queueOpen, setQueueOpen] = useState(false);
+  const [queueWidth, setQueueWidth] = useState(savedQueueWidth);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [jobStatus, setJobStatus] = useState<EvaluationJob["status"] | null>(
     null,
@@ -1131,6 +1134,7 @@ export default function App() {
             </nav>
             <div
               className={`review-workspace mobile-${mobilePanel} ${queueOpen ? "queue-open" : ""}`}
+              style={{ "--queue-width": `${queueWidth}px` } as CSSProperties}
             >
               {queueOpen && (
                 <button
@@ -1140,6 +1144,7 @@ export default function App() {
                 />
               )}
               <ConversationQueue
+                resizeHandle={<QueueResize onChange={setQueueWidth} />}
                 items={filtered}
                 total={conversations.length}
                 selectedKey={selectedKey}

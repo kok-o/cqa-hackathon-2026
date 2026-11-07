@@ -1,4 +1,5 @@
 import Select from "./Select";
+import type { ReactNode } from "react";
 import {
   Headphones,
   ListFilter,
@@ -16,6 +17,7 @@ export const conversationKey = (value: {
   conversation_id: string;
 }) => JSON.stringify([value.group_id, value.conversation_id]);
 type Props = {
+  resizeHandle?: ReactNode;
   items: ConversationSummary[];
   total: number;
   selectedKey: string;
@@ -226,6 +228,7 @@ export default function ConversationQueue(p: Props) {
           <span className="button-count">{p.items.length}</span>
         </button>
       </footer>
+      {p.resizeHandle}
     </aside>
   );
 }

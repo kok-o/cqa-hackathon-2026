@@ -130,9 +130,6 @@ export default function App() {
       ),
     [conversations, language, channel, group, grossError, query],
   );
-  const completedCount = conversations.filter(
-    (item) => item.latest_score != null,
-  ).length;
   const submissionCount = submission
     ? conversations.filter((item) => item.group_id === submission.group).length
     : 0;
@@ -724,7 +721,7 @@ export default function App() {
       </div>
       <main id="main-content">
         <div className="workspace-toolbar">
-          <h1 className="page-title">{tab === "review" ? "Диалоги" : "Чек-листы"}<span>{tab === "review" ? `${completedCount} / ${conversations.length}` : selectedChecklist ? `v${selectedChecklist.version}` : ""}</span></h1>
+          <h1 className="page-title">{tab === "review" ? "Диалоги" : "Чек-листы"}</h1>
           <label className="checklist-select">
             <ClipboardList size={17} />
             <span className="sr-only">Версия чек-листа</span>

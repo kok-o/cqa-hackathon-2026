@@ -1,0 +1,20 @@
+{
+  "status": "passed",
+  "mode": "isolated_test_double_not_AI_quality",
+  "checks": [
+    "synthetic_json_import_and_transcript",
+    "real_job_endpoint_with_explicit_test_double",
+    "evidence_navigation_and_highlight",
+    "appeal_replacement_recalculation_and_immutable_original",
+    "editor_new_criterion_new_version_applied_and_history_preserved",
+    "previously_unseen_json_uses_current_criteria",
+    "json_export_download"
+  ],
+  "group_id": "BROWSER_75f8a803",
+  "revision_before": 1,
+  "revision_after": 2,
+  "score_before": 66.67,
+  "score_after": 100.0,
+  "new_checklist_version": 2,
+  "page_errors": []
+}

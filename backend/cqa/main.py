@@ -224,13 +224,16 @@ def create_app(database_path: str | Path | None = None, evaluator=None, evaluato
                 run = await result if inspect.isawaitable(result) else result
                 store.complete_job(job_id, conversation, checklist, run.draft, run.model_info)
             except Exception as error:
+                error_code = model_info = None
                 try:
                     from .evaluator.service import EvaluatorError
                     message = str(error) if isinstance(error, EvaluatorError) else "Оценка не завершена. Проверьте настройки модели и повторите запуск."
+                    if isinstance(error, EvaluatorError):
+                        error_code, model_info = error.code, error.model_info
                 except ImportError:
                     message = "Модуль оценки недоступен. Проверьте установку приложения."
                 logger.warning("Evaluation job %s failed (%s)", job_id, type(error).__name__)
-                store.fail_job(job_id, message)
+                store.fail_job(job_id, message, error_code=error_code, model_info=model_info)
 
     @application.post("/api/evaluation-jobs", status_code=202)
     async def create_job(body: JobRequest, background: BackgroundTasks):
@@ -274,12 +277,14 @@ def create_app(database_path: str | Path | None = None, evaluator=None, evaluato
             raise HTTPException(status_code=422, detail="Укажите team_name или CQA_TEAM_NAME.")
         conversations = [Conversation.model_validate(store.conversation(group_id, item["conversation_id"]))
                          for item in store.list_conversations(group_id=group_id)]
+        current_sources = {conversation.conversation_id: conversation.model_dump() for conversation in conversations}
         approved = load_approved_checklist()
         approved_fingerprint = checklist_criteria_fingerprint(approved)
         selected = {}
         for item in store.list_evaluations(group_id=group_id):
             info = item.get("model_info", {})
             if ((info.get("requested_model") or info.get("model")) == model_name
+                    and item["conversation"] == current_sources.get(item["conversation"]["conversation_id"])
                     and checklist_criteria_fingerprint(item["checklist"]) == approved_fingerprint):
                 selected.setdefault(item["conversation"]["conversation_id"], item)
         known_modes = {"local" if item.get("model_info", {}).get("provider") == "local" else "external_api"

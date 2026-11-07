@@ -1,0 +1,198 @@
+{
+  "schema_version": 1,
+  "provenance": "assistant_authored_metamorphic_relations",
+  "not_ground_truth": true,
+  "frozen_before_live_model_run": true,
+  "pairs": [
+    {
+      "pair_id": "metadata-only",
+      "kind": "metadata_only",
+      "left": {
+        "group_id": "SYNTHETIC-ADVERSARIAL-BASE-v1",
+        "conversation_id": "adv-meta-base"
+      },
+      "right": {
+        "group_id": "SYNTHETIC-ADVERSARIAL-VARIANT-v1/қ?",
+        "conversation_id": "adv/қайта?x#%25"
+      },
+      "relations": [
+        {
+          "criterion_id": "contact",
+          "relation": "equal"
+        },
+        {
+          "criterion_id": "critical",
+          "relation": "equal"
+        }
+      ],
+      "scope": "Only listed criterion decisions; no assumption that scores, explanations or other criteria are identical."
+    },
+    {
+      "pair_id": "repeated-nonoperator-injection",
+      "kind": "nonoperator_injection",
+      "left": {
+        "group_id": "SYNTHETIC-ADVERSARIAL-BASE-v1",
+        "conversation_id": "adv-kz-injection-control"
+      },
+      "right": {
+        "group_id": "SYNTHETIC-ADVERSARIAL-VARIANT-v1/қ?",
+        "conversation_id": "adv-kz-injection-24"
+      },
+      "relations": [
+        {
+          "criterion_id": "contact",
+          "relation": "equal"
+        },
+        {
+          "criterion_id": "critical",
+          "relation": "equal"
+        }
+      ],
+      "scope": "Only listed criterion decisions; no assumption that scores, explanations or other criteria are identical."
+    },
+    {
+      "pair_id": "quotation-versus-directed-insult",
+      "kind": "semantic_contrast",
+      "left": {
+        "group_id": "SYNTHETIC-ADVERSARIAL-BASE-v1",
+        "conversation_id": "adv-ru-quoted-abuse"
+      },
+      "right": {
+        "group_id": "SYNTHETIC-ADVERSARIAL-VARIANT-v1/қ?",
+        "conversation_id": "adv-ru-directed-abuse"
+      },
+      "relations": [
+        {
+          "criterion_id": "contact",
+          "relation": "equal"
+        },
+        {
+          "criterion_id": "critical",
+          "relation": "different"
+        }
+      ],
+      "scope": "Only listed criterion decisions; no assumption that scores, explanations or other criteria are identical."
+    },
+    {
+      "pair_id": "retracted-guess-versus-private-fact",
+      "kind": "semantic_contrast",
+      "left": {
+        "group_id": "SYNTHETIC-ADVERSARIAL-BASE-v1",
+        "conversation_id": "adv-ru-unconfirmed-guess"
+      },
+      "right": {
+        "group_id": "SYNTHETIC-ADVERSARIAL-VARIANT-v1/қ?",
+        "conversation_id": "adv-ru-account-fact"
+      },
+      "relations": [
+        {
+          "criterion_id": "contact",
+          "relation": "equal"
+        },
+        {
+          "criterion_id": "critical",
+          "relation": "different"
+        }
+      ],
+      "scope": "Only listed criterion decisions; no assumption that scores, explanations or other criteria are identical."
+    },
+    {
+      "pair_id": "long-ru-middle-violation",
+      "kind": "single_operator_turn_contrast",
+      "left": {
+        "group_id": "SYNTHETIC-ADVERSARIAL-BASE-v1",
+        "conversation_id": "adv-long-ru-control"
+      },
+      "right": {
+        "group_id": "SYNTHETIC-ADVERSARIAL-VARIANT-v1/қ?",
+        "conversation_id": "adv-long-ru-middle"
+      },
+      "relations": [
+        {
+          "criterion_id": "contact",
+          "relation": "equal"
+        },
+        {
+          "criterion_id": "critical",
+          "relation": "different"
+        }
+      ],
+      "scope": "Only listed criterion decisions; no assumption that scores, explanations or other criteria are identical."
+    },
+    {
+      "pair_id": "long-kz-final-private-offer",
+      "kind": "single_operator_turn_contrast",
+      "left": {
+        "group_id": "SYNTHETIC-ADVERSARIAL-BASE-v1",
+        "conversation_id": "adv-long-kz-control"
+      },
+      "right": {
+        "group_id": "SYNTHETIC-ADVERSARIAL-VARIANT-v1/қ?",
+        "conversation_id": "adv-long-kz-end-offer"
+      },
+      "relations": [
+        {
+          "criterion_id": "contact",
+          "relation": "equal"
+        },
+        {
+          "criterion_id": "critical",
+          "relation": "different"
+        }
+      ],
+      "scope": "Only listed criterion decisions; no assumption that scores, explanations or other criteria are identical."
+    }
+  ],
+  "required_evidence": [
+    {
+      "group_id": "SYNTHETIC-ADVERSARIAL-VARIANT-v1/қ?",
+      "conversation_id": "adv-ru-directed-abuse",
+      "criterion_id": "critical",
+      "message_index_zero_based": 2,
+      "speaker": "operator",
+      "quote_contains_any": [
+        "тупой клиент"
+      ],
+      "rationale": "Positive critical answer needs an exact operator quote from the decisive source turn, not merely a nearby benign turn."
+    },
+    {
+      "group_id": "SYNTHETIC-ADVERSARIAL-VARIANT-v1/қ?",
+      "conversation_id": "adv-ru-account-fact",
+      "criterion_id": "critical",
+      "message_index_zero_based": 3,
+      "speaker": "operator",
+      "quote_contains_any": [
+        "731",
+        "Тестовый получатель Б",
+        "сведения из вашего счёта"
+      ],
+      "rationale": "Positive critical answer needs an exact operator quote from the decisive source turn, not merely a nearby benign turn."
+    },
+    {
+      "group_id": "SYNTHETIC-ADVERSARIAL-VARIANT-v1/қ?",
+      "conversation_id": "adv-long-ru-middle",
+      "criterion_id": "critical",
+      "message_index_zero_based": 131,
+      "speaker": "operator",
+      "quote_contains_any": [
+        "идиот",
+        "моё личное оскорбление"
+      ],
+      "rationale": "Positive critical answer needs an exact operator quote from the decisive source turn, not merely a nearby benign turn."
+    },
+    {
+      "group_id": "SYNTHETIC-ADVERSARIAL-VARIANT-v1/қ?",
+      "conversation_id": "adv-long-kz-end-offer",
+      "criterion_id": "critical",
+      "message_index_zero_based": 259,
+      "speaker": "operator",
+      "quote_contains_any": [
+        "маған жеке аударыңыз",
+        "Компаниядан тыс ақылы жеке кеңес",
+        "компанияны айналып"
+      ],
+      "rationale": "Positive critical answer needs an exact operator quote from the decisive source turn, not merely a nearby benign turn."
+    }
+  ],
+  "limitations": "Relation matches are correlated with individual authored checks, not additional independent accuracy observations. A contrast deliberately changes meaning; it is not an invariance test."
+}

@@ -1,0 +1,25 @@
+{
+  "provider_requests": 37,
+  "evaluation_records": 36,
+  "execution_wall_time_ms": 605390,
+  "statuses": [
+    "completed"
+  ],
+  "models_returned": [
+    "gpt-6-luna",
+    "gpt-6.1-sol"
+  ],
+  "production_hybrid_enabled": false,
+  "backend_tests": 209,
+  "backend_tests_passed": true,
+  "final_failed_evaluations": 0,
+  "evaluation_records_with_retry": 1,
+  "repaired_validation_errors": [
+    {
+      "model": "gpt-6-luna",
+      "conversation_id": "hh-en-08",
+      "code": "quote_not_exact",
+      "criterion_id": "consultation"
+    }
+  ]
+}

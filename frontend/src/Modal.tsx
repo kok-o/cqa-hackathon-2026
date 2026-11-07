@@ -46,7 +46,6 @@ export default function Modal({
     >
       <header>
         <div>
-          <span className="eyebrow">Рабочая область CQA</span>
           <h2 id="modal-heading">{title}</h2>
         </div>
         <button

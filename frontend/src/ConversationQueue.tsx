@@ -1,7 +1,4 @@
 import {
-  Check,
-  ChevronRight,
-  FileJson,
   Headphones,
   ListFilter,
   MessageSquare,
@@ -57,11 +54,9 @@ export default function ConversationQueue(p: Props) {
     >
       <div className="sidebar-heading">
         <div>
-          <span className="eyebrow">Рабочая очередь</span>
-          <h2>
-            Диалоги <span>{p.items.length}</span>
-          </h2>
+          <h2>Очередь <span>{p.items.length === p.total ? p.total : `${p.items.length} / ${p.total}`}</span></h2>
         </div>
+        <button className="icon-button queue-import" onClick={p.onImport} disabled={p.importing || p.running} aria-label="Импорт JSON" title="Импорт JSON"><Upload size={17} /></button>
         <button
           className="icon-button queue-close"
           onClick={p.onClose}
@@ -146,14 +141,9 @@ export default function ConversationQueue(p: Props) {
           )}
         </div>
       )}
-      <div className="queue-caption">
-        <span>{p.group || "Все наборы"}</span>
-        <span>
-          {p.items.length} из {p.total}
-        </span>
-      </div>
+      {p.group && <div className="queue-caption"><span>{p.group}</span></div>}
       <div className="conversation-list">
-        {p.items.map((item, i) => (
+        {p.items.map((item) => (
           <button
             key={conversationKey(item)}
             className={`conversation-item ${conversationKey(item) === p.selectedKey ? "selected" : ""}`}
@@ -163,9 +153,6 @@ export default function ConversationQueue(p: Props) {
             }
           >
             <span className="conversation-item-top">
-              <span className="conversation-index">
-                {String(i + 1).padStart(2, "0")}
-              </span>
               <strong>{item.conversation_id}</strong>
               <span className="language-tag">{item.language}</span>
             </span>
@@ -191,14 +178,13 @@ export default function ConversationQueue(p: Props) {
                 ) : null}
                 {item.latest_score != null ? (
                   <>
-                    <Check size={12} />
                     {number(item.latest_score, 2)}
                   </>
                 ) : (
                   statusName(item.latest_status)
                 )}
               </span>
-              <ChevronRight size={13} className="row-chevron" />
+
             </span>
           </button>
         ))}
@@ -206,7 +192,7 @@ export default function ConversationQueue(p: Props) {
           <div className="small-empty">
             <Search size={24} />
             <strong>Ничего не найдено</strong>
-            <p>Попробуйте другой запрос или сбросьте фильтры.</p>
+
             <button className="text-button" onClick={p.onReset}>
               Сбросить фильтры
             </button>
@@ -222,29 +208,12 @@ export default function ConversationQueue(p: Props) {
           <Play size={15} /> Оценить выборку{" "}
           <span className="button-count">{p.items.length}</span>
         </button>
-        <div className="queue-actions">
-          <button
-            className="button secondary"
-            disabled={p.importing || p.running}
-            onClick={p.onImport}
-          >
-            <Upload size={14} /> Импорт JSON
-          </button>
-          <button
-            className="icon-button"
-            title="Файл для сдачи"
-            aria-label="Файл для сдачи"
-            onClick={p.onSubmission}
-          >
-            <FileJson size={18} />
-          </button>
-        </div>
         <button
           className="text-button demo-link"
           disabled={p.importing}
           onClick={p.onDemo}
         >
-          Открыть учебный набор
+          Учебный набор
         </button>
       </footer>
     </aside>

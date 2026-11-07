@@ -1,10 +1,7 @@
 import {
   ArrowLeft,
-  Bot,
   Headphones,
   MessageSquare,
-  Settings2,
-  UserRound,
 } from "lucide-react";
 import type { Conversation, Evaluation, Speaker } from "./contracts";
 const names: Record<Speaker, string> = {
@@ -42,26 +39,9 @@ export default function Transcript({
       aria-busy={loading}
     >
       <header className="panel-heading">
-        <div>
-          <span className="eyebrow">Исходный разговор</span>
-          <h2>
-            Транскрипт{" "}
-            <span className="subtle">
-              {source?.transcript.length ?? 0} реплик
-            </span>
-          </h2>
-        </div>
-        <span className="badge neutral">
-          {source?.language || "—"} ·{" "}
-          {source?.channel === "voice call" ? "Звонок" : "Чат"}
-        </span>
+        <h2>Разговор <span className="subtle">{source?.transcript.length ?? 0} реплик</span></h2>
+        {evaluation && <span className="source-version" title={`Сохранённый снимок диалога из оценки по чек-листу v${evaluation.checklist.version}`}>Снимок оценки</span>}
       </header>
-      {evaluation && (
-        <div className="snapshot-label">
-          <span className="status-dot" /> Снимок на момент оценки · версия
-          правил {evaluation.checklist.version}
-        </div>
-      )}
       {highlight && (
         <div className="evidence-return">
           <span>
@@ -90,7 +70,7 @@ export default function Transcript({
       {source?.channel === "voice call" && !source.audio_url && (
         <div className="no-audio-banner">
           <Headphones size={16} />
-          <span>Запись недоступна. Для разбора доступен транскрипт.</span>
+          <span>Запись звонка недоступна</span>
         </div>
       )}
       <div className="transcript-content">
@@ -129,17 +109,6 @@ export default function Transcript({
                   <span className="message-position">
                     {String(i + 1).padStart(2, "0")}
                   </span>
-                  <span className="speaker-avatar">
-                    {message.speaker === "operator" ? (
-                      <Headphones size={14} />
-                    ) : message.speaker === "client" ? (
-                      <UserRound size={14} />
-                    ) : message.speaker === "bot" ? (
-                      <Bot size={14} />
-                    ) : (
-                      <Settings2 size={14} />
-                    )}
-                  </span>
                   <strong>{names[message.speaker]}</strong>
                   <time title={message.timestamp}>
                     {message.timestamp.includes("T")
@@ -158,14 +127,6 @@ export default function Transcript({
           </div>
         )}
       </div>
-      <footer className="transcript-footer">
-        <span>
-          {source?.channel === "voice call"
-            ? "Транскрипт звонка"
-            : "Текстовый диалог"}
-        </span>
-        <span>Исходные роли и время</span>
-      </footer>
     </section>
   );
 }

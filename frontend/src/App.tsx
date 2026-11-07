@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertCircle,
-  ArrowRight,
-  ArrowUpRight,
   CheckCheck,
   ClipboardList,
   Download,
@@ -13,7 +11,6 @@ import {
   Play,
   RefreshCw,
   Settings2,
-  ShieldCheck,
   Upload,
   X,
 } from "lucide-react";
@@ -608,15 +605,7 @@ export default function App() {
           }}
           aria-label="CQA — рабочая область"
         >
-          <span className="brand-mark">
-            <ShieldCheck size={23} strokeWidth={1.8} />
-          </span>
-          <span>
-            <strong>
-              CQA<span className="brand-period">.</span>
-            </strong>
-            <small>Conversation quality</small>
-          </span>
+          <span className="brand-word">cqa<span aria-hidden="true" className="brand-signal" /></span>
         </a>
         <nav className="main-nav" aria-label="Разделы приложения">
           <button
@@ -624,14 +613,14 @@ export default function App() {
             onClick={() => setTab("review")}
             aria-current={tab === "review" ? "page" : undefined}
           >
-            <MessageSquare size={17} /> Диалоги
+            Диалоги
           </button>
           <button
             className={tab === "checklist" ? "active" : ""}
             onClick={() => setTab("checklist")}
             aria-current={tab === "checklist" ? "page" : undefined}
           >
-            <ClipboardList size={17} /> Чек-листы
+            Чек-листы
           </button>
         </nav>
         <div className="header-actions">
@@ -650,16 +639,14 @@ export default function App() {
             <span className="status-dot" />
             <span>
               {config?.mode === "test"
-                ? "Тестовый режим"
+                ? "Тест"
                 : config?.provider_configured
-                  ? "Модель подключена"
-                  : "Модель не подключена"}
+                  ? "Модель"
+                  : "Нет модели"}
             </span>
             <Settings2 size={15} />
           </button>
-          <span className="header-avatar" aria-label="Рабочее место QA">
-            QA
-          </span>
+
         </div>
       </header>
       {showSetup && (
@@ -737,18 +724,7 @@ export default function App() {
       </div>
       <main id="main-content">
         <div className="workspace-toolbar">
-          <div className="toolbar-title">
-            <span className="eyebrow">Контроль качества · Freedom Broker</span>
-            <h1>{tab === "review" ? "Разбор диалогов" : "Правила оценки"}</h1>
-          </div>
-          <div className="workspace-stats">
-            <span>
-              <strong>{conversations.length}</strong> диалогов
-            </span>
-            <span>
-              <strong>{completedCount}</strong> оценено
-            </span>
-          </div>
+          <h1 className="page-title">{tab === "review" ? "Диалоги" : "Чек-листы"}<span>{tab === "review" ? `${completedCount} / ${conversations.length}` : selectedChecklist ? `v${selectedChecklist.version}` : ""}</span></h1>
           <label className="checklist-select">
             <ClipboardList size={17} />
             <span className="sr-only">Версия чек-листа</span>
@@ -1018,52 +994,13 @@ export default function App() {
           )
         ) : conversations.length === 0 ? (
           <section className="onboarding">
-            <span className="onboarding-symbol">
-              <MessageSquare size={36} strokeWidth={1.4} />
-            </span>
-            <span className="eyebrow">От разговора — к понятной оценке</span>
-            <h2>
-              Качество видно
-              <br />в деталях диалога.
-            </h2>
-            <p>
-              Загрузите транскрипты, примените чек-лист и разберите каждый вывод
-              по исходным репликам.
-            </p>
+            <h2>Загрузите диалоги</h2>
+            <p>JSON с транскриптами на русском, казахском или английском.</p>
             <div className="button-row">
-              <button
-                className="button primary"
-                onClick={() => inputRef.current?.click()}
-                disabled={importing}
-              >
-                <Upload size={17} /> Импорт JSON
-              </button>
-              <button
-                className="button secondary"
-                onClick={() => void importDataset({ source: "dev" })}
-                disabled={importing}
-              >
-                <FileJson size={17} /> Открыть DEV
-              </button>
+              <button className="button primary" onClick={() => inputRef.current?.click()} disabled={importing}><Upload size={17} /> Импорт JSON</button>
+              <button className="button secondary" onClick={() => void importDataset({ source: "dev" })} disabled={importing}>Открыть DEV</button>
             </div>
-            <button
-              className="text-button"
-              onClick={() => void importDataset({ source: "demo" })}
-              disabled={importing}
-            >
-              Попробовать на 3 учебных диалогах <ArrowRight size={16} />
-            </button>
-            <div className="onboarding-steps">
-              <span>
-                <b>01</b>Загрузите диалог
-              </span>
-              <span>
-                <b>02</b>Проверьте доказательства
-              </span>
-              <span>
-                <b>03</b>Сохраните решение
-              </span>
-            </div>
+            <button className="text-button" onClick={() => void importDataset({ source: "demo" })} disabled={importing}>Открыть 3 учебных диалога</button>
           </section>
         ) : (
           <>
@@ -1212,7 +1149,7 @@ export default function App() {
                 aria-label="Результаты оценки"
               >
                 <div className="assessment-actions">
-                  <span className="eyebrow">Оценка качества</span>
+                  <h2>Оценка</h2>
                   <button
                     className="button primary small"
                     disabled={
@@ -1266,52 +1203,11 @@ export default function App() {
                   />
                 ) : (
                   <div className="assessment-empty">
-                    <div className="empty-assessment-visual">
-                      <ClipboardList size={30} strokeWidth={1.3} />
-                      <span>
-                        <CheckCheck size={15} />
-                      </span>
-                    </div>
-                    <span className="eyebrow">Готово к разбору</span>
-                    <h2>
-                      У каждого балла —<br />
-                      своё доказательство
-                    </h2>
-                    <p>
-                      Запустите оценку, чтобы увидеть ответы по критериям и
-                      реплики, на которых основан вывод.
-                    </p>
-                    <div className="selected-rules">
-                      <ClipboardList size={17} />
-                      <div>
-                        <strong>
-                          {selectedChecklist?.title ?? "Выберите чек-лист"}
-                        </strong>
-                        <span>
-                          Версия {selectedChecklist?.version} ·{" "}
-                          {selectedChecklist?.criteria.length ?? 0} критериев
-                        </span>
-                      </div>
-                    </div>
-                    {selectedChecklist?.provenance === "synthetic_example" && (
-                      <span className="badge warning">Учебные правила</span>
-                    )}
-                    {!config?.provider_configured && (
-                      <button
-                        className="connection-hint"
-                        onClick={() => setShowSetup(true)}
-                      >
-                        <AlertCircle size={16} />
-                        <span>Для AI-оценки подключите модель</span>
-                        <ArrowUpRight size={16} />
-                      </button>
-                    )}
-                    <button
-                      className="text-button"
-                      onClick={() => setTab("checklist")}
-                    >
-                      Открыть чек-лист <ArrowRight size={15} />
-                    </button>
+                    <h2>Диалог ещё не оценён</h2>
+                    <p>{selectedChecklist?.criteria.length ?? 0} критериев, версия {selectedChecklist?.version}.</p>
+                    {selectedChecklist?.provenance === "synthetic_example" && <span className="badge warning">Учебный чек-лист</span>}
+                    {!config?.provider_configured && <button className="connection-hint" onClick={() => setShowSetup(true)}><AlertCircle size={16} /> Подключить модель</button>}
+                    <button className="text-button" onClick={() => setTab("checklist")}>Изменить чек-лист</button>
                   </div>
                 )}
               </aside>
@@ -1319,16 +1215,6 @@ export default function App() {
           </>
         )}
       </main>
-      <footer className="app-footer">
-        <span>
-          <ShieldCheck size={13} /> CQA · Freedom Broker Hackathon
-        </span>
-        <span>
-          {config?.mode === "test"
-            ? "Учебные ответы · тестовый режим"
-            : "Проверяемые оценки. Обоснованные решения."}
-        </span>
-      </footer>
     </div>
   );
 }

@@ -1,0 +1,182 @@
+{
+  "run_fingerprint": "573634d72f356ad79db5b5059ca1bb0807a74a33f301733224f8cbf82d89b2b4",
+  "created_at": "2026-11-07T17:45:25.998043+00:00",
+  "dataset_sha256": "5036f5def91968de656acbbe72084d6659da5922152dc1661a90681a895241d8",
+  "expected_file_sha256": "898691b7377b7d12c337e9a460b4fbdb3eadc28b3d75d8b99a086596487045cd",
+  "checklist_sha256": "9264b4d2099685078769691b7f72ef1fcb1befe19ec6c9ad94e69a6531cedfaf",
+  "routing_policy_sha256": "9b5bc627ae53a9e11873bb06cad22830afd07fb48f4f75f842fc2582cba9a4e9",
+  "routing_policy": {
+    "version": "hybrid-risk-v1",
+    "needs_review": "all non-audio criteria",
+    "paired_identity_critical": "critical=true or identification=false",
+    "consultation_values": [
+      5,
+      10,
+      15
+    ],
+    "dialogue_values": [
+      4,
+      7
+    ],
+    "empathy": false,
+    "operator_only_patterns": {
+      "privacy_ru": "\\b(?:баланс\\w*|остат(?:ок|к)\\w*|портфел\\w*|иин|паспорт\\w*)\\b",
+      "privacy_en": "\\b(?:balance|portfolio|passport)\\b|\\bcard[\\s-]+number\\b",
+      "privacy_kz": "\\b(?:қалдық\\w*|жсн|паспорт\\w*)\\b",
+      "personal_payment_ru": "(?:перевед\\w*|перевод\\w*|оплат\\w*|заплат\\w*).{0,80}(?:мне|мо[юийе]\\w*|личн\\w*).{0,40}(?:карт\\w*|сч[её]т\\w*|номер\\w*|консультац\\w*)",
+      "personal_payment_en": "\\b(?:pay|send|transfer)\\b.{0,80}\\b(?:me|my|personal|private)\\b.{0,40}\\b(?:card|account|number|consultation|advice)\\b",
+      "personal_payment_kz": "(?:маған|менің|жеке).{0,60}(?:карт\\w*|шот\\w*|нөмір\\w*|кеңес\\w*).{0,80}(?:аудар\\w*|төле\\w*)|(?:аудар\\w*|төле\\w*).{0,80}(?:маған|менің|жеке)"
+    },
+    "regex_flags": [
+      "IGNORECASE",
+      "DOTALL"
+    ],
+    "excluded_triggers": [
+      "ordinary N/A",
+      "contact=false",
+      "closure=false",
+      "Luna explanation",
+      "labels",
+      "reviewer output"
+    ]
+  },
+  "deployment_gate": {
+    "version": "hybrid-pilot-gate-v2",
+    "conversations": 24,
+    "criteria_per_conversation": 8,
+    "language_counts": {
+      "RU": 8,
+      "KZ": 8,
+      "EN": 8
+    },
+    "minimum_net_corrected_decisions": 4,
+    "bootstrap_samples": 10000,
+    "bootstrap_seed": 20261107,
+    "require_family_labels": true,
+    "require_family_bootstrap_lower_above_zero": true,
+    "minimum_bootstrap_lower_bound": 0,
+    "maximum_critical_regressions": 0,
+    "allow_language_accuracy_decline": false,
+    "maximum_uncached_usd_per_conversation": 0.05,
+    "require_complete_usage": true,
+    "require_all_requested_reviews_complete": true
+  },
+  "models": {
+    "gpt-6-luna": {
+      "model": "gpt-6-luna",
+      "timeout_seconds": 180,
+      "json_mode": "json_schema",
+      "max_tokens": 16384,
+      "input_cost_per_million": 0.1,
+      "output_cost_per_million": 0.5,
+      "api_style": "responses",
+      "reasoning_effort": "high",
+      "cached_input_cost_per_million": 0.01,
+      "cache_write_input_cost_per_million": 0.125,
+      "endpoint_sha256": "ee071e382ae11baecc06ca51545a6d4f3fa74cb3ea12b605d63d0b19ae84fea7"
+    },
+    "gpt-6.1-sol": {
+      "model": "gpt-6.1-sol",
+      "timeout_seconds": 600,
+      "json_mode": "json_schema",
+      "max_tokens": 32768,
+      "input_cost_per_million": 2.0,
+      "output_cost_per_million": 10.0,
+      "api_style": "responses",
+      "reasoning_effort": "max",
+      "cached_input_cost_per_million": 0.1,
+      "cache_write_input_cost_per_million": 2.5,
+      "endpoint_sha256": "ee071e382ae11baecc06ca51545a6d4f3fa74cb3ea12b605d63d0b19ae84fea7"
+    }
+  },
+  "pricing": {
+    "schema_version": 1,
+    "currency": "USD",
+    "billing_mode": "standard",
+    "verified_at": "2026-11-07",
+    "notes": "Official public standard API prices, per million tokens; excludes taxes. Cache writes and long-context premiums are included in reservation bounds. Reverify before future runs.",
+    "models": {
+      "gpt-6.1-sol": {
+        "input_per_million": 2.0,
+        "cached_input_per_million": 0.1,
+        "cache_write_input_per_million": 2.5,
+        "output_per_million": 10.0,
+        "long_context_threshold": 272000,
+        "long_context_input_multiplier": 2.0,
+        "long_context_output_multiplier": 1.5,
+        "source": "https://developers.openai.com/api/docs/models/gpt-6.1-sol"
+      },
+      "gpt-6-astra": {
+        "input_per_million": 10.0,
+        "cached_input_per_million": 1.0,
+        "cache_write_input_per_million": 12.5,
+        "output_per_million": 50.0,
+        "long_context_threshold": 272000,
+        "long_context_input_multiplier": 2.0,
+        "long_context_output_multiplier": 1.5,
+        "source": "https://developers.openai.com/api/docs/models/gpt-6-astra"
+      },
+      "gpt-6-luna": {
+        "input_per_million": 0.1,
+        "cached_input_per_million": 0.01,
+        "cache_write_input_per_million": 0.125,
+        "output_per_million": 0.5,
+        "source": "https://developers.openai.com/api/docs/models/gpt-6-luna"
+      }
+    }
+  },
+  "implementation_sha256": {
+    "evaluation/hybrid.py": "a409cdfe71bc7a71358b394084134c4880e99ef9513ae238386cf33cd9f644da",
+    "evaluation/hybrid_decision.py": "472b37562aeeda660891c81d19caa1d95fdc1881c33ca51bf765cc29797b566f",
+    "scripts/hybrid_benchmark.py": "5d5a67aac918dae46063e90400d0530066280912feb68b84b7f1e939205d5602",
+    "evaluation/benchmark.py": "952f5561be6cd575cb24cf6b4d7ad27c0567e4086099ae9a194b5dc5ec66f4f4",
+    "evaluation/submission.py": "a6e08c4867b9ea5f8f6409ce5ac015dbacfa6607dd878c26e5cebadeeff71589",
+    "backend/cqa/evaluator/service.py": "120225417de47872af15a64f534682f84967cc5ab61c11d280c63ab6a7876f6e",
+    "backend/cqa/evaluator/provider.py": "e8aba774fc0be709a13b6323b180f9b79ee5602a8ddaf413848c59427efdd43a",
+    "backend/cqa/evaluator/validation.py": "edc41ccfe6275266dbb44ea441a9f757e64812a5a7d5fa0650279353abe45cda",
+    "backend/cqa/models.py": "155f24e73c9851d7b411b6e1ebc98b49ede605f99e4c04a82e6a0f6d90d39bc3",
+    "backend/cqa/scoring.py": "966b202dacc6c8032d2548ee24c2611a0755d3508e34f4b60fef9a6af1be7c31",
+    "backend/cqa/importer.py": "81ebed45046d2c1fd3f9f287b4b80f52bd017864db8cb61cfe544b09bfe85b4c",
+    "prompts/evaluator.md": "9e1b076b20a7dc66db18e72f13c97a808d2f2fc0ffd3bba56b34a04c04f41053"
+  },
+  "maximum_budget_usd": 3,
+  "labels": "assistant-authored, independently reviewed by a second assistant; not human or organizer GT",
+  "initial_label_agreement": {
+    "agreed": 190,
+    "total": 192
+  },
+  "pre_run_reconciliation": {
+    "source_conversations_clarified": 3,
+    "all_final_decisions_agree": 192
+  },
+  "families": 13,
+  "holdout_freeze": {
+    "phase": "final_pre_run_frozen",
+    "utc": "2026-11-07T17:45:04.512617+00:00",
+    "model_calls_started": false,
+    "dataset_sha256_canonical": "5036f5def91968de656acbbe72084d6659da5922152dc1661a90681a895241d8",
+    "dataset_sha256_bytes": "8754332b7b9e3896d7b0c071c7089ffb72a52baa54210e4fecbbdbf03b548aa1",
+    "expected_sha256_canonical": "040eb92191964dd4432f6a63c15b055a8c4ef5dd4bde8f19ebc6d9416ccaa270",
+    "expected_sha256_bytes": "898691b7377b7d12c337e9a460b4fbdb3eadc28b3d75d8b99a086596487045cd",
+    "readme_sha256_bytes": "33950355b5dab0125a16d44ccc0b6d9bd8bf22fb04e352cb074e73ec10823e1b",
+    "checklist_sha256_normalized": "9264b4d2099685078769691b7f72ef1fcb1befe19ec6c9ad94e69a6531cedfaf",
+    "checklist_sha256_bytes": "66fa4351bb9b12fb1a33e7353663ea1a0480e20a8af7c7f499f19b79aa2282c4",
+    "organizer_clarifications_sha256_bytes": "99abcf4979b166bce801d73e0d64548d24acabba431bff8d00c58989f6bc984a",
+    "blind_review_sha256_bytes": "82bb59028b050f1af08d9e1a65d49c3092969ab658213c274515d8893aa04e50",
+    "amendment_review_sha256_bytes": "c8d13ac355d6c1376a67619996553fa72df6ff3ab7b2b0511a366e55e068ee9b",
+    "reconciliation_sha256_bytes": "11148b0dcd9f8808a5f30d521a95fda771a671d2d54797152733bcd09276616a",
+    "cases": 24,
+    "decisions": 192,
+    "families": 13,
+    "easy": 12,
+    "hard": 12,
+    "languages": {
+      "RU": 8,
+      "KZ": 8,
+      "EN": 8
+    },
+    "validation": "24 full drafts validate_draft passed; exact citations and allowed scales checked; all official score fields recomputed and equal; 192 independently reviewed decisions agree after source clarification",
+    "limitations": "Assistant-authored synthetic labels and assistant review; not human or organizer GT. Use family clusters for uncertainty; classes are not balanced."
+  },
+  "production_policy": "Enable only if every preregistered condition passes; otherwise retain Luna"
+}

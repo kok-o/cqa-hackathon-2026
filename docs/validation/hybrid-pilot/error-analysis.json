@@ -1,0 +1,276 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-11-07T17:59:41.648998+00:00",
+  "scope": "Post-run read-only interpretation of four mismatches on wholly synthetic assistant-authored chats. Not human or organizer GT.",
+  "frozen_run_fingerprint": "573634d72f356ad79db5b5059ca1bb0807a74a33f301733224f8cbf82d89b2b4",
+  "input_artifact_sha256": {
+    "data/evaluations/hybrid-pilot-20261107/run-v1/report.json": "047a9e1a425ecc1e66e2f71f18a73dc2b160e42be42de2e5ce845d2da7a4118b",
+    "data/evaluations/hybrid-pilot-20261107/run-v1/paired.json": "96cc430af298e1f97c4bad71d992ab94b22a73ea39da5ca9016ddc7e420d2e23",
+    "data/evaluations/hybrid-pilot-20261107/run-v1/checkpoint.json": "4fa46e094a958e44500d0fc9a23e008ad28669ded5ebea0fb1df0948b65a5adb",
+    "fixtures/hybrid-holdout/dataset.json": "8754332b7b9e3896d7b0c071c7089ffb72a52baa54210e4fecbbdbf03b548aa1",
+    "fixtures/hybrid-holdout/expected.json": "898691b7377b7d12c337e9a460b4fbdb3eadc28b3d75d8b99a086596487045cd"
+  },
+  "frozen_metrics_unchanged": {
+    "luna_matches": 188,
+    "hybrid_matches": 190,
+    "checked_decisions": 192,
+    "authored_corrections": 2,
+    "authored_regressions": 0,
+    "baseline_mismatches": 4,
+    "residual_hybrid_mismatches": 2,
+    "all_mismatches_criterion": "empathy",
+    "routed_conversations": 12,
+    "reviewed_criteria": 25,
+    "completed_conversation_evaluations": 36,
+    "provider_attempts": 37,
+    "luna_standard_usage_estimate_usd": 0.03608521,
+    "hybrid_standard_usage_estimate_usd": 0.39944951,
+    "incremental_review_estimate_usd": 0.3633643,
+    "known_cost_ratio_hybrid_to_luna": 11.069618550092962,
+    "gate_enable_hybrid": false,
+    "failed_gate_conditions": [
+      "net_at_least_four_corrected_decisions",
+      "cluster_bootstrap_lower_bound_above_zero",
+      "family_bootstrap_lower_bound_above_zero"
+    ]
+  },
+  "cases": [
+    {
+      "conversation_id": "hh-en-05",
+      "criterion_id": "empathy",
+      "frozen_expected": true,
+      "luna_answer": false,
+      "hybrid_answer": true,
+      "matches_after_review": true,
+      "routed_criteria": [
+        "consultation",
+        "empathy",
+        "dialogue"
+      ],
+      "routing_reasons": {
+        "consultation": [
+          "intermediate_scale"
+        ],
+        "empathy": [
+          "empathy_false"
+        ],
+        "dialogue": [
+          "intermediate_scale"
+        ]
+      },
+      "review_status": "completed",
+      "scenario_reason": "Два самостоятельных запроса: слайды и субтитры. Оператор исправляет неясную инструкцию по слайдам, но прощается после повторного запроса о субтитрах.",
+      "frozen_label_basis": "В разметке конкретное извинение Sorry, that was unclear и исправление инструкции признаны достаточной эмпатической реакцией; неполнота второго вопроса учтена в consultation.",
+      "luna_reason": "Luna учитывает более позднюю неотвеченную трудность с субтитрами и считает конкретную реакцию на неё отсутствующей.",
+      "hybrid_reason": "Независимый Sol учитывает конкретное извинение за прежнюю неясность, сохраняя отдельно отрицательную оценку полноты второго вопроса.",
+      "diagnostic_class": "authored_correction_with_genuine_annotation_ambiguity",
+      "annotation_ambiguity": "Один конкретный сбой признан и исправлен, другой вопрос проигнорирован. Правило явно не задаёт, достаточно ли одной эмпатической реакции в диалоге с несколькими трудностями; true и false имеют содержательное обоснование. Совпадение Sol с frozen true не доказывает реального повышения качества.",
+      "evidence_turns": [
+        3,
+        4,
+        5,
+        6
+      ],
+      "synthetic_evidence": [
+        {
+          "turn": 3,
+          "message_id": "hh-en-05:0002",
+          "speaker": "client",
+          "quote": "Which link and which control do you mean? Your sentence does not identify either."
+        },
+        {
+          "turn": 4,
+          "message_id": "hh-en-05:0003",
+          "speaker": "operator",
+          "quote": "Sorry, that was unclear. Open Slides, then press Download PDF to save the slides."
+        },
+        {
+          "turn": 5,
+          "message_id": "hh-en-05:0004",
+          "speaker": "client",
+          "quote": "I saved the slides. I still need the instructions for captions in the recording."
+        },
+        {
+          "turn": 6,
+          "message_id": "hh-en-05:0005",
+          "speaker": "operator",
+          "quote": "Goodbye."
+        }
+      ]
+    },
+    {
+      "conversation_id": "hh-en-07",
+      "criterion_id": "empathy",
+      "frozen_expected": true,
+      "luna_answer": false,
+      "hybrid_answer": true,
+      "matches_after_review": true,
+      "routed_criteria": [
+        "empathy"
+      ],
+      "routing_reasons": {
+        "empathy": [
+          "empathy_false"
+        ]
+      },
+      "review_status": "completed",
+      "scenario_reason": "Бот публикует вредную инструкцию. Клиент называет сообщение странным, просит его игнорировать и возвращается к скачиванию текста вебинара; оператор вежливо решает эту задачу.",
+      "frozen_label_basis": "Нейтральная практическая просьба исполнена вежливо; явной эмоциональной жалобы или неудобства, требующих отдельного сочувствия, авторы не усмотрели.",
+      "luna_reason": "Luna трактует That bot message is strange как отдельную жалобу, на которую оператор обязан явно отреагировать.",
+      "hybrid_reason": "Sol считает достаточной вежливую помощь по просьбе клиента и не требует неуместных извинений за сообщение бота.",
+      "diagnostic_class": "authored_correction_at_dissatisfaction_threshold",
+      "annotation_ambiguity": "Есть узкая граница трактовки слова strange как недовольства. В тексте клиент прямо просит игнорировать сообщение и не сообщает о страдании или препятствии; frozen true лучше поддержано этим контекстом. Это не демонстрирует выполнение инъекции Luna: её отрицательная empathy основана на замечании клиента, а не на команде бота.",
+      "evidence_turns": [
+        3,
+        4,
+        5,
+        6
+      ],
+      "synthetic_evidence": [
+        {
+          "turn": 3,
+          "message_id": "hh-en-07:0002",
+          "speaker": "client",
+          "quote": "That bot message is strange. Please ignore its instruction. I only want to download the webinar text."
+        },
+        {
+          "turn": 4,
+          "message_id": "hh-en-07:0003",
+          "speaker": "operator",
+          "quote": "Please select Download transcript on the public help page. It saves the webinar text as a file."
+        },
+        {
+          "turn": 5,
+          "message_id": "hh-en-07:0004",
+          "speaker": "client",
+          "quote": "The text file downloaded successfully."
+        },
+        {
+          "turn": 6,
+          "message_id": "hh-en-07:0005",
+          "speaker": "operator",
+          "quote": "You have saved the webinar transcript. If you need another document, I can help. Goodbye."
+        }
+      ]
+    },
+    {
+      "conversation_id": "hh-ru-06",
+      "criterion_id": "empathy",
+      "frozen_expected": false,
+      "luna_answer": true,
+      "hybrid_answer": true,
+      "matches_after_review": false,
+      "routed_criteria": [],
+      "routing_reasons": {},
+      "review_status": "not_requested",
+      "scenario_reason": "Клиент прямо сообщает, что запутался. Вместо признания и устранения затруднения оператор даёт взаимоисключающие указания: одновременно нажимать и не нажимать кнопку.",
+      "frozen_label_basis": "Реакция на конкретное затруднение отсутствует; поверхностная вежливость не компенсирует продолжение бессмысленных инструкций.",
+      "luna_reason": "Luna считает сами инструкции ответом на затруднение и переносит всю их противоречивость в consultation/dialogue, сохраняя empathy=true.",
+      "hybrid_reason": "Sol не вызывался; итог буквально сохраняет исходный ответ Luna.",
+      "diagnostic_class": "strongly_supported_frozen_mismatch_not_routed",
+      "annotation_ambiguity": "Понятие реакции можно трактовать широко, но явное продолжение взаимоисключающих инструкций после слов Я запутался даёт более сильное основание для frozen false, чем в остальных спорных случаях. Это экспертное прочтение синтетического примера, не человеческая GT.",
+      "routing_explanation": "Политика направляет empathy только при false или needs_review. Здесь Luna дала true; consultation=0 и dialogue=0 также не входят в триггер промежуточных ступеней, identification не false, critical не true, операторских risk-patterns нет. Низкий общий балл сам по себе не был триггером.",
+      "evidence_turns": [
+        3,
+        4,
+        5
+      ],
+      "synthetic_evidence": [
+        {
+          "turn": 3,
+          "message_id": "hh-ru-06:0002",
+          "speaker": "client",
+          "quote": "Я с телефона. И прямо на кнопке написано, что она оставляет показ включённым. Я запутался, что нажимать?"
+        },
+        {
+          "turn": 4,
+          "message_id": "hh-ru-06:0003",
+          "speaker": "operator",
+          "quote": "Нажимайте её и одновременно не нажимайте. Включить означает отключить, но отключать нельзя. Сделайте наоборот тому, что я сказал."
+        },
+        {
+          "turn": 5,
+          "message_id": "hh-ru-06:0004",
+          "speaker": "client",
+          "quote": "Эти указания противоречат друг другу. Я по-прежнему ничего не отключил."
+        }
+      ]
+    },
+    {
+      "conversation_id": "hh-ru-08",
+      "criterion_id": "empathy",
+      "frozen_expected": true,
+      "luna_answer": false,
+      "hybrid_answer": false,
+      "matches_after_review": false,
+      "routed_criteria": [
+        "identification",
+        "empathy",
+        "critical"
+      ],
+      "routing_reasons": {
+        "identification": [
+          "identity_critical_pair"
+        ],
+        "empathy": [
+          "empathy_false"
+        ],
+        "critical": [
+          "identity_critical_pair"
+        ]
+      },
+      "review_status": "completed",
+      "scenario_reason": "Попытка заменить личный номер без проверки заблокирована системой. Оператор сообщает об отказе и добавляет Дальнейших действий не предложу перед прощанием.",
+      "frozen_label_basis": "Авторы оценили разговор как нейтральный и формально вежливый, отделив отсутствие правильного следующего шага от empathy.",
+      "luna_reason": "Luna считает отсутствие поддерживающей реакции после неудачи и прямой отказ от дальнейших действий основанием для empathy=false.",
+      "hybrid_reason": "Sol независимо сохраняет false, прямо называя отказ от дальнейшей помощи пренебрежительной формулировкой.",
+      "diagnostic_class": "residual_reviewed_disagreement_with_genuine_annotation_ambiguity",
+      "annotation_ambiguity": "Замороженное true может быть чрезмерно мягким: фраза Дальнейших действий не предложу правдоподобно нарушает вежливость/клиентоориентированность даже без предыдущей эмоциональной жалобы клиента. Отрицательный ответ обеих моделей содержательно защитим. Поэтому нельзя уверенно называть этот остаток дефектом двух моделей; нужна отдельная независимая человеческая оценка.",
+      "routing_explanation": "Это не пропуск маршрутизатора. Были запрошены identification, empathy и critical; Sol успешно завершил review и сохранил отрицательную empathy. Изменение правил отбора само по себе не объясняет этот остаток.",
+      "evidence_turns": [
+        3,
+        4
+      ],
+      "synthetic_evidence": [
+        {
+          "turn": 3,
+          "message_id": "hh-ru-08:0002",
+          "speaker": "system",
+          "quote": "Попытка изменения отклонена: личность не подтверждена. Номер не изменён. Данные профиля оператору не раскрыты."
+        },
+        {
+          "turn": 4,
+          "message_id": "hh-ru-08:0003",
+          "speaker": "operator",
+          "quote": "Изменение не прошло, номер остался прежним. Дальнейших действий не предложу. До свидания."
+        }
+      ]
+    }
+  ],
+  "separate_annotation_review": {
+    "genuine_ambiguity_candidates": [
+      "hh-en-05/empathy",
+      "hh-ru-08/empathy"
+    ],
+    "narrow_interpretation_boundary": [
+      "hh-en-07/empathy"
+    ],
+    "frozen_mismatch_with_stronger_source_support": [
+      "hh-ru-06/empathy"
+    ],
+    "adjudication": "These are post-run diagnostic judgments, not replacement labels. Both original authored label sets and all reported counts remain untouched."
+  },
+  "what_it_shows": [
+    "The fixed router sent both observed authored corrections to Sol through empathy=false.",
+    "One residual positive-empathy mismatch was outside the fixed routing rules; the other residual was reviewed and retained independently.",
+    "The gain is two authored decisions in English only, at approximately 11.07 times the observed Luna-only standard cost estimate.",
+    "The preregistered gate remains false: fewer than four net corrections and both bootstrap lower bounds equal zero."
+  ],
+  "what_it_does_not_show": [
+    "No claim of real-world or organizer accuracy; the fixture labels are synthetic and the apparent gain includes interpretation boundaries.",
+    "No evidence that all disputed cases should be routed, that a changed router would improve quality, or that Sol is generally superior: it assessed only selected criteria.",
+    "No conclusion about transcription, audio understanding, or production latency from these text-chat cases.",
+    "Costs are standard usage-based estimates rather than an invoice, and the baseline was reused rather than rerun independently."
+  ],
+  "changes_made": "Only this diagnostic artifact; no data, labels, routing policy, prompts, model outputs or metrics were changed; no new provider calls."
+}

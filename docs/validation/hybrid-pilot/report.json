@@ -1,0 +1,586 @@
+{
+  "schema_version": 1,
+  "run_fingerprint": "573634d72f356ad79db5b5059ca1bb0807a74a33f301733224f8cbf82d89b2b4",
+  "policy": {
+    "version": "hybrid-risk-v1",
+    "needs_review": "all non-audio criteria",
+    "paired_identity_critical": "critical=true or identification=false",
+    "consultation_values": [
+      5,
+      10,
+      15
+    ],
+    "dialogue_values": [
+      4,
+      7
+    ],
+    "empathy": false,
+    "operator_only_patterns": {
+      "privacy_ru": "\\b(?:баланс\\w*|остат(?:ок|к)\\w*|портфел\\w*|иин|паспорт\\w*)\\b",
+      "privacy_en": "\\b(?:balance|portfolio|passport)\\b|\\bcard[\\s-]+number\\b",
+      "privacy_kz": "\\b(?:қалдық\\w*|жсн|паспорт\\w*)\\b",
+      "personal_payment_ru": "(?:перевед\\w*|перевод\\w*|оплат\\w*|заплат\\w*).{0,80}(?:мне|мо[юийе]\\w*|личн\\w*).{0,40}(?:карт\\w*|сч[её]т\\w*|номер\\w*|консультац\\w*)",
+      "personal_payment_en": "\\b(?:pay|send|transfer)\\b.{0,80}\\b(?:me|my|personal|private)\\b.{0,40}\\b(?:card|account|number|consultation|advice)\\b",
+      "personal_payment_kz": "(?:маған|менің|жеке).{0,60}(?:карт\\w*|шот\\w*|нөмір\\w*|кеңес\\w*).{0,80}(?:аудар\\w*|төле\\w*)|(?:аудар\\w*|төле\\w*).{0,80}(?:маған|менің|жеке)"
+    },
+    "regex_flags": [
+      "IGNORECASE",
+      "DOTALL"
+    ],
+    "excluded_triggers": [
+      "ordinary N/A",
+      "contact=false",
+      "closure=false",
+      "Luna explanation",
+      "labels",
+      "reviewer output"
+    ]
+  },
+  "metric_status": "paired_assistant_authored_synthetic_comparison_not_human_or_organizer_accuracy",
+  "not_ground_truth": true,
+  "baseline_reused": true,
+  "cases": [
+    {
+      "conversation_key": "[\"HYBRID_HOLDOUT_20261107\",\"hh-en-01\"]",
+      "language": "EN",
+      "family": "public_definition_lookup",
+      "completed": true,
+      "validated_draft": true,
+      "checked": 8,
+      "baseline_correct": 8,
+      "hybrid_correct": 8,
+      "critical_regression": false,
+      "corrections": 0,
+      "regressions": 0,
+      "changes": []
+    },
+    {
+      "conversation_key": "[\"HYBRID_HOLDOUT_20261107\",\"hh-en-02\"]",
+      "language": "EN",
+      "family": "necessary_clarification",
+      "completed": true,
+      "validated_draft": true,
+      "checked": 8,
+      "baseline_correct": 8,
+      "hybrid_correct": 8,
+      "critical_regression": false,
+      "corrections": 0,
+      "regressions": 0,
+      "changes": []
+    },
+    {
+      "conversation_key": "[\"HYBRID_HOLDOUT_20261107\",\"hh-en-03\"]",
+      "language": "EN",
+      "family": "verified_protected_service",
+      "completed": true,
+      "validated_draft": true,
+      "checked": 8,
+      "baseline_correct": 8,
+      "hybrid_correct": 8,
+      "critical_regression": false,
+      "corrections": 0,
+      "regressions": 0,
+      "changes": []
+    },
+    {
+      "conversation_key": "[\"HYBRID_HOLDOUT_20261107\",\"hh-en-04\"]",
+      "language": "EN",
+      "family": "vague_navigation",
+      "completed": true,
+      "validated_draft": true,
+      "checked": 8,
+      "baseline_correct": 8,
+      "hybrid_correct": 8,
+      "critical_regression": false,
+      "corrections": 0,
+      "regressions": 0,
+      "changes": []
+    },
+    {
+      "conversation_key": "[\"HYBRID_HOLDOUT_20261107\",\"hh-en-05\"]",
+      "language": "EN",
+      "family": "consultation_completeness",
+      "completed": true,
+      "validated_draft": true,
+      "checked": 8,
+      "baseline_correct": 7,
+      "hybrid_correct": 8,
+      "critical_regression": false,
+      "corrections": 1,
+      "regressions": 0,
+      "changes": [
+        {
+          "criterion_id": "empathy",
+          "baseline": {
+            "status": "applicable",
+            "answer": false,
+            "gross_error": false
+          },
+          "hybrid": {
+            "status": "applicable",
+            "answer": true,
+            "gross_error": false
+          },
+          "authored_expected": {
+            "status": "applicable",
+            "answer": true,
+            "gross_error": false
+          },
+          "correction": true,
+          "regression": false
+        }
+      ]
+    },
+    {
+      "conversation_key": "[\"HYBRID_HOLDOUT_20261107\",\"hh-en-06\"]",
+      "language": "EN",
+      "family": "corporate_vs_private_paid_service",
+      "completed": true,
+      "validated_draft": true,
+      "checked": 8,
+      "baseline_correct": 8,
+      "hybrid_correct": 8,
+      "critical_regression": false,
+      "corrections": 0,
+      "regressions": 0,
+      "changes": []
+    },
+    {
+      "conversation_key": "[\"HYBRID_HOLDOUT_20261107\",\"hh-en-07\"]",
+      "language": "EN",
+      "family": "bot_vs_operator_contact",
+      "completed": true,
+      "validated_draft": true,
+      "checked": 8,
+      "baseline_correct": 7,
+      "hybrid_correct": 8,
+      "critical_regression": false,
+      "corrections": 1,
+      "regressions": 0,
+      "changes": [
+        {
+          "criterion_id": "empathy",
+          "baseline": {
+            "status": "applicable",
+            "answer": false,
+            "gross_error": false
+          },
+          "hybrid": {
+            "status": "applicable",
+            "answer": true,
+            "gross_error": false
+          },
+          "authored_expected": {
+            "status": "applicable",
+            "answer": true,
+            "gross_error": false
+          },
+          "correction": true,
+          "regression": false
+        }
+      ]
+    },
+    {
+      "conversation_key": "[\"HYBRID_HOLDOUT_20261107\",\"hh-en-08\"]",
+      "language": "EN",
+      "family": "corporate_vs_private_paid_service",
+      "completed": true,
+      "validated_draft": true,
+      "checked": 8,
+      "baseline_correct": 8,
+      "hybrid_correct": 8,
+      "critical_regression": false,
+      "corrections": 0,
+      "regressions": 0,
+      "changes": []
+    },
+    {
+      "conversation_key": "[\"HYBRID_HOLDOUT_20261107\",\"hh-kz-01\"]",
+      "language": "KZ",
+      "family": "public_pdf_download",
+      "completed": true,
+      "validated_draft": true,
+      "checked": 8,
+      "baseline_correct": 8,
+      "hybrid_correct": 8,
+      "critical_regression": false,
+      "corrections": 0,
+      "regressions": 0,
+      "changes": []
+    },
+    {
+      "conversation_key": "[\"HYBRID_HOLDOUT_20261107\",\"hh-kz-02\"]",
+      "language": "KZ",
+      "family": "necessary_clarification",
+      "completed": true,
+      "validated_draft": true,
+      "checked": 8,
+      "baseline_correct": 8,
+      "hybrid_correct": 8,
+      "critical_regression": false,
+      "corrections": 0,
+      "regressions": 0,
+      "changes": []
+    },
+    {
+      "conversation_key": "[\"HYBRID_HOLDOUT_20261107\",\"hh-kz-03\"]",
+      "language": "KZ",
+      "family": "verified_protected_service",
+      "completed": true,
+      "validated_draft": true,
+      "checked": 8,
+      "baseline_correct": 8,
+      "hybrid_correct": 8,
+      "critical_regression": false,
+      "corrections": 0,
+      "regressions": 0,
+      "changes": []
+    },
+    {
+      "conversation_key": "[\"HYBRID_HOLDOUT_20261107\",\"hh-kz-04\"]",
+      "language": "KZ",
+      "family": "bot_vs_operator_contact",
+      "completed": true,
+      "validated_draft": true,
+      "checked": 8,
+      "baseline_correct": 8,
+      "hybrid_correct": 8,
+      "critical_regression": false,
+      "corrections": 0,
+      "regressions": 0,
+      "changes": []
+    },
+    {
+      "conversation_key": "[\"HYBRID_HOLDOUT_20261107\",\"hh-kz-05\"]",
+      "language": "KZ",
+      "family": "consultation_completeness",
+      "completed": true,
+      "validated_draft": true,
+      "checked": 8,
+      "baseline_correct": 8,
+      "hybrid_correct": 8,
+      "critical_regression": false,
+      "corrections": 0,
+      "regressions": 0,
+      "changes": []
+    },
+    {
+      "conversation_key": "[\"HYBRID_HOLDOUT_20261107\",\"hh-kz-06\"]",
+      "language": "KZ",
+      "family": "insult_attribution",
+      "completed": true,
+      "validated_draft": true,
+      "checked": 8,
+      "baseline_correct": 8,
+      "hybrid_correct": 8,
+      "critical_regression": false,
+      "corrections": 0,
+      "regressions": 0,
+      "changes": []
+    },
+    {
+      "conversation_key": "[\"HYBRID_HOLDOUT_20261107\",\"hh-kz-07\"]",
+      "language": "KZ",
+      "family": "verification_vs_disclosure",
+      "completed": true,
+      "validated_draft": true,
+      "checked": 8,
+      "baseline_correct": 8,
+      "hybrid_correct": 8,
+      "critical_regression": false,
+      "corrections": 0,
+      "regressions": 0,
+      "changes": []
+    },
+    {
+      "conversation_key": "[\"HYBRID_HOLDOUT_20261107\",\"hh-kz-08\"]",
+      "language": "KZ",
+      "family": "unannounced_wait",
+      "completed": true,
+      "validated_draft": true,
+      "checked": 8,
+      "baseline_correct": 8,
+      "hybrid_correct": 8,
+      "critical_regression": false,
+      "corrections": 0,
+      "regressions": 0,
+      "changes": []
+    },
+    {
+      "conversation_key": "[\"HYBRID_HOLDOUT_20261107\",\"hh-ru-01\"]",
+      "language": "RU",
+      "family": "public_pdf_download",
+      "completed": true,
+      "validated_draft": true,
+      "checked": 8,
+      "baseline_correct": 8,
+      "hybrid_correct": 8,
+      "critical_regression": false,
+      "corrections": 0,
+      "regressions": 0,
+      "changes": []
+    },
+    {
+      "conversation_key": "[\"HYBRID_HOLDOUT_20261107\",\"hh-ru-02\"]",
+      "language": "RU",
+      "family": "necessary_clarification",
+      "completed": true,
+      "validated_draft": true,
+      "checked": 8,
+      "baseline_correct": 8,
+      "hybrid_correct": 8,
+      "critical_regression": false,
+      "corrections": 0,
+      "regressions": 0,
+      "changes": []
+    },
+    {
+      "conversation_key": "[\"HYBRID_HOLDOUT_20261107\",\"hh-ru-03\"]",
+      "language": "RU",
+      "family": "verified_protected_service",
+      "completed": true,
+      "validated_draft": true,
+      "checked": 8,
+      "baseline_correct": 8,
+      "hybrid_correct": 8,
+      "critical_regression": false,
+      "corrections": 0,
+      "regressions": 0,
+      "changes": []
+    },
+    {
+      "conversation_key": "[\"HYBRID_HOLDOUT_20261107\",\"hh-ru-04\"]",
+      "language": "RU",
+      "family": "missing_introduction_and_closure",
+      "completed": true,
+      "validated_draft": true,
+      "checked": 8,
+      "baseline_correct": 8,
+      "hybrid_correct": 8,
+      "critical_regression": false,
+      "corrections": 0,
+      "regressions": 0,
+      "changes": []
+    },
+    {
+      "conversation_key": "[\"HYBRID_HOLDOUT_20261107\",\"hh-ru-05\"]",
+      "language": "RU",
+      "family": "consultation_completeness",
+      "completed": true,
+      "validated_draft": true,
+      "checked": 8,
+      "baseline_correct": 8,
+      "hybrid_correct": 8,
+      "critical_regression": false,
+      "corrections": 0,
+      "regressions": 0,
+      "changes": []
+    },
+    {
+      "conversation_key": "[\"HYBRID_HOLDOUT_20261107\",\"hh-ru-06\"]",
+      "language": "RU",
+      "family": "contradictory_instructions",
+      "completed": true,
+      "validated_draft": true,
+      "checked": 8,
+      "baseline_correct": 7,
+      "hybrid_correct": 7,
+      "critical_regression": false,
+      "corrections": 0,
+      "regressions": 0,
+      "changes": []
+    },
+    {
+      "conversation_key": "[\"HYBRID_HOLDOUT_20261107\",\"hh-ru-07\"]",
+      "language": "RU",
+      "family": "insult_attribution",
+      "completed": true,
+      "validated_draft": true,
+      "checked": 8,
+      "baseline_correct": 8,
+      "hybrid_correct": 8,
+      "critical_regression": false,
+      "corrections": 0,
+      "regressions": 0,
+      "changes": []
+    },
+    {
+      "conversation_key": "[\"HYBRID_HOLDOUT_20261107\",\"hh-ru-08\"]",
+      "language": "RU",
+      "family": "verification_vs_disclosure",
+      "completed": true,
+      "validated_draft": true,
+      "checked": 8,
+      "baseline_correct": 7,
+      "hybrid_correct": 7,
+      "critical_regression": false,
+      "corrections": 0,
+      "regressions": 0,
+      "changes": []
+    }
+  ],
+  "by_criterion": {
+    "contact": {
+      "checked": 24,
+      "baseline_correct": 24,
+      "hybrid_correct": 24,
+      "corrections": 0,
+      "regressions": 0
+    },
+    "discovery": {
+      "checked": 24,
+      "baseline_correct": 24,
+      "hybrid_correct": 24,
+      "corrections": 0,
+      "regressions": 0
+    },
+    "identification": {
+      "checked": 24,
+      "baseline_correct": 24,
+      "hybrid_correct": 24,
+      "corrections": 0,
+      "regressions": 0
+    },
+    "consultation": {
+      "checked": 24,
+      "baseline_correct": 24,
+      "hybrid_correct": 24,
+      "corrections": 0,
+      "regressions": 0
+    },
+    "empathy": {
+      "checked": 24,
+      "baseline_correct": 20,
+      "hybrid_correct": 22,
+      "corrections": 2,
+      "regressions": 0
+    },
+    "dialogue": {
+      "checked": 24,
+      "baseline_correct": 24,
+      "hybrid_correct": 24,
+      "corrections": 0,
+      "regressions": 0
+    },
+    "closure": {
+      "checked": 24,
+      "baseline_correct": 24,
+      "hybrid_correct": 24,
+      "corrections": 0,
+      "regressions": 0
+    },
+    "critical": {
+      "checked": 24,
+      "baseline_correct": 24,
+      "hybrid_correct": 24,
+      "corrections": 0,
+      "regressions": 0
+    }
+  },
+  "checked_decisions": 192,
+  "baseline_exact_accuracy_including_na": 0.9791666666666666,
+  "hybrid_exact_accuracy_including_na": 0.9895833333333334,
+  "corrections": 2,
+  "regressions": 0,
+  "baseline_score_mae": 3.44,
+  "hybrid_score_mae": 1.5166666666666666,
+  "baseline_score_cases": 24,
+  "hybrid_score_cases": 24,
+  "routed_conversations": 12,
+  "conversation_routing_rate": 0.5,
+  "criterion_routing_rate": 0.13020833333333334,
+  "review_fallbacks": 0,
+  "all_requested_reviews_complete": true,
+  "costs": {
+    "luna_only": {
+      "known_cost_usd": 0.03608521,
+      "unknown_cost_requests": 0,
+      "total_cost_usd": 0.03608521,
+      "charged_or_reserved_usd": 0.03608521,
+      "full_cold_estimate_usd": 0.04191375,
+      "full_cold_basis": "All attempts; every input token charged at max(uncached, cache-write) rate; output includes reasoning once"
+    },
+    "incremental_review": {
+      "known_cost_usd": 0.3633643,
+      "unknown_cost_requests": 0,
+      "total_cost_usd": 0.3633643,
+      "charged_or_reserved_usd": 0.3633643,
+      "full_cold_estimate_usd": 0.4159975,
+      "full_cold_basis": "All attempts; every input token charged at max(uncached, cache-write) rate; output includes reasoning once"
+    },
+    "hybrid": {
+      "known_cost_usd": 0.39944951,
+      "unknown_cost_requests": 0,
+      "total_cost_usd": 0.39944951,
+      "charged_or_reserved_usd": 0.39944951,
+      "full_cold_estimate_usd": 0.45791125,
+      "full_cold_basis": "All attempts; every input token charged at max(uncached, cache-write) rate; output includes reasoning once"
+    }
+  },
+  "latency": {
+    "luna_only": {
+      "mean_ms": 20038.166666666668,
+      "p50_ms": 16781.0,
+      "p95_ms": 34303
+    },
+    "hybrid": {
+      "mean_ms": 34606.958333333336,
+      "p50_ms": 27613.0,
+      "p95_ms": 94712
+    }
+  },
+  "gate": {
+    "gate": {
+      "version": "hybrid-pilot-gate-v2",
+      "conversations": 24,
+      "criteria_per_conversation": 8,
+      "language_counts": {
+        "RU": 8,
+        "KZ": 8,
+        "EN": 8
+      },
+      "minimum_net_corrected_decisions": 4,
+      "bootstrap_samples": 10000,
+      "bootstrap_seed": 20261107,
+      "require_family_labels": true,
+      "require_family_bootstrap_lower_above_zero": true,
+      "minimum_bootstrap_lower_bound": 0,
+      "maximum_critical_regressions": 0,
+      "allow_language_accuracy_decline": false,
+      "maximum_uncached_usd_per_conversation": 0.05,
+      "require_complete_usage": true,
+      "require_all_requested_reviews_complete": true
+    },
+    "enable_hybrid": false,
+    "conditions": {
+      "complete_unique_24_by_8": true,
+      "net_at_least_four_corrected_decisions": false,
+      "cluster_bootstrap_lower_bound_above_zero": false,
+      "family_labels_present": true,
+      "family_bootstrap_lower_bound_above_zero": false,
+      "no_new_critical_error": true,
+      "no_language_decline": true,
+      "known_uncached_cost_at_most_five_cents_per_case": true,
+      "usage_complete": true,
+      "all_requested_reviews_completed": true
+    },
+    "net_corrected_decisions": 2,
+    "by_language_net_corrected": {
+      "EN": 2,
+      "KZ": 0,
+      "RU": 0
+    },
+    "paired_case_bootstrap_95_interval": [
+      0.0,
+      0.026041666666666668
+    ],
+    "paired_family_bootstrap_95_interval": [
+      0.0,
+      0.02403846153846154
+    ],
+    "family_count": 13,
+    "mean_accuracy_delta": 0.010416666666666666,
+    "uncached_cost_per_conversation_usd": 0.019079635416666667,
+    "interpretation": "Assistant-authored synthetic pilot; interval resamples these cases, not real production traffic or human labels."
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "table_comparison": {
+    "appeals": {
+      "unchanged_from_pre_task_backup": true,
+      "row_count": 0,
+      "sha256_rows": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "checklist_versions": {
+      "unchanged_from_pre_task_backup": true,
+      "row_count": 2,
+      "sha256_rows": "09b3462e5dfe2742258c725005c0bb24f7bfd29478307c62224ca0d3b5faa389"
+    },
+    "conversations": {
+      "unchanged_from_pre_task_backup": true,
+      "row_count": 65,
+      "sha256_rows": "74e68173d10ab653bdd94317eceb062b75ea2b9bcaba8d0a16dae788fa7fe29b"
+    },
+    "evaluation_jobs": {
+      "unchanged_from_pre_task_backup": true,
+      "row_count": 137,
+      "sha256_rows": "bef69920e8cdbae54f0fd8e5b90fb503173d40714fcabc9ca939121237504757"
+    },
+    "evaluations": {
+      "unchanged_from_pre_task_backup": true,
+      "row_count": 137,
+      "sha256_rows": "908bf785e65ff3a45f05977df24b5b9b1880feaad87b59fc0fcbd192d0fa5307"
+    },
+    "operations": {
+      "unchanged_from_pre_task_backup": true,
+      "row_count": 0,
+      "sha256_rows": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  },
+  "backup": "integration-backup-20261107-220242.sqlite3",
+  "dev_results_unchanged": true,
+  "live_profile": {
+    "mode": "live",
+    "model": "gpt-6-luna",
+    "prompt_version": "cqa-evaluator-v6",
+    "team_name": "SetW",
+    "reasoning_effort": "high"
+  }
+}

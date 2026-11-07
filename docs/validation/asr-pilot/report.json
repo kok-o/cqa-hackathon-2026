@@ -1,0 +1,117 @@
+{
+  "summary": {
+    "model": "gpt-transcribe",
+    "records_planned": 5,
+    "records_completed": 5,
+    "known_duration_price_estimate_usd": 0.1571415,
+    "unknown_request_reservations_usd": 0,
+    "accounted_usd": 0.1571415,
+    "invoice_verified": false,
+    "statuses": {
+      "p4-ru-001": "completed",
+      "p4-ru-002": "completed",
+      "p4-ru-003": "completed",
+      "p4-ru-004": "completed",
+      "p4-ru-005": "completed"
+    },
+    "quality_reference": "provided_transcript_proxy_not_human_GT",
+    "speaker_labels_measured": false
+  },
+  "plan_hash": "d24c16f636fcbe41d54f9cdc97df486f8b7914be5ed5df0dddb67e8fa0c89d2d",
+  "duration_minutes": 34.92033333333333,
+  "rows": [
+    {
+      "conversation_id": "p4-ru-001",
+      "duration_seconds": 312.26,
+      "request_ms": 6543,
+      "download_and_request_ms": 17764,
+      "paid_dispatches": 1,
+      "anchor_hits": 5,
+      "anchor_total": 5,
+      "reference_tokens": 574,
+      "hypothesis_tokens": 567,
+      "reference_normalized_edit_rate": 0.189895,
+      "missing_exact_anchor_labels": []
+    },
+    {
+      "conversation_id": "p4-ru-002",
+      "duration_seconds": 620.38,
+      "request_ms": 8536,
+      "download_and_request_ms": 28655,
+      "paid_dispatches": 1,
+      "anchor_hits": 4,
+      "anchor_total": 5,
+      "reference_tokens": 576,
+      "hypothesis_tokens": 480,
+      "reference_normalized_edit_rate": 0.371528,
+      "missing_exact_anchor_labels": [
+        "market_order"
+      ]
+    },
+    {
+      "conversation_id": "p4-ru-003",
+      "duration_seconds": 393.22,
+      "request_ms": 6023,
+      "download_and_request_ms": 18938,
+      "paid_dispatches": 1,
+      "anchor_hits": 5,
+      "anchor_total": 5,
+      "reference_tokens": 533,
+      "hypothesis_tokens": 516,
+      "reference_normalized_edit_rate": 0.360225,
+      "missing_exact_anchor_labels": []
+    },
+    {
+      "conversation_id": "p4-ru-004",
+      "duration_seconds": 424.02,
+      "request_ms": 6858,
+      "download_and_request_ms": 13214,
+      "paid_dispatches": 1,
+      "anchor_hits": 5,
+      "anchor_total": 5,
+      "reference_tokens": 758,
+      "hypothesis_tokens": 664,
+      "reference_normalized_edit_rate": 0.386544,
+      "missing_exact_anchor_labels": []
+    },
+    {
+      "conversation_id": "p4-ru-005",
+      "duration_seconds": 345.34,
+      "request_ms": 6104,
+      "download_and_request_ms": 9763,
+      "paid_dispatches": 1,
+      "anchor_hits": 5,
+      "anchor_total": 5,
+      "reference_tokens": 691,
+      "hypothesis_tokens": 619,
+      "reference_normalized_edit_rate": 0.264834,
+      "missing_exact_anchor_labels": []
+    }
+  ],
+  "exact_anchor_hits": 24,
+  "anchor_total": 25,
+  "all_sources_RU": true,
+  "total_request_ms": 34064,
+  "sum_download_and_request_ms": 88334,
+  "quality_is_not_human_wer": true,
+  "role_or_timestamp_accuracy_measured": false,
+  "missing_anchor_inspection": "One unmatched frozen lexical anchor appears with a different grammatical ending in new ASR. Frozen metric unchanged; this alone does not establish a semantic recognition error. No audio adjudication performed.",
+  "production_references_replaced": false,
+  "freedomspeech": {
+    "mode": "dry_run_no_network",
+    "status": "blocked_missing_key_and_tariff",
+    "blockers": [
+      "missing_key",
+      "missing_verified_tariff",
+      "missing_explicit_budget"
+    ],
+    "provider": "FreedomSpeech",
+    "records": 5,
+    "minutes": 34.9203,
+    "reserved_usd": null,
+    "tariff_publicly_verified": false,
+    "speaker_role_mapping": null,
+    "plan_hash": "cef1862b2b00415eaae2ecb8de5c83c0e757007c2f373595d5712fa5bd486048",
+    "paid_calls": 0
+  }
+}

@@ -1365,7 +1365,10 @@
           "criterion_id": "identification",
           "value": null,
           "rationale": "Запрос касался входа в аккаунт; оператор дал общий адрес для входа и не раскрывал данные клиента и не выполнял защищённое действие, требующее идентификации.",
-          "evidence_turns": []
+          "evidence_turns": [
+            11,
+            12
+          ]
         },
         {
           "criterion_id": "consultation",
@@ -1834,13 +1837,20 @@
           "criterion_id": "discovery",
           "value": null,
           "rationale": "Запрос клиента с самого начала был понятен: он хотел узнать, где обновить данные. Дополнительные сведения от клиента для ответа не требовались.",
-          "evidence_turns": []
+          "evidence_turns": [
+            1,
+            4,
+            5
+          ]
         },
         {
           "criterion_id": "identification",
           "value": null,
           "rationale": "Клиент спрашивал только о навигации по меню; раскрытия данных или защищённого действия не было.",
-          "evidence_turns": []
+          "evidence_turns": [
+            1,
+            12
+          ]
         },
         {
           "criterion_id": "consultation",
@@ -2013,13 +2023,19 @@
           "criterion_id": "discovery",
           "value": null,
           "rationale": "До ответа оператора клиент уже описал проблему и уточнил, что хочет узнать, освободится ли старый логин. Этого контекста хватало для ответа.",
-          "evidence_turns": []
+          "evidence_turns": [
+            1,
+            5
+          ]
         },
         {
           "criterion_id": "identification",
           "value": null,
           "rationale": "Обсуждалось общее правило о доступности логина; оператор не раскрывал данные клиента или сведения о его конкретном счёте и не совершал защищённого действия.",
-          "evidence_turns": []
+          "evidence_turns": [
+            5,
+            10
+          ]
         },
         {
           "criterion_id": "consultation",
@@ -2499,7 +2515,11 @@
           "criterion_id": "identification",
           "value": null,
           "rationale": "Оператор не раскрывал данные по счёту и не выполнял защищённое действие: он запросил сведения, чтобы уточнить обращение и направить его на проверку.",
-          "evidence_turns": []
+          "evidence_turns": [
+            12,
+            13,
+            14
+          ]
         },
         {
           "criterion_id": "consultation",
@@ -2834,13 +2854,19 @@
           "criterion_id": "discovery",
           "value": null,
           "rationale": "Запрос о том, где посмотреть тариф, был конкретным; до ответа оператору также были известны сведения, что клиент с ноутбука и не хочет скачивать отчёт. Дополнительное уточнение не требовалось.",
-          "evidence_turns": []
+          "evidence_turns": [
+            1,
+            5
+          ]
         },
         {
           "criterion_id": "identification",
           "value": null,
           "rationale": "Клиент спрашивал, где посмотреть тариф; оператор дал общую навигационную подсказку, не раскрывая данные по счёту и не выполняя защищённое действие.",
-          "evidence_turns": []
+          "evidence_turns": [
+            1,
+            10
+          ]
         },
         {
           "criterion_id": "consultation",
@@ -3025,7 +3051,11 @@
           "criterion_id": "identification",
           "value": null,
           "rationale": "Запрос касался общей навигации по кабинету; оператор не раскрывал данные клиента и не выполнял защищённое действие, поэтому идентификация не требовалась.",
-          "evidence_turns": []
+          "evidence_turns": [
+            1,
+            13,
+            14
+          ]
         },
         {
           "criterion_id": "consultation",
@@ -3415,7 +3445,11 @@
           "criterion_id": "discovery",
           "value": null,
           "rationale": "Клиент сразу описал проблему и задал вопросы о расположении поручения и повторной подаче на вывод; дополнительных сведений от него для уточнения запроса не требовалось.",
-          "evidence_turns": []
+          "evidence_turns": [
+            1,
+            5,
+            10
+          ]
         },
         {
           "criterion_id": "identification",

@@ -105,7 +105,9 @@ class AdversarialRehearsalTests(unittest.TestCase):
                 runner.report(out)
 
     def test_live_rejects_budget_or_config_tampering_before_dispatch(self):
-        with TemporaryDirectory(dir=runner.ROOT / "data/evaluations") as temporary:
+        output_root = runner.ROOT / "data/evaluations"
+        output_root.mkdir(parents=True, exist_ok=True)  # Absent in a clean checkout.
+        with TemporaryDirectory(dir=output_root) as temporary:
             out = Path(temporary) / "run"
             with redirect_stdout(io.StringIO()):
                 runner.plan(out)

@@ -31,5 +31,14 @@
     "evaluation_jobs": 137,
     "pending_before_restart": 0,
     "backup_created": true
+  },
+  "clean_checkout_tests": {
+    "passed": 166,
+    "elapsed_seconds": 13.667,
+    "method": "git archive HEAD plus current test-only patch into TemporaryDirectory; existing Python environment",
+    "env_file_present": false,
+    "data_evaluations_present_before_run": false,
+    "network_model_calls": 0,
+    "initial_ci_failure": "New test assumed ignored output parent existed; test now creates it."
   }
 }

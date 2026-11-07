@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ChevronDown, ExternalLink, MessageSquarePlus, Check, Gavel, FileDown, AlertTriangle } from 'lucide-react';
 import type { Appeal, Criterion, CriterionResult, Evaluation } from './contracts';
-import { downloadJson, errorText, post, q, request, uid } from './api';
+import { ApiError, downloadJson, errorText, post, q, request, uid } from './api';
 import { answerName, date, number, statusName } from './format';
 
 type Props = { evaluation: Evaluation; onUpdated: (value: Evaluation) => void; onEvidence: (id: string) => void };
@@ -75,9 +75,12 @@ function DecisionForm({ appeal, evaluation, criterion, result, onUpdated, onClos
   const [messageId, setMessageId] = useState(evaluation.conversation.transcript.find(message => message.speaker === 'operator')?.message_id ?? evaluation.conversation.transcript[0].message_id);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [isConflict, setIsConflict] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const message = evaluation.conversation.transcript.find(item => item.message_id === messageId)!;
+
   async function submit() {
-    setBusy(true); setError('');
+    setBusy(true); setError(''); setIsConflict(false);
     try {
       let updated: CriterionResult | null = null;
       if (action === 'replace') {
@@ -87,8 +90,29 @@ function DecisionForm({ appeal, evaluation, criterion, result, onUpdated, onClos
       }
       const next = await post<Evaluation>(`/appeals/${q(appeal.appeal_id)}/decision`, { action, reason: reason.trim(), replacement_result: updated, expected_revision: evaluation.revision, idempotency_key: uid() });
       onUpdated(next); onClose();
-    } catch (error) { setError(errorText(error)); } finally { setBusy(false); }
+    } catch (err) {
+      const msg = errorText(err);
+      setError(msg);
+      if ((err instanceof ApiError && err.status === 409) || msg.toLowerCase().includes('ревизия') || msg.toLowerCase().includes('конфликт')) {
+        setIsConflict(true);
+      }
+    } finally { setBusy(false); }
   }
+
+  async function syncEvaluation() {
+    setRefreshing(true);
+    try {
+      const fresh = await request<Evaluation>(`/evaluations/${q(evaluation.evaluation_id)}`);
+      onUpdated(fresh);
+      setError('');
+      setIsConflict(false);
+    } catch (err) {
+      setError(errorText(err));
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
   return <div className="decision-form">
     <label className="field">Решение<select value={action} onChange={event => setAction(event.target.value as 'uphold' | 'replace')}><option value="uphold">Подтвердить оценку</option><option value="replace">Изменить оценку</option></select></label>
     {action === 'replace' ? <><label className="field">Применимость<select value={replacement.status} onChange={event => { const status = event.target.value as CriterionResult['status']; setReplacement({ ...replacement, status, answer: status !== 'applicable' ? null : criterion.answer_type === 'boolean' ? false : criterion.answer_type === 'scale' ? criterion.scale_min : Object.keys(criterion.choices)[0] }); }}><option value="applicable">Применим</option>{criterion.na_allowed ? <option value="not_applicable">Не применим (N/A)</option> : null}<option value="needs_review">Нужна проверка</option></select></label>
@@ -99,7 +123,7 @@ function DecisionForm({ appeal, evaluation, criterion, result, onUpdated, onClos
       {criterion.gross_error_rule ? <label className="check-field"><input type="checkbox" checked={replacement.gross_error} onChange={event => setReplacement({ ...replacement, gross_error: event.target.checked })} /> Грубая ошибка</label> : null}
     </> : null}
     <label className="field">Обоснование решения<textarea rows={2} value={reason} onChange={event => setReason(event.target.value)} placeholder="Обязательно для истории пересмотра" /></label>
-    {error ? <p className="error-text" role="alert">{error}</p> : null}
+    {error ? <div className="decision-error-block" role="alert"><p className="error-text">{error}</p>{isConflict ? <button type="button" className="button secondary small" disabled={refreshing} onClick={() => void syncEvaluation()}>{refreshing ? 'Обновляем…' : 'Обновить данные оценки'}</button> : null}</div> : null}
     <button className="button primary small" disabled={busy || !reason.trim() || (action === 'replace' && !replacement.explanation.trim())} onClick={() => void submit()}>{busy ? 'Сохраняем…' : 'Сохранить решение и пересчитать'}</button>
   </div>;
 }

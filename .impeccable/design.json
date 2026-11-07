@@ -1,22 +1,22 @@
 {
   "schemaVersion": 1,
   "colors": {
-    "canvas": "#f3f6f4",
+    "canvas": "#f4f5f3",
     "surface": "#ffffff",
-    "text": "#1a2823",
-    "muted": "#53665d",
-    "border": "#dce6e0",
+    "text": "#25312a",
+    "muted": "#667169",
+    "border": "#e4e8e2",
     "primary": "#216447",
-    "nav": "#173d2d",
+    "nav": "#ffffff",
     "selected": "#e8f3ec",
     "warning": "#875313",
     "danger": "#a03434"
   },
   "typography": {
-    "family": "Manrope Variable, sans-serif",
+    "family": "IBM Plex Sans, sans-serif",
     "body": 14,
-    "heading": 24,
-    "lineHeight": 1.55
+    "heading": 20,
+    "lineHeight": 1.5
   },
   "spacing": [
     4,
@@ -27,8 +27,8 @@
     32
   ],
   "radii": {
-    "control": 8,
-    "sheet": 12
+    "control": 4,
+    "sheet": 0
   },
   "interaction": {
     "mobileTouchTarget": 44,
@@ -42,5 +42,11 @@
     "tablet": "queue on demand, transcript and assessment",
     "mobile": "single pane with Queue/Conversation/Assessment tabs",
     "editor": "criterion index and single detail form"
-  }
+  },
+  "principles": [
+    "Compact review tool",
+    "Functional labels without repeated explanations",
+    "Dividers and alignment instead of decorative cards",
+    "Visible focus and explicit validation"
+  ]
 }

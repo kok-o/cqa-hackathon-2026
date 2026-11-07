@@ -6,10 +6,6 @@ import {
   Copy,
   FileDown,
   Check,
-  ChevronRight,
-  SlidersHorizontal,
-  FileText,
-  ShieldCheck,
   AlertCircle,
 } from "lucide-react";
 import type { ChecklistVersion, Criterion } from "./contracts";
@@ -184,7 +180,7 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
           );
       setDirty(false);
       setNotice(
-        `Сохранена версия ${saved.version}. Она готова к новой оценке.`,
+        `Версия ${saved.version} сохранена.`,
       );
       onSaved(saved);
     } catch (err) {
@@ -277,9 +273,7 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
     >
       <header className="editor-heading-row">
         <div>
-          <span className="editor-eyebrow">Конфигурация оценки</span>
-          <h2 id="editor-heading">Редактор чек-листа</h2>
-          <p>Настройте правила, по которым модель проверяет каждый диалог.</p>
+          <h2 id="editor-heading">Чек-лист</h2>
         </div>
         <button
           className="button secondary"
@@ -342,7 +336,7 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
           </select>
         </label>
         <div className="editor-version">
-          <span>Исходная версия</span>
+          <span>Версия</span>
           <strong>v{checklist.version}</strong>
         </div>
       </div>
@@ -375,9 +369,6 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
                 onClick={() => setSelectedId(item.criterion_id)}
                 onKeyDown={(event) => navigateCriteria(event, index)}
               >
-                <span className="editor-order">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
                 <span className="editor-criterion-label">
                   <strong>{item.title || "Новый критерий"}</strong>
                   <small>
@@ -386,7 +377,6 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
                   </small>
                 </span>
                 <span className="editor-weight">{item.weight}</span>
-                <ChevronRight size={14} aria-hidden="true" />
               </button>
             ))}
           </div>
@@ -397,10 +387,6 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
           >
             <Plus size={16} /> Добавить критерий
           </button>
-          <div className="editor-history-note">
-            <ShieldCheck size={17} />
-            <p>У сохранённой оценки остаются её правила и исходная версия.</p>
-          </div>
         </aside>
         <div
           className="editor-detail"
@@ -410,10 +396,6 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
         >
           <header className="editor-detail-heading">
             <div>
-              <span className="editor-eyebrow">
-                Критерий {String(selectedIndex + 1).padStart(2, "0")} из{" "}
-                {draft.criteria.length}
-              </span>
               <h3 id="editor-selected-heading">
                 {criterion.title || "Новый критерий"}
               </h3>
@@ -434,7 +416,7 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
           </header>
           <fieldset className="editor-fieldset" disabled={busy}>
             <legend>
-              <FileText size={16} /> Название и инструкция
+              Инструкция
             </legend>
             <div className="editor-field-grid">
               <label className="field editor-wide">
@@ -459,10 +441,6 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
                   placeholder="Что проверять и какие условия соответствуют каждому ответу"
                   required
                 />
-                <span className="form-help">
-                  Опишите наблюдаемое действие и условия оценки. Эти инструкции
-                  получит модель.
-                </span>
               </label>
               <label className="field editor-wide">
                 Раздел
@@ -482,7 +460,7 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
           </fieldset>
           <fieldset className="editor-fieldset" disabled={busy}>
             <legend>
-              <SlidersHorizontal size={16} /> Вес и шкала
+              Вес и шкала
             </legend>
             <div className="editor-field-grid">
               <label className="field">
@@ -509,9 +487,7 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
                     change({ weight: Number(event.target.value) })
                   }
                 />
-                <span className="form-help">
-                  Вес 0 не влияет на итоговый балл.
-                </span>
+                {criterion.weight === 0 ? <span className="form-help">Не влияет на итоговый балл.</span> : null}
               </label>
               {criterion.answer_type === "boolean" ? (
                 <label className="field editor-wide">
@@ -583,8 +559,7 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
                       placeholder="Например: 0, 4, 7, 10"
                     />
                     <span className="form-help">
-                      Через запятую или пробел; дробные числа — с точкой. Без
-                      ступеней доступно любое число в пределах шкалы.
+                      Через запятую, дробные — с точкой. Пусто — любое значение в диапазоне.
                     </span>
                   </label>
                 </>
@@ -618,7 +593,7 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
           </fieldset>
           <fieldset className="editor-fieldset" disabled={busy}>
             <legend>
-              <ShieldCheck size={16} /> Применимость и нарушения
+              Применимость
             </legend>
             <div className="editor-field-grid">
               <label className="editor-toggle">
@@ -631,7 +606,7 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
                 />
                 <span>
                   <strong>Допускается N/A</strong>
-                  <small>Условие неприменимости задайте в инструкции.</small>
+                  <small>Условие N/A — в инструкции.</small>
                 </span>
               </label>
               <label className="editor-toggle">
@@ -644,14 +619,11 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
                 />
                 <span>
                   <strong>Требуется аудио</strong>
-                  <small>Для проверки нужен анализ записи.</small>
                 </span>
               </label>
               {criterion.requires_audio ? (
                 <p className="editor-inline-note editor-wide">
-                  Текстовый оценщик оставит этот критерий со статусом «Нужна
-                  проверка»: наличие плеера не означает, что модель прослушала
-                  запись.
+                  Текстовый оценщик не проверяет аудио. Критерий потребует ручной проверки.
                 </p>
               ) : null}
               <label className="field editor-wide">
@@ -673,8 +645,7 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
                   placeholder="Какое нарушение нужно отмечать отдельно"
                 />
                 <span className="form-help">
-                  Грубая ошибка отмечается отдельным флагом и не обнуляет итог
-                  автоматически.
+                  Отдельный флаг; итоговый балл не обнуляется.
                 </span>
               </label>
               {criterion.answer_type === "boolean" &&
@@ -708,15 +679,7 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
       </div>
       <footer className="editor-save-bar">
         <div className="editor-save-status">
-          <span className={`editor-draft-dot ${dirty ? "is-dirty" : ""}`} />
-          <span>
-            <strong>{dirty ? "Есть изменения" : "Версия сохранена"}</strong>
-            <small>
-              {dirty
-                ? `Сохранение создаст новую версию после v${checklist.version}`
-                : `Чек-лист v${checklist.version} · ${draft.criteria.length} критериев`}
-            </small>
-          </span>
+          {dirty ? "Изменения не сохранены" : `Версия ${checklist.version}`}
         </div>
         <div className="editor-save-actions">
           <button

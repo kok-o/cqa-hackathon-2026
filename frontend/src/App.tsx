@@ -26,7 +26,9 @@ import type {
   ProviderInfo,
   SubmissionFile,
 } from "./contracts";
-import { downloadJson, errorText, post, q, request, uid } from "./api";
+import { ApiError, downloadJson, errorText, isTransientError, post, q, request, uid } from "./api";
+import { readQueue, saveQueue, type SavedQueue } from "./evaluationQueue";
+import { assertEvaluation, assertEvaluationHistory, assertJob, assertProviderInfo } from "./evaluationProtocol";
 import { date, number } from "./format";
 import Assessment from "./Assessment";
 import ChecklistEditor from "./ChecklistEditor";
@@ -40,6 +42,27 @@ const conversationKey = (value: {
 }) => JSON.stringify([value.group_id, value.conversation_id]);
 const checklistKey = (value: ChecklistVersion) =>
   JSON.stringify([value.checklist_id, value.version]);
+const matchingEvaluation = (history: Evaluation[], source: Conversation) => history.find(item => {
+  const saved = item.conversation;
+  return conversationKey(saved) === conversationKey(source) && saved.language === source.language && saved.channel === source.channel && saved.audio_url === source.audio_url && saved.transcript.length === source.transcript.length && saved.transcript.every((message, index) => {
+    const current = source.transcript[index];
+    return message.message_id === current.message_id && message.speaker === current.speaker && message.timestamp === current.timestamp && message.text === current.text;
+  });
+})?.evaluation_id ?? '';
+const mergeHistory = (fetched: Evaluation[], current: Evaluation[], source: Conversation) => {
+  const merged = new Map(fetched.map(item => [item.evaluation_id, item]));
+  for (const item of current) {
+    if (conversationKey(item.conversation) !== conversationKey(source)) continue;
+    const existing = merged.get(item.evaluation_id);
+    if (!existing || item.revision > existing.revision) merged.set(item.evaluation_id, item);
+    else if (item.revision === existing.revision) {
+      const appeals = new Map(existing.appeals.map(appeal => [appeal.appeal_id, appeal]));
+      item.appeals.forEach(appeal => appeals.set(appeal.appeal_id, appeal));
+      merged.set(item.evaluation_id, { ...item, appeals: [...appeals.values()] });
+    }
+  }
+  return [...merged.values()].sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
+};
 type Batch = {
   total: number;
   done: number;
@@ -93,6 +116,8 @@ export default function App() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [importing, setImporting] = useState(false);
   const [running, setRunning] = useState(false);
+  const [pendingQueue, setPendingQueue] = useState<SavedQueue | null>(readQueue);
+  const executingRef = useRef(false);
   const [batch, setBatch] = useState<Batch | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -198,23 +223,10 @@ export default function App() {
       request<ProviderInfo>("/config"),
     ]);
     if (!mountedRef.current) return;
-    setConversations(list);
-    setChecklists(rules);
-    setConfig(provider);
-    setSelectedKey((current) =>
-      list.some((item) => conversationKey(item) === current)
-        ? current
-        : list[0]
-          ? conversationKey(list[0])
-          : "",
-    );
-    setSelectedChecklistKey((current) =>
-      rules.some((item) => checklistKey(item) === current)
-        ? current
-        : rules[0]
-          ? checklistKey(rules[0])
-          : "",
-    );
+    assertProviderInfo(provider);
+    setConversations(list); setChecklists(rules); setConfig(provider);
+    setSelectedKey(current => list.some(item => conversationKey(item) === current) ? current : list[0] ? conversationKey(list[0]) : '');
+    setSelectedChecklistKey(current => rules.some(item => checklistKey(item) === current) ? current : rules[0] ? checklistKey(rules[0]) : '');
   }
 
   useEffect(() => {
@@ -258,48 +270,16 @@ export default function App() {
     setEvaluationId("");
     setHighlight(null);
     Promise.all([
-      request<Conversation>(
-        `/conversations/${q(conversationId)}?group_id=${q(groupId)}`,
-        { signal: controller.signal },
-      ),
-      request<Evaluation[]>(
-        `/evaluations?group_id=${q(groupId)}&conversation_id=${q(conversationId)}`,
-        { signal: controller.signal },
-      ),
-    ])
-      .then(([value, history]) => {
-        if (!controller.signal.aborted) {
-          setConversation(value);
-          setEvaluations((current) => {
-            const merged = new Map(
-              history.map((item) => [item.evaluation_id, item]),
-            );
-            current
-              .filter(
-                (item) => conversationKey(item.conversation) === selectedKey,
-              )
-              .forEach((item) => {
-                if (
-                  (merged.get(item.evaluation_id)?.revision ?? 0) <=
-                  item.revision
-                )
-                  merged.set(item.evaluation_id, item);
-              });
-            return [...merged.values()].sort((a, b) =>
-              b.created_at.localeCompare(a.created_at),
-            );
-          });
-          setEvaluationId(
-            (current) => current || history[0]?.evaluation_id || "",
-          );
-        }
-      })
-      .catch((error) => {
-        if (!controller.signal.aborted) setError(errorText(error));
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setDetailLoading(false);
-      });
+      request<Conversation>(`/conversations/${q(conversationId)}?group_id=${q(groupId)}`, { signal: controller.signal }),
+      request<Evaluation[]>(`/evaluations?group_id=${q(groupId)}&conversation_id=${q(conversationId)}`, { signal: controller.signal }),
+    ]).then(([value, history]) => {
+      if (!controller.signal.aborted) {
+        assertEvaluationHistory(history);
+        setConversation(value);
+        setEvaluations(current => mergeHistory(history, current, value));
+        setEvaluationId(current => current || matchingEvaluation(history, value));
+      }
+    }).catch(error => { if (!controller.signal.aborted) setError(errorText(error)); }).finally(() => { if (!controller.signal.aborted) setDetailLoading(false); });
     return () => controller.abort();
   }, [selectedKey]);
 
@@ -328,19 +308,8 @@ export default function App() {
       if (first) {
         const nextKey = conversationKey(first);
         if (nextKey === selectedRef.current) {
-          const [current, history] = await Promise.all([
-            request<Conversation>(
-              `/conversations/${q(first.conversation_id)}?group_id=${q(first.group_id)}`,
-            ),
-            request<Evaluation[]>(
-              `/evaluations?group_id=${q(first.group_id)}&conversation_id=${q(first.conversation_id)}`,
-            ),
-          ]);
-          if (selectedRef.current === nextKey) {
-            setConversation(current);
-            setEvaluations(history);
-            setEvaluationId("");
-          }
+          const [current, history] = await Promise.all([request<Conversation>(`/conversations/${q(first.conversation_id)}?group_id=${q(first.group_id)}`), request<Evaluation[]>(`/evaluations?group_id=${q(first.group_id)}&conversation_id=${q(first.conversation_id)}`)]);
+          if (selectedRef.current === nextKey) { assertEvaluationHistory(history); setConversation(current); setEvaluations(existing => mergeHistory(history, existing, current)); setEvaluationId(matchingEvaluation(history, current)); }
         } else setSelectedKey(nextKey);
       }
       setTab("review");
@@ -378,59 +347,54 @@ export default function App() {
   }
 
   async function run(targets: ConversationSummary[]) {
-    if (!selectedChecklist || !targets.length) return;
-    if (!config?.provider_configured) {
-      setShowSetup(true);
-      return;
+    if (!selectedChecklist || !targets.length || pendingQueue || executingRef.current) return;
+    if (!config?.provider_configured) { setShowSetup(true); return; }
+    const queue: SavedQueue = { version: 1, checklist_id: selectedChecklist.checklist_id, checklist_version: selectedChecklist.version, model: config.model ?? '', prompt_version: config.prompt_version ?? '', items: targets.map(target => ({ group_id: target.group_id, conversation_id: target.conversation_id, key: uid(), done: false, failed: false })) };
+    await executeQueue(queue);
+  }
+
+  async function executeQueue(queue: SavedQueue) {
+    if (executingRef.current) return;
+    executingRef.current = true;
+    let currentConfig: ProviderInfo;
+    try { currentConfig = await request<ProviderInfo>('/config'); assertProviderInfo(currentConfig); setConfig(currentConfig); }
+    catch (error) { executingRef.current = false; setError(errorText(error)); return; }
+    if (!currentConfig.provider_configured || currentConfig.model !== queue.model || (currentConfig.prompt_version ?? '') !== queue.prompt_version) {
+      executingRef.current = false;
+      setError('Настройки модели изменились. Проверьте сохранённые результаты и уберите старую очередь перед новым запуском.'); return;
     }
-    setRunning(true);
-    setError("");
-    setNotice("");
-    setJobErrors([]);
-    stopRef.current = false;
-    const rules = selectedChecklist;
-    let done = 0,
-      failed = 0;
-    setBatch({
-      total: targets.length,
-      done,
-      failed,
-      label: "",
-      stopped: false,
-    });
-    for (const target of targets) {
+    setRunning(true); setError(''); setNotice(''); setJobErrors([]); stopRef.current = false;
+    setSelectedChecklistKey(JSON.stringify([queue.checklist_id, queue.checklist_version]));
+    setPendingQueue(queue);
+    if (!saveQueue(queue)) setError('Браузер не сохранил очередь. Не обновляйте вкладку до завершения обработки.');
+    let done = queue.items.filter(item => item.done).length, failed = queue.items.filter(item => item.failed).length;
+    setBatch({ total: queue.items.length, done, failed, label: '', stopped: false });
+    for (const target of queue.items) {
+      if (target.done) continue;
       if (stopRef.current || !mountedRef.current) break;
-      setBatch({
-        total: targets.length,
-        done,
-        failed,
-        label: target.conversation_id,
-        stopped: false,
-      });
+      setBatch({ total: queue.items.length, done, failed, label: target.conversation_id, stopped: false });
       try {
-        let job = await post<EvaluationJob>("/evaluation-jobs", {
-          conversation_id: target.conversation_id,
-          group_id: target.group_id,
-          checklist_id: rules.checklist_id,
-          checklist_version: rules.version,
-          idempotency_key: uid(),
-        });
+        let job = target.job_id ? await request<EvaluationJob>(`/evaluation-jobs/${q(target.job_id)}`)
+          : await post<EvaluationJob>('/evaluation-jobs', { conversation_id: target.conversation_id, group_id: target.group_id, checklist_id: queue.checklist_id, checklist_version: queue.checklist_version, idempotency_key: target.key });
+        assertJob(job);
+        if (target.job_id && job.job_id !== target.job_id) throw new ApiError('Сервер вернул другую задачу. Продолжите сохранённую очередь после восстановления связи.', 0);
         setJobStatus(job.status);
-        while (job.status === "queued" || job.status === "running") {
-          await new Promise((resolve) => setTimeout(resolve, 1200));
-          if (!mountedRef.current) return;
-          job = await request<EvaluationJob>(
-            `/evaluation-jobs/${q(job.job_id)}`,
-          );
+        target.job_id = job.job_id;
+        saveQueue(queue);
+        while (job.status === 'queued' || job.status === 'running') {
+          await new Promise(resolve => setTimeout(resolve, 1200));
+          if (!mountedRef.current) { executingRef.current = false; return; }
+          const nextJob: EvaluationJob = await request<EvaluationJob>(`/evaluation-jobs/${q(target.job_id)}`);
+          assertJob(nextJob);
+          if (nextJob.job_id !== target.job_id) throw new ApiError('Сервер вернул другую задачу. Продолжите сохранённую очередь после восстановления связи.', 0);
+          job = nextJob;
           setJobStatus(job.status);
         }
-        if (job.status === "failed" || !job.evaluation_id)
-          throw new Error(
-            job.error || "Оценка не завершена. Повторите запуск.",
-          );
-        const completed = await request<Evaluation>(
-          `/evaluations/${q(job.evaluation_id)}`,
-        );
+        if (job.status === 'failed' || !job.evaluation_id) throw new Error(job.error || 'Оценка не завершена. Повторите запуск.');
+        const completed = await request<Evaluation>(`/evaluations/${q(job.evaluation_id)}`);
+        assertEvaluation(completed);
+        if (completed.evaluation_id !== job.evaluation_id || conversationKey(completed.conversation) !== conversationKey(target)
+          || completed.checklist.checklist_id !== queue.checklist_id || completed.checklist.version !== queue.checklist_version) throw new ApiError('Сервер вернул оценку другого диалога или версии правил. Проверьте историю перед продолжением очереди.', 0);
         if (selectedRef.current === conversationKey(target)) {
           setEvaluations((current) => [
             completed,
@@ -442,6 +406,12 @@ export default function App() {
           setMobilePanel("assessment");
         }
       } catch (error) {
+        if (isTransientError(error)) {
+          stopRef.current = true;
+          setError('Связь с сервером прервалась. Очередь сохранена: продолжение проверит уже созданную задачу без повторного запуска модели.');
+          break;
+        }
+        target.failed = true;
         failed++;
         setJobErrors((current) => [
           ...current,
@@ -452,49 +422,30 @@ export default function App() {
           },
         ]);
       }
+      target.done = true;
+      saveQueue(queue);
       done++;
-      setBatch({
-        total: targets.length,
-        done,
-        failed,
-        label: "",
-        stopped: stopRef.current,
-      });
+      setBatch({ total: queue.items.length, done, failed, label: '', stopped: stopRef.current });
       await refreshConversations().catch(() => undefined);
     }
-    if (mountedRef.current) {
-      setRunning(false);
-      setBatch({
-        total: targets.length,
-        done,
-        failed,
-        label: "",
-        stopped: stopRef.current,
-      });
-    }
+    executingRef.current = false;
+    const remaining = queue.items.some(item => !item.done) ? queue : null;
+    saveQueue(remaining);
+    if (mountedRef.current) { setPendingQueue(remaining); setRunning(false); setBatch({ total: queue.items.length, done, failed, label: '', stopped: stopRef.current }); }
   }
 
   function onEvaluationUpdated(value: Evaluation) {
-    setEvaluations((current) =>
-      current.map((item) => {
-        if (
-          item.evaluation_id !== value.evaluation_id ||
-          item.revision > value.revision
-        )
-          return item;
-        if (item.revision === value.revision) {
-          const appeals = new Map(
-            item.appeals.map((appeal) => [appeal.appeal_id, appeal]),
-          );
-          value.appeals.forEach((appeal) =>
-            appeals.set(appeal.appeal_id, appeal),
-          );
-          return { ...value, appeals: [...appeals.values()] };
-        }
-        return value;
-      }),
-    );
-    void refreshConversations().catch((error) => setError(errorText(error)));
+    assertEvaluation(value);
+    setEvaluations(current => current.map(item => {
+      if (item.evaluation_id !== value.evaluation_id || item.revision > value.revision) return item;
+      if (item.revision === value.revision) {
+        const appeals = new Map(item.appeals.map(appeal => [appeal.appeal_id, appeal]));
+        value.appeals.forEach(appeal => appeals.set(appeal.appeal_id, appeal));
+        return { ...value, appeals: [...appeals.values()] };
+      }
+      return value;
+    }));
+    void refreshConversations().catch(error => setError(errorText(error)));
   }
 
   function focusElement(id: string) {
@@ -957,6 +908,18 @@ export default function App() {
             )}
           </div>
         )}
+        {pendingQueue && !running && (
+          <section className="queue-recovery notice warning" aria-label="Незавершённая очередь">
+            <div>
+              <strong>Осталось обработать: {pendingQueue.items.filter(item => !item.done).length}</strong>
+              <p>Продолжение проверит уже запущенные оценки и обработает оставшиеся диалоги.</p>
+            </div>
+            <div className="button-row">
+              <button className="button secondary small" disabled={!config?.provider_configured} onClick={() => void executeQueue(pendingQueue)}>Продолжить очередь</button>
+              <button className="button ghost small" onClick={() => { saveQueue(null); setPendingQueue(null); }}>Убрать очередь</button>
+            </div>
+          </section>
+        )}
         {jobErrors.length > 0 && (
           <details className="job-errors">
             <summary>
@@ -969,7 +932,7 @@ export default function App() {
             ))}
             <button
               className="button secondary small"
-              disabled={running}
+              disabled={running || !!pendingQueue}
               onClick={() =>
                 void run(
                   conversations.filter((item) =>
@@ -1155,6 +1118,7 @@ export default function App() {
                 grossError={grossError}
                 filtersOpen={filtersOpen}
                 running={running}
+                pending={!!pendingQueue}
                 importing={importing}
                 configured={!!config?.provider_configured}
                 onQuery={setQuery}
@@ -1193,6 +1157,7 @@ export default function App() {
                     disabled={
                       !selectedSummary ||
                       running ||
+                      !!pendingQueue ||
                       detailLoading ||
                       !selectedChecklist
                     }
@@ -1220,6 +1185,7 @@ export default function App() {
                       value={evaluationId}
                       onChange={(event) => setEvaluationId(event.target.value)}
                     >
+                      <option value="">Текущий диалог без оценки</option>
                       {evaluations.map((item) => (
                         <option
                           key={item.evaluation_id}

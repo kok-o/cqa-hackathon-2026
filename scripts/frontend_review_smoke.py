@@ -6,7 +6,7 @@ docs/FRONTEND_QA.md before running this script.
 """
 from __future__ import annotations
 
-from select_control import choose_select
+from select_control import choose_select, expect_select_value, select_control, set_filters_open
 import argparse
 from copy import deepcopy
 import json
@@ -48,6 +48,24 @@ def seed(api: httpx.Client, token: str) -> tuple[str, str, dict]:
         job = api.get('/api/evaluation-jobs/' + job['job_id']).raise_for_status().json()
     assert job['status'] == 'completed', job
     evaluation = api.get('/api/evaluations/' + job['evaluation_id']).raise_for_status().json()
+    # The shared mechanical evaluator emits quotes. Prepare a checked-span
+    # result explicitly through the appeal API, so both evidence paths are
+    # exercised without relying on a different private test server.
+    greeting = deepcopy(evaluation['results'][0])
+    greeting['evidence'] = []
+    greeting['checked_span'] = {
+        'start_message_id': evaluation['conversation']['transcript'][0]['message_id'],
+        'end_message_id': evaluation['conversation']['transcript'][-1]['message_id'],
+    }
+    appeal = api.post('/api/evaluations/' + evaluation['evaluation_id'] + '/appeals', json={
+        'criterion_id': greeting['criterion_id'], 'comment': 'Synthetic checked-span UI setup.',
+        'idempotency_key': uuid4().hex,
+    }).raise_for_status().json()
+    evaluation = api.post('/api/appeals/' + appeal['appeal_id'] + '/decision', json={
+        'action': 'replace', 'reason': 'Exercise the whole-transcript anchor in the isolated UI test.',
+        'replacement_result': greeting, 'expected_revision': evaluation['revision'],
+        'idempotency_key': uuid4().hex,
+    }).raise_for_status().json()
     return group, ru['conversation_id'], evaluation
 
 
@@ -96,14 +114,24 @@ def main() -> None:
             for selector in ('#queue-panel', '#transcript-panel', '#assessment-panel'):
                 panel = page.locator(selector)
                 if panel.is_visible():
-                    assert panel.evaluate('(el) => el.scrollWidth <= el.clientWidth + 1'), f'Panel overflow: {selector}'
+                    if selector == '#queue-panel':
+                        # The resize hit target deliberately straddles the pane
+                        # border. Check content overflow, excluding only it.
+                        assert panel.evaluate('''el => [...el.children]
+                            .filter(child => !child.matches('.queue-resize-handle'))
+                            .every(child => child.scrollWidth <= child.clientWidth + 1 &&
+                                child.getBoundingClientRect().right <= el.getBoundingClientRect().right + 1)'''), f'Panel content overflow: {selector}'
+                    else:
+                        assert panel.evaluate('(el) => el.scrollWidth <= el.clientWidth + 1'), f'Panel overflow: {selector}'
 
         try:
             page.goto(base)
+            page.wait_for_load_state('networkidle')
             expect(page.get_by_role('heading', level=1, name=re.compile(r'^Диалоги'))).to_be_visible()
-            if not page.get_by_label('Набор', exact=True).count():
-                page.get_by_role('button', name=re.compile('^Фильтры')).click()
-            choose_select(page.get_by_label('Набор', exact=True), group)
+            choose_select(select_control(page, 'Версия чек-листа'), json.dumps(['synthetic-checklist', 1], separators=(',', ':')))
+            set_filters_open(page, True)
+            choose_select(select_control(page, 'Набор'), group)
+            set_filters_open(page, False)
             page.get_by_role('button').filter(has_text=conversation_id).click()
             expect(page.locator('.conversation-context strong')).to_have_text(conversation_id)
             expect(page.locator('.aq-run-details').last).to_contain_text(evaluation['evaluation_id'])
@@ -139,12 +167,10 @@ def main() -> None:
             page.get_by_role('tab', name='Оценка', exact=True).press('Home')
             expect(queue_tab).to_be_focused()
             expect(queue_tab).to_have_attribute('aria-selected', 'true')
-            if not page.get_by_label('Набор', exact=True).count():
-                page.get_by_role('button', name=re.compile('^Фильтры')).click()
-            page.get_by_label('Набор', exact=True).press('Escape')
+            set_filters_open(page, True)
+            select_control(page, 'Набор').press('Escape')
             expect(page.locator('#queue-filters')).to_have_count(0)
             expect(page.get_by_role('button', name=re.compile('^Фильтры'))).to_be_focused()
-            page.get_by_role('button', name=re.compile('^Фильтры')).click()
             checks.append('keyboard_mobile_tabs_and_escape_filter_focus_return')
             select_tab('Оценка')
             criterion_button(quote_id).click()
@@ -174,6 +200,19 @@ def main() -> None:
             page.get_by_role('button', name='Оспорить оценку', exact=True).click()
             appeal_comment = page.get_by_placeholder('Сошлитесь на реплику или правило чек-листа')
             appeal_comment.fill('Учебный параллельный пересмотр.')
+            criterion_button(quote_id).click()
+            expect(appeal_comment).to_have_count(0)
+            criterion_button(greeting_id).click()
+            expect(appeal_comment).to_have_value('Учебный параллельный пересмотр.')
+            criterion_button(greeting_id).click()
+            expect(appeal_comment).to_have_count(0)
+            criterion_button(greeting_id).click()
+            expect(appeal_comment).to_have_value('Учебный параллельный пересмотр.')
+            select_tab('Диалог')
+            expect(appeal_comment).to_be_hidden()
+            select_tab('Оценка')
+            expect(appeal_comment).to_have_value('Учебный параллельный пересмотр.')
+            checks.append('appeal_draft_survives_criterion_switch_collapse_and_mobile_tabs')
             appeal_comment.press('Escape')
             expect(page.get_by_role('button', name='Оспорить оценку', exact=True)).to_be_focused()
             page.get_by_role('button', name='Оспорить оценку', exact=True).click()
@@ -186,6 +225,41 @@ def main() -> None:
             reason = 'Сохранить эту причину после конфликта ревизии.'
             reason_input = page.get_by_placeholder('Обязательно для истории пересмотра')
             reason_input.fill(reason)
+            explanation = 'Черновик решения с новой цитатой сохраняется при навигации.'
+            replacement_message = evaluation['conversation']['transcript'][3]['message_id']
+            choose_select(select_control(page, 'Решение'), 'replace')
+            choose_select(select_control(page, 'Новый ответ'), 'true')
+            page.get_by_role('textbox', name=re.compile('^Объяснение нового результата')).fill(explanation)
+            choose_select(select_control(page, 'Доказательство'), 'quote')
+            choose_select(select_control(page, 'Реплика'), replacement_message)
+
+            def assert_decision_draft() -> None:
+                expect(reason_input).to_have_value(reason)
+                expect_select_value(select_control(page, 'Решение'), 'replace')
+                expect_select_value(select_control(page, 'Применимость'), 'applicable')
+                expect_select_value(select_control(page, 'Новый ответ'), 'true')
+                expect(page.get_by_role('textbox', name=re.compile('^Объяснение нового результата'))).to_have_value(explanation)
+                expect_select_value(select_control(page, 'Доказательство'), 'quote')
+                expect_select_value(select_control(page, 'Реплика'), replacement_message)
+
+            criterion_button(quote_id).click()
+            expect(reason_input).to_have_count(0)
+            criterion_button(greeting_id).click()
+            assert_decision_draft()
+            criterion_button(greeting_id).click()
+            expect(reason_input).to_have_count(0)
+            criterion_button(greeting_id).click()
+            assert_decision_draft()
+            select_tab('Диалог')
+            expect(reason_input).to_be_hidden()
+            select_tab('Оценка')
+            assert_decision_draft()
+            reason_input.press('Escape')
+            expect(reason_input).to_have_count(0)
+            expect(page.get_by_role('button', name='Решение проверяющего', exact=True)).to_be_focused()
+            page.get_by_role('button', name='Решение проверяющего', exact=True).click()
+            assert_decision_draft()
+            checks.append('decision_action_reason_answer_explanation_and_quote_survive_navigation_and_escape')
             competing = api.post('/api/evaluations/' + evaluation['evaluation_id'] + '/appeals', json={
                 'criterion_id': quote_id, 'comment': 'Вторая учебная проверка', 'idempotency_key': uuid4().hex,
             }).raise_for_status().json()
@@ -197,7 +271,7 @@ def main() -> None:
                 page.get_by_role('button', name='Сохранить решение и пересчитать', exact=True).click()
             assert conflict.value.status == 409
             page.get_by_role('button', name='Обновить данные оценки', exact=True).click()
-            expect(reason_input).to_have_value(reason)
+            assert_decision_draft()
             with page.expect_response(lambda r: r.request.method == 'POST' and r.url.endswith('/decision')) as resolved:
                 page.get_by_role('button', name='Сохранить решение и пересчитать', exact=True).click()
             assert resolved.value.status == 200, resolved.value.text()
@@ -205,26 +279,35 @@ def main() -> None:
             assert latest['revision'] == concurrent['revision'] + 1
             assert latest['original_results'] == evaluation['original_results']
             assert latest['original_score'] == evaluation['original_score']
+            replacement = next(item for item in latest['results'] if item['criterion_id'] == greeting_id)
+            assert replacement['answer'] is True and replacement['explanation'] == explanation
+            assert replacement['evidence'][0]['message_id'] == replacement_message
             checks.append('conflict_409_refresh_preserves_reason_and_recovers')
 
             select_tab('Очередь')
             page.get_by_label('Поиск диалога', exact=True).fill('no-such-' + token)
             expect(page.get_by_text('Ничего не найдено', exact=True)).to_be_visible()
             page.locator('.conversation-list .small-empty').get_by_role('button', name='Сбросить фильтры', exact=True).click()
-            choose_select(page.get_by_label('Набор', exact=True), group)
-            choose_select(page.get_by_label('Язык', exact=True), 'KZ')
+            set_filters_open(page, True)
+            choose_select(select_control(page, 'Набор'), group)
+            choose_select(select_control(page, 'Язык'), 'KZ')
+            set_filters_open(page, False)
             page.get_by_role('button').filter(has_text=f'frontend-{token}-kz').click()
             select_tab('Диалог')
             expect(page.locator('#transcript-panel')).to_contain_text('Сәлеметсіз бе!')
             checks.append('empty_search_reset_and_kazakh_text')
 
             select_tab('Очередь')
-            choose_select(page.get_by_label('Язык', exact=True), 'EN')
+            set_filters_open(page, True)
+            choose_select(select_control(page, 'Язык'), 'EN')
+            set_filters_open(page, False)
             page.get_by_role('button').filter(has_text=f'frontend-{token}-en').click()
             select_tab('Диалог')
-            expect(page.locator('.no-audio-banner')).to_be_visible()
+            expect(page.locator('.conversation-context')).to_contain_text('Звонок')
+            expect(page.locator('#transcript-panel .message')).to_have_count(4)
             expect(page.locator('audio')).to_have_count(0)
-            checks.append('voice_call_without_audio_visible_state')
+            expect(page.get_by_role('button', name='Открыть запись звонка', exact=True)).to_have_count(0)
+            checks.append('voice_transcript_available_without_unprovided_audio_control')
 
             # The browser receives an invalid source file. No import request may
             # succeed and the currently selected conversation must survive.

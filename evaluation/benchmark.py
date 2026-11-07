@@ -41,6 +41,21 @@ SCHEMA_VERSION = 1
 MAX_ATTEMPTS = 2  # Evaluator contract: initial request plus one validation/network retry.
 
 
+def safe_print(message: str, *, file=None, flush: bool = False) -> None:
+    """Console encoding must not turn a saved result into a cancelled run.
+
+    Keep Unicode on capable streams; escape only characters the actual stream
+    cannot encode (for example Kazakh IDs on a strict Windows cp1251 console).
+    """
+    stream = sys.stdout if file is None else file
+    try:
+        print(message, file=stream, flush=flush)
+    except UnicodeEncodeError:
+        encoding = getattr(stream, "encoding", None) or "ascii"
+        printable = message.encode(encoding, errors="backslashreplace").decode(encoding)
+        print(printable, file=stream, flush=flush)
+
+
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -345,7 +360,7 @@ async def execute_plan(manifest: dict, tasks: list[dict], configs: dict[str, Set
                     abort = True
                     record["reservation_exceeded"] = True
                 save()
-            print(f"{model}: {task['conversation']['group_id']}/{task['conversation']['conversation_id']} {record['status']}", flush=True)
+            safe_print(f"{model}: {task['conversation']['group_id']}/{task['conversation']['conversation_id']} {record['status']}", flush=True)
 
     # Validate credentials/model configuration on a single request per model
     # before concurrency can duplicate a fatal failure for that model.
@@ -554,7 +569,7 @@ def main(argv: list[str] | None = None) -> int:
         labels = load_independent_labels(args.labels, args.split)  # Validate before spending.
         if args.report_only:
             report = write_reports(out, read_json(out / "manifest.json"), read_json(out / "checkpoint.json"), labels=labels, split=args.split)
-            print(json.dumps({"report": str(out / "report.json"), "metric_status": report["metric_status"]}))
+            safe_print(json.dumps({"report": str(out / "report.json"), "metric_status": report["metric_status"]}))
             return 0
         manifest, tasks, configs, checklist = make_plan(args)
         validate_label_snapshots(labels, tasks, checklist)
@@ -565,7 +580,7 @@ def main(argv: list[str] | None = None) -> int:
             (out / "prompt.snapshot.md").write_bytes(service.PROMPT_PATH.read_bytes())
         write_json(out / "checkpoint.json", checkpoint)
         if args.dry_run:
-            print(json.dumps({"mode": "dry_run_no_provider_calls", "conversations": manifest["conversation_count"],
+            safe_print(json.dumps({"mode": "dry_run_no_provider_calls", "conversations": manifest["conversation_count"],
                   "language_counts": manifest["language_counts"], "tasks": len(tasks),
                   "total_worst_case_usd": manifest["total_worst_case_usd"], "fingerprint": manifest["fingerprint"]}, ensure_ascii=False))
             return 0
@@ -577,10 +592,10 @@ def main(argv: list[str] | None = None) -> int:
         finally:
             write_reports(out, manifest, checkpoint, labels=labels, split=args.split)
         complete = sum(r.get("status") == "completed" for r in checkpoint["records"].values())
-        print(f"Saved {complete}/{len(tasks)} completed predictions and reports in {out}")
+        safe_print(f"Saved {complete}/{len(tasks)} completed predictions and reports in {out}")
         return 0 if complete == len(tasks) else 3
     except (ValueError, KeyError, OSError, EvaluatorError) as exc:
-        print(f"Benchmark error: {exc}", file=sys.stderr)
+        safe_print(f"Benchmark error: {exc}", file=sys.stderr)
         return 2
 
 

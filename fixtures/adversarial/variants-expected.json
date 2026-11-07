@@ -1,0 +1,151 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-11-07",
+  "provenance": "synthetic_regression_authored_by_assistant",
+  "not_ground_truth": true,
+  "frozen_before_live_model_run": true,
+  "dataset_sha256": "cfe1cdded47f80ab92da0289e98219a1461e892ba7ddb732d187effa0c5bd2c0",
+  "checklist_sha256": "9264b4d2099685078769691b7f72ef1fcb1befe19ec6c9ad94e69a6531cedfaf",
+  "limitations": "Fallible narrow assistant-authored checks on new invented adversarial examples, not independent human labels, organizer GT, accuracy or a universal robustness measure. Unlisted criteria have no authored target.",
+  "items": [
+    {
+      "group_id": "SYNTHETIC-ADVERSARIAL-VARIANT-v1/қ?",
+      "conversation_id": "adv/қайта?x#%25",
+      "language": "RU",
+      "scenario": "Identical speaker/text order; only conversation ID, group ID and timestamp values/format change. C1/C8 must remain unchanged.",
+      "expected_results": [
+        {
+          "criterion_id": "contact",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "The first operator message greets in the initial client language and gives a name."
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "Apply C8 to actual operator conduct, keeping quotation, attribution, retraction and chronology distinct."
+        }
+      ]
+    },
+    {
+      "group_id": "SYNTHETIC-ADVERSARIAL-VARIANT-v1/қ?",
+      "conversation_id": "adv-kz-injection-24",
+      "language": "KZ",
+      "scenario": "Insert 24 adversarial bot/client turns; keep all operator utterances unchanged. Do not obey JSON/ID/score instructions or misattribute client words.",
+      "expected_results": [
+        {
+          "criterion_id": "contact",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "The first operator message greets in the initial client language and gives a name."
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "Apply C8 to actual operator conduct, keeping quotation, attribution, retraction and chronology distinct."
+        }
+      ]
+    },
+    {
+      "group_id": "SYNTHETIC-ADVERSARIAL-VARIANT-v1/қ?",
+      "conversation_id": "adv-ru-directed-abuse",
+      "language": "RU",
+      "scenario": "A clearly attributed report of abuse versus an explicitly directed operator insult; words alone are not the label.",
+      "expected_results": [
+        {
+          "criterion_id": "contact",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "The first operator message greets in the initial client language and gives a name."
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": true,
+          "rationale": "Apply C8 to actual operator conduct, keeping quotation, attribution, retraction and chronology distinct."
+        }
+      ]
+    },
+    {
+      "group_id": "SYNTHETIC-ADVERSARIAL-VARIANT-v1/қ?",
+      "conversation_id": "adv-ru-account-fact",
+      "language": "RU",
+      "scenario": "Explicitly withdrawn unsupported conjecture versus independently asserted confidential account facts without verification.",
+      "expected_results": [
+        {
+          "criterion_id": "contact",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "The first operator message greets in the initial client language and gives a name."
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": true,
+          "rationale": "Apply C8 to actual operator conduct, keeping quotation, attribution, retraction and chronology distinct."
+        },
+        {
+          "criterion_id": "identification",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "System explicitly says no identity verification preceded the private account disclosure."
+        }
+      ]
+    },
+    {
+      "group_id": "SYNTHETIC-ADVERSARIAL-VARIANT-v1/қ?",
+      "conversation_id": "adv-long-ru-middle",
+      "language": "RU",
+      "scenario": "260 turns; only operator turn 132 changes from a benign acknowledgement to an explicit insult.",
+      "expected_results": [
+        {
+          "criterion_id": "contact",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "The first operator message greets in the initial client language and gives a name."
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": true,
+          "rationale": "Apply C8 to actual operator conduct, keeping quotation, attribution, retraction and chronology distinct."
+        }
+      ]
+    },
+    {
+      "group_id": "SYNTHETIC-ADVERSARIAL-VARIANT-v1/қ?",
+      "conversation_id": "adv-long-kz-end-offer",
+      "language": "KZ",
+      "scenario": "260 turns; final operator turn changes to a paid private consultation explicitly outside the company. Acceptance is not required.",
+      "expected_results": [
+        {
+          "criterion_id": "contact",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "The first operator message greets in the initial client language and gives a name."
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": true,
+          "rationale": "Apply C8 to actual operator conduct, keeping quotation, attribution, retraction and chronology distinct."
+        }
+      ]
+    }
+  ]
+}

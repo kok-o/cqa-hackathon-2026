@@ -1,0 +1,81 @@
+{
+  "status": "passed",
+  "created_at": "2026-11-07T16:25:46.138718+00:00",
+  "mode": "real_browser_and_HTTP_mechanical_evaluator",
+  "paid_calls": 0,
+  "checks": [
+    {
+      "case": "accepted_POST_response_lost_once",
+      "passed": true,
+      "http_posts": 2,
+      "unique_jobs": 1,
+      "evaluations": 1
+    },
+    {
+      "case": "transient_poll_503_recovers",
+      "passed": true,
+      "poll_requests": 2,
+      "evaluations": 1
+    },
+    {
+      "case": "all_POST_responses_lost_then_reload_resume",
+      "passed": true,
+      "lost_posts": 3,
+      "first_unique_jobs": 1,
+      "final_evaluations": 3
+    },
+    {
+      "case": "reload_during_active_queue_resumes_once",
+      "passed": true,
+      "final_evaluations": 3
+    },
+    {
+      "case": "explicit_stop_then_resume",
+      "passed": true,
+      "final_evaluations": 3
+    },
+    {
+      "case": "accepted_POST_null_body_preserves_recovery_key",
+      "passed": true,
+      "evaluations": 1
+    },
+    {
+      "case": "malformed_completed_evaluation_preserves_job",
+      "passed": true,
+      "evaluations": 1
+    },
+    {
+      "case": "long_Retry_After_pauses_without_early_retry",
+      "passed": true
+    },
+    {
+      "case": "null_config_does_not_lock_future_runs",
+      "passed": true
+    },
+    {
+      "case": "wrong_poll_job_id_preserves_original_job",
+      "passed": true
+    },
+    {
+      "case": "wrong_checklist_version_preserves_recovery",
+      "passed": true
+    },
+    {
+      "case": "delayed_old_history_keeps_fresh_result",
+      "passed": true
+    },
+    {
+      "case": "current_source_selected_over_late_old_evaluation",
+      "passed": true
+    },
+    {
+      "case": "transcript_HTML_is_inert_text",
+      "passed": true
+    },
+    {
+      "case": "corrupt_saved_queue_does_not_crash_UI",
+      "passed": true
+    }
+  ],
+  "page_errors": []
+}

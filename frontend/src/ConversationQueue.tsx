@@ -29,6 +29,7 @@ type Props = {
   grossError: string;
   filtersOpen: boolean;
   running: boolean;
+  pending: boolean;
   importing: boolean;
   configured: boolean;
   onQuery: (value: string) => void;
@@ -221,7 +222,7 @@ export default function ConversationQueue(p: Props) {
       <footer className="sidebar-footer">
         <button
           className="button primary full-width"
-          disabled={p.running || !p.items.length || !p.configured}
+          disabled={p.running || p.pending || !p.items.length || !p.configured}
           onClick={p.onRun}
         >
           <Play size={15} /> Оценить выборку{" "}

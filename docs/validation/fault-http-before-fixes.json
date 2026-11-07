@@ -1,0 +1,48 @@
+{
+  "mode": "local_http_and_owned_process_only",
+  "paid_provider_calls": 0,
+  "checks": [
+    "same_id_different_group_isolated",
+    "concurrent_and_lost_response_idempotency",
+    "stale_appeal_conflict_preserves_original",
+    "kill_restart_preserves_history_and_fails_pending_without_replay",
+    "real_http_faults_have_bounded_attempts_and_no_public_secret"
+  ],
+  "findings": [
+    "Late old-snapshot completion hides the completed current-snapshot evaluation",
+    "Failed API job loses observed token usage and cost diagnostics (schema)",
+    "Failed API job loses observed token usage and cost diagnostics (refusal)",
+    "Failed API job loses observed token usage and cost diagnostics (http429)",
+    "Failed API job loses observed token usage and cost diagnostics (http503)"
+  ],
+  "provider_faults": {
+    "corrupt": {
+      "status": "failed",
+      "attempts": 2
+    },
+    "schema": {
+      "status": "failed",
+      "attempts": 2
+    },
+    "refusal": {
+      "status": "failed",
+      "attempts": 1
+    },
+    "http429": {
+      "status": "failed",
+      "attempts": 2
+    },
+    "http503": {
+      "status": "failed",
+      "attempts": 2
+    },
+    "timeout": {
+      "status": "failed",
+      "attempts": 2
+    },
+    "repair": {
+      "status": "completed",
+      "attempts": 2
+    }
+  }
+}

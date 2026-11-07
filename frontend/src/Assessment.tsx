@@ -1,5 +1,6 @@
 import Select from "./Select";
-import { useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import {
   ArrowUpRight,
   ChevronDown,
@@ -38,6 +39,65 @@ type AppealProps = Pick<Props, "evaluation" | "onUpdated"> & {
   criterion: Criterion;
   result: CriterionResult;
 };
+type AppealDraft = {
+  adding: boolean;
+  comment: string;
+  busy: boolean;
+  error: string;
+};
+type DecisionDraft = {
+  reviewing: boolean;
+  action: "uphold" | "replace";
+  reason: string;
+  replacement: CriterionResult;
+  evidenceMode: "keep" | "quote" | "span";
+  messageId: string;
+  busy: boolean;
+  error: string;
+  isConflict: boolean;
+  refreshing: boolean;
+};
+type DraftContextValue = {
+  appeals: Record<string, AppealDraft>;
+  decisions: Record<string, DecisionDraft>;
+  setAppeals: Dispatch<SetStateAction<Record<string, AppealDraft>>>;
+  setDecisions: Dispatch<SetStateAction<Record<string, DecisionDraft>>>;
+};
+const DraftContext = createContext<DraftContextValue | null>(null);
+const emptyAppealDraft = (): AppealDraft => ({ adding: false, comment: "", busy: false, error: "" });
+
+// The expanded criterion is unmounted on navigation. Keep editable state at the
+// evaluation level so only one detail panel is rendered without losing drafts.
+function useAppealDraft(criterionId: string) {
+  const { appeals, setAppeals } = useContext(DraftContext)!;
+  const draft = appeals[criterionId] ?? emptyAppealDraft();
+  const update = (patch: Partial<AppealDraft>) => setAppeals(current => ({
+    ...current,
+    [criterionId]: { ...(current[criterionId] ?? emptyAppealDraft()), ...patch },
+  }));
+  return { draft, update };
+}
+
+function useDecisionDraft(appealId: string, result: CriterionResult, evaluation: Evaluation) {
+  const { decisions, setDecisions } = useContext(DraftContext)!;
+  const empty = (): DecisionDraft => ({
+    reviewing: false, action: "uphold", reason: "", replacement: structuredClone(result),
+    evidenceMode: "keep", messageId: evaluation.conversation.transcript.find(message => message.speaker === "operator")?.message_id
+      ?? evaluation.conversation.transcript[0]?.message_id ?? "",
+    busy: false, error: "", isConflict: false, refreshing: false,
+  });
+  const draft = decisions[appealId] ?? empty();
+  const update = (patch: Partial<DecisionDraft>) => setDecisions(current => ({
+    ...current,
+    [appealId]: { ...(current[appealId] ?? empty()), ...patch },
+  }));
+  const reset = () => setDecisions(current => {
+    const next = { ...current };
+    delete next[appealId];
+    return next;
+  });
+  return { draft, update, reset };
+}
 const motion = () =>
   window.matchMedia("(prefers-reduced-motion: reduce)").matches
     ? ("instant" as const)
@@ -51,6 +111,8 @@ export default function Assessment({
   const [showOriginal, setShowOriginal] = useState(false);
   const [selectedId, setSelectedId] = useState("");
   const [saved, setSaved] = useState(false);
+  const [appealDrafts, setAppealDrafts] = useState<Record<string, AppealDraft>>({});
+  const [decisionDrafts, setDecisionDrafts] = useState<Record<string, DecisionDraft>>({});
   const revisionRef = useRef(evaluation.revision);
   useEffect(() => {
     if (revisionRef.current !== evaluation.revision) {
@@ -194,6 +256,7 @@ export default function Assessment({
     </div>
   ) : null;
   return (
+    <DraftContext.Provider value={{ appeals: appealDrafts, decisions: decisionDrafts, setAppeals: setAppealDrafts, setDecisions: setDecisionDrafts }}>
     <section className="assessment aq-panel" aria-label="Оценка диалога">
       <header className="aq-heading">
         <button
@@ -362,6 +425,7 @@ export default function Assessment({
         </dl>
       </details>
     </section>
+    </DraftContext.Provider>
   );
 }
 
@@ -371,10 +435,12 @@ function CriterionAppeals({
   result,
   onUpdated,
 }: AppealProps) {
-  const [adding, setAdding] = useState(false);
-  const [comment, setComment] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const { draft, update } = useAppealDraft(criterion.criterion_id);
+  const { adding, comment, busy, error } = draft;
+  const setAdding = (adding: boolean) => update({ adding });
+  const setComment = (comment: string) => update({ comment });
+  const setBusy = (busy: boolean) => update({ busy });
+  const setError = (error: string) => update({ error });
   const trigger = useRef<HTMLButtonElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
   const appeals = evaluation.appeals.filter(
@@ -517,7 +583,9 @@ function AppealItem({
   result,
   onUpdated,
 }: AppealProps & { appeal: Appeal }) {
-  const [reviewing, setReviewing] = useState(false);
+  const { draft, update } = useDecisionDraft(appeal.appeal_id, result, evaluation);
+  const { reviewing } = draft;
+  const setReviewing = (reviewing: boolean) => update({ reviewing });
   const trigger = useRef<HTMLButtonElement>(null);
   function close() {
     setReviewing(false);
@@ -589,24 +657,18 @@ function DecisionForm({
   onUpdated,
   onClose,
 }: AppealProps & { appeal: Appeal; onClose: () => void }) {
-  const [action, setAction] = useState<"uphold" | "replace">("uphold");
-  const [reason, setReason] = useState("");
-  const [replacement, setReplacement] = useState<CriterionResult>(() =>
-    structuredClone(result),
-  );
-  const [evidenceMode, setEvidenceMode] = useState<"keep" | "quote" | "span">(
-    "keep",
-  );
+  const { draft, update, reset } = useDecisionDraft(appeal.appeal_id, result, evaluation);
+  const { action, reason, replacement, evidenceMode, messageId, busy, error, isConflict, refreshing } = draft;
+  const setAction = (action: DecisionDraft["action"]) => update({ action });
+  const setReason = (reason: string) => update({ reason });
+  const setReplacement = (replacement: CriterionResult) => update({ replacement });
+  const setEvidenceMode = (evidenceMode: DecisionDraft["evidenceMode"]) => update({ evidenceMode });
+  const setMessageId = (messageId: string) => update({ messageId });
+  const setBusy = (busy: boolean) => update({ busy });
+  const setError = (error: string) => update({ error });
+  const setIsConflict = (isConflict: boolean) => update({ isConflict });
+  const setRefreshing = (refreshing: boolean) => update({ refreshing });
   const transcript = evaluation.conversation.transcript;
-  const [messageId, setMessageId] = useState(
-    transcript.find((message) => message.speaker === "operator")?.message_id ??
-      transcript[0]?.message_id ??
-      "",
-  );
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const [isConflict, setIsConflict] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
   const firstField = useRef<HTMLButtonElement>(null);
   useEffect(() => firstField.current?.focus(), []);
   const message = transcript.find((item) => item.message_id === messageId);
@@ -656,6 +718,7 @@ function DecisionForm({
         },
       );
       onUpdated(next);
+      reset();
       onClose();
     } catch (err) {
       setError(errorText(err));

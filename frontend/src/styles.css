@@ -1657,6 +1657,9 @@ main {
 @media(min-width:701px) and (max-width:900px) { .review-workspace { grid-template-columns:minmax(0,1fr) 330px; } }
 @media(max-width:700px) { .page-title { font-size:21px; } .workspace-toolbar { min-height:68px; } .review-context { padding:12px 14px; } .conversation-context strong { font-size:17px; width:100%; } .conversation-context>span { padding:3px 6px; font-size:11px; } .transcript-content { padding-inline:14px; } .message { padding:13px 14px; } .message p { font-size:16px; } .panel-heading { padding-inline:16px; } .no-audio-banner { margin-inline:14px; } .filters { grid-template-columns:1fr; } }
 .notice.warning { background:#fff5df; color:#875313; }
+.queue-recovery { flex-wrap:wrap; justify-content:space-between; flex-shrink:0; gap:12px; margin:0 0 12px; }
+.queue-recovery > div:first-child { flex:1 1 280px; min-width:0; }
+.queue-recovery p { margin:4px 0 0; }
 .audio-error { color:var(--danger); padding:0 22px 10px; font-size:12px; }
 .conversation-sidebar { position:relative; }
 .queue-resize-handle { position:absolute; inset:0 -5px 0 auto; width:10px; z-index:15; cursor:col-resize; touch-action:none; }

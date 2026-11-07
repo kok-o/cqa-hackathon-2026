@@ -11,6 +11,7 @@ from urllib.parse import quote
 import httpx
 
 from backend.cqa.main import create_app
+from backend.cqa.evaluator.service import EvaluatorError
 from backend.cqa.models import EvaluationDraft
 
 
@@ -23,6 +24,9 @@ class BackendReliabilityTests(unittest.IsolatedAsyncioTestCase):
         self.calls = []
         self.fail_once = set()
         self.active = self.peak = 0
+        self.hold_once = set()
+        self.entered, self.release = asyncio.Event(), asyncio.Event()
+        self.reported_failure = None
         with patch.dict("os.environ", {"LLM_CONCURRENCY": "2"}):
             self.app = create_app(Path(self.temporary.name) / "test.sqlite3", evaluator=self.evaluate)
         self.lifecycle = self.app.router.lifespan_context(self.app)
@@ -41,6 +45,12 @@ class BackendReliabilityTests(unittest.IsolatedAsyncioTestCase):
         self.active += 1
         self.peak = max(self.peak, self.active)
         try:
+            if conversation.conversation_id in self.hold_once:
+                self.hold_once.remove(conversation.conversation_id)
+                self.entered.set()
+                await self.release.wait()
+            if self.reported_failure is not None:
+                raise self.reported_failure
             await asyncio.sleep(0.005)
             if conversation.conversation_id in self.fail_once:
                 self.fail_once.remove(conversation.conversation_id)
@@ -172,6 +182,52 @@ class BackendReliabilityTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(job["status"], "completed")
         self.assertEqual(self.calls, ["once"])
         self.assertEqual(len((await self.client.get("/api/evaluations")).json()), 1)
+
+    async def test_late_old_snapshot_cannot_hide_current_evaluation_or_official_export(self):
+        dataset = self.dataset(["changing"] + [f"other-{n}" for n in range(9)])
+        (await self.client.post("/api/datasets/import", json={"dataset": dataset})).raise_for_status()
+        self.hold_once.add("changing")
+        pending = asyncio.create_task(self.submit("changing", key="old"))
+        await asyncio.wait_for(self.entered.wait(), timeout=2)
+        try:
+            dataset["data"]["records"][0]["transcript"][0]["text"] = "Current revised source"
+            (await self.client.post("/api/datasets/import", json={"dataset": dataset})).raise_for_status()
+            current = await self.submit("changing", key="current")
+        finally:
+            self.release.set()
+        old = await pending
+        summary = next(item for item in (await self.client.get("/api/conversations")).json() if item["conversation_id"] == "changing")
+        self.assertEqual(summary["latest_evaluation_id"], current["evaluation_id"])
+        self.assertNotEqual(old["evaluation_id"], current["evaluation_id"])
+        history = (await self.client.get("/api/evaluations")).json()
+        self.assertEqual(len(history), 2)
+        self.assertEqual(history[0]["evaluation_id"], old["evaluation_id"])
+        self.assertNotEqual(history[0]["conversation"], history[1]["conversation"])
+        response = await self.client.get("/api/submission/export", params={"group_id": "UNSEEN_TEST", "model_name": "test",
+                "team_name": "Test", "model_mode": "external_api", "split": "prod"})
+        self.assertEqual(response.status_code, 200, response.text)
+        record = next(item for item in response.json()["results"] if item["conversation_id"] == "changing")
+        self.assertEqual(record["status"], "ok")
+        self.assertEqual(len(record["criteria"]), 8)
+
+    async def test_failed_job_retains_observed_usage_on_idempotent_replay_and_restart(self):
+        (await self.client.post("/api/datasets/import", json={"dataset": self.dataset(["failed"])})).raise_for_status()
+        info = {"attempts": 2, "input_tokens": 200, "output_tokens": 40, "usage_complete": True,
+                "estimated_cost": 0.000262, "attempt_details": [{"status": "http", "http_status": 503}]}
+        self.reported_failure = EvaluatorError("Safe provider error", code="http", model_info=info)
+        state = await self.submit("failed", key="failed-key")
+        self.assertEqual(state["status"], "failed")
+        self.assertEqual(state["error_code"], "http")
+        self.assertEqual(state["model_info"], info)
+        replay = await self.submit("failed", key="failed-key")
+        self.assertEqual(replay, state)
+        self.assertEqual(self.calls, ["failed"])
+        await self.lifecycle.__aexit__(None, None, None)
+        self.lifecycle = self.app.router.lifespan_context(self.app)
+        await self.lifecycle.__aenter__()
+        saved = (await self.client.get("/api/evaluation-jobs/" + state["job_id"])).json()
+        self.assertEqual(saved, state)
+        self.assertEqual((await self.client.get("/api/evaluations")).json(), [])
 
 
 if __name__ == "__main__":

@@ -133,4 +133,6 @@ export interface EvaluationJob {
   status: 'queued' | 'running' | 'completed' | 'failed';
   error: string | null;
   evaluation_id: string | null;
+  error_code?: string | null;
+  model_info?: Record<string, unknown> | null;
 }

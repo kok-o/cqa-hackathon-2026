@@ -94,11 +94,11 @@ components:
 
 The approved visual direction takes its typographic contrast and light/dark composition from the user's MOONDROP reference. CQA interprets that direction as a readable warm-paper conversation beside a graphite assessment ledger. Large Manrope page headings and condensed Oswald titles and scores establish a recognisable hierarchy. This is a functional review application, with no decorative product imagery or borrowed claims.
 
-The user rejected both the original pale-green three-panel scaffold and the subsequent generic neutral sidebar. The replacement uses a light horizontal header, a full-width dialogue index and a dedicated two-area review. The Freedom Broker shield remains the brand asset; neither the reference nor the public shield is presented as an official CQA design system.
+The user explicitly chose to combine the current expressive visual system with the sidebar from the local reference on port 8061. The desktop shell therefore uses a persistent navigation rail, an independent dialogue index and a dedicated two-area review. The Freedom Broker shield remains the brand asset; neither the reference nor the public shield is presented as an official CQA design system.
 
 ## Colors
 
-The header and transcript use warm paper, forms and the index use white, and the assessment uses graphite. The assessment is the deliberate dark focal area, with cream text, sage secondary text and pale green actions. Red and amber remain meaningful failure and warning signals on both grounds.
+The navigation and transcript use warm paper, forms and the index use white, and the assessment uses graphite. The assessment is the deliberate dark focal area, with cream text, sage secondary text and pale green actions. Red and amber remain meaningful failure and warning signals on both grounds.
 
 The global CSS custom properties in `frontend/src/styles.css` and scoped assessment properties in `Assessment.css` are the palette sources. Ordinary controls use green `#167345`; assessment actions use `#8bdd9b` on the dark surface. Exact source quotes use the pale olive highlight from `Transcript.css`. The public Freedom shield is sourced from https://fbroker.kz/images/Logo.svg.
 
@@ -112,7 +112,7 @@ Keep sentence case. Message positions, timestamps, weights and counts use tabula
 
 ## Layout
 
-A 76px warm-paper horizontal header contains the shield and CQA wordmark, centered section navigation and compact model status. The work area fills the width underneath. Main gutters are 40px, reducing to 28px at 1100px and 20px at 700px. Mobile navigation occupies a second header row.
+A sticky, full-height 184px warm-paper sidebar contains the shield and CQA wordmark at the top, three icon navigation rows, and SetW/model controls at the bottom. Active navigation has a filled warm-neutral background. The rail narrows to 156px at 1100px. At 900px and below it becomes a 76px horizontal header; at 700px the navigation occupies a second header row. Main gutters are 40px, reducing to 28px at 1100px and 20px at 700px.
 
 The dialogue index owns its main viewport. State filters and import precede search and optional field filters, followed by a full-width table. Excerpts lead the rows; metadata, status, score and gross-error result remain independently readable. At 760px and below, table rows become compact responsive list entries while selection and sorting remain available.
 
@@ -130,7 +130,7 @@ General controls have 3px corners, editor controls 2px and modal overlays 12px. 
 
 ## Components
 
-- **Navigation** uses underlined application sections in the light horizontal header. The skip link moves focus into the current section without changing its route.
+- **Navigation** uses filled icon rows in the desktop sidebar and underlined sections in the compact horizontal header. The skip link moves focus into the current section without changing its route.
 - **Dialogue index** keeps actual scope counts and makes multi-selection explicit. Selection exposes the batch action. Searching, filtering and sorting affect the working list; the detail queue follows that same order.
 - **Launch dialog** appears when the user requests an assessment. It states the number of target dialogues, lets the user choose a version, and names the configured model. Confirming starts the existing real queue; canceling sends no assessment request.
 - **Source and evidence** keep original message numbers. Long sources expose a compact navigation strip whose positions are derived from valid quote references and checked ranges in the actual assessment; selecting a marker uses the same evidence and focus-return flow as a criterion. A bot prelude may collapse, but a selected citation reopens its source. Exact quotes or checked ranges are highlighted, and the return action restores focus to the initiating criterion. Source snapshots and current dialogue content retain their existing distinction.
@@ -146,7 +146,7 @@ General controls have 3px corners, editor controls 2px and modal overlays 12px. 
 - Do keep import, launch, review, appeal, rule editing and export discoverable in their respective contexts.
 - Do keep native focus and keyboard behavior intact when changing composition.
 - Don't restore the permanently visible queue beside the two review areas.
-- Don't recreate the rejected pale-green card framework or neutral sidebar through new component names.
+- Don't recreate the rejected pale-green card framework through new component names.
 - Don't extend the graphite assessment palette to every screen; its contrast with the warm transcript is deliberate.
 - Don't turn a library's default appearance into the visual specification.
 - Don't invent scores, model confidence, progress percentages or available audio.

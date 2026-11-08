@@ -4,11 +4,11 @@ Mode: Operate.
 
 ## Confirmed direction
 
-The user rejected the existing generated-looking layout, approved separating the dialogue index from the detailed review, then explicitly selected a more expressive MOONDROP-informed direction after rejecting the neutral-sidebar execution. The current direction pairs a warm-paper source with a graphite assessment, Manrope body typography and Oswald section titles and scores. This is a code-led replacement of that visual world, preserving the working API, assessment logic, source data, appeal history, drafts and official export. The approved proposal is the direction authority.
+The user approved the expressive MOONDROP-informed direction, then explicitly requested the sidebar from the local port 8061 reference. The combined direction uses that sidebar structure with a warm-paper source, graphite assessment, Manrope body typography and Oswald section titles and scores. The working API, assessment logic, source data, appeal history, drafts and official export stay intact. This explicit combination is the current direction authority.
 
 ## First viewport
 
-The initial desktop view shows a light horizontal header and an independent, full-width dialogue table. State filters and import sit above search and optional filters. Actual excerpts lead the rows; identity, language, channel, status, score and gross-error flag remain aligned and independently readable. There is no permanently open transcript or result panel in the index.
+The initial desktop view shows a warm-paper sidebar with brand at the top, three icon navigation rows, and SetW/model controls at the bottom. The independent dialogue table fills the remaining width. State filters and import sit above search and optional filters. Actual excerpts lead the rows; identity, language, channel, status, score and gross-error flag remain aligned and independently readable. At 900px and below the navigation moves to the top. There is no permanently open transcript or result panel in the index.
 
 Opening a row enters a dedicated review route. A compact identity and navigation header sits above two contrasting areas: a broad warm-paper transcript and a narrower graphite assessment. A large condensed score and a clearly structured criterion ledger establish the assessment focal point. The source dominates the available reading width. On mobile, two tabs switch the same review between Conversation and Assessment. The queue is available on demand.
 
@@ -18,7 +18,7 @@ Open a criterion, inspect its explanation, and select its evidence. In a long so
 
 ## Cross-surface rules
 
-- Warm-paper header and transcript, white index and forms, graphite assessment with cream text and sage metadata. Green remains meaningful action and selection.
+- Warm-paper navigation and transcript, white index and forms, graphite assessment with cream text and sage metadata. Green remains meaningful action and selection.
 - Locally bundled Manrope body and Oswald display typography; Kazakh passages use IBM Plex Sans for complete glyph coverage. Readable 16px transcript text, deliberately large page titles and scores, clear alignment rather than repeated card shells.
 - Evaluation settings appear in a launch dialog with real target count and version.
 - Checklist editing uses a criterion index and a single form with version-bound drafts.

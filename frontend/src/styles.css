@@ -170,28 +170,26 @@ code { overflow-wrap: anywhere; font-size: .92em; }
 .badge.bad { background: var(--danger-bg); color: var(--danger); }
 
 
-/* A restrained header frames the light conversation and graphite assessment. */
-.app-shell { display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:auto auto minmax(0,1fr); min-height:100dvh; background:var(--surface); }
-.app-header { grid-row:1; position:relative; min-height:76px; display:flex; align-items:center; gap:48px; padding:12px var(--gutter); background:var(--canvas); border-bottom:1px solid var(--line); z-index:20; }
-.brand { display:flex; gap:10px; align-items:center; text-decoration:none; color:var(--text); }
+/* The reference sidebar frames the warm conversation and graphite assessment. */
+.app-shell { display:grid; grid-template-columns:184px minmax(0,1fr); grid-template-rows:auto minmax(0,1fr); min-height:100dvh; background:var(--surface); }
+.app-header { grid-column:1; grid-row:1 / -1; position:sticky; top:0; height:100dvh; display:flex; flex-direction:column; align-items:stretch; padding:28px 16px 18px; background:var(--canvas); border-right:1px solid var(--line); z-index:20; }
+.brand { display:flex; gap:10px; align-items:center; padding:0 8px 34px; text-decoration:none; color:var(--text); }
 .brand-mark { display:flex; align-items:center; }
-.brand-copy { display:flex; align-items:center; gap:14px; }
+.brand-copy { display:grid; gap:6px; }
 .brand-copy strong { font-family:var(--font-display); font-size:34px; font-weight:500; line-height:1; letter-spacing:-.025em; }
-.brand-copy>span { color:var(--muted); font-size:10px; max-width:55px; line-height:1.4; }
-.main-nav { display:flex; gap:26px; margin-left:auto; margin-right:auto; align-self:stretch; }
-.main-nav button { position:relative; display:flex; align-items:center; gap:8px; padding:8px 2px; min-height:42px; background:transparent; border:0; border-radius:0; color:var(--muted); text-align:left; font-size:13px; font-weight:500; }
-.main-nav button svg { display:none; }
-.main-nav button:hover { color:var(--text); }
-.main-nav button.active { color:var(--text); }
-.main-nav button.active::after { content:""; position:absolute; height:2px; bottom:-13px; left:0; right:0; background:var(--text); }
-.header-actions { display:flex; align-items:center; justify-content:space-between; gap:22px; }
+.brand-copy>span { color:var(--muted); font-size:10px; line-height:1.4; }
+.main-nav { display:grid; gap:6px; }
+.main-nav button { position:relative; display:flex; align-items:center; gap:11px; padding:10px 12px; min-height:42px; background:transparent; border:0; border-radius:3px; color:var(--muted); text-align:left; font-size:13px; font-weight:500; }
+.main-nav button:hover { background:#eeeee6; color:var(--text); }
+.main-nav button.active { background:#e5e7de; color:var(--text); }
+.header-actions { display:flex; align-items:center; justify-content:space-between; margin-top:auto; gap:6px; padding:16px 4px 0; border-top:1px solid var(--line); }
 .team-name { font-size:12px; font-weight:600; color:var(--muted); }
 .provider-button { display:flex; align-items:center; gap:6px; min-height:34px; padding:5px 0; border:0; border-radius:3px; background:transparent; font-size:11px; color:var(--muted); }
 .provider-button:hover { color:var(--text); }
 .status-dot { width:6px; height:6px; flex:0 0 6px; background:#b77825; border-radius:50%; }
 .connected .status-dot { background:var(--primary); }
-main { grid-row:3; min-width:0; padding:0 var(--gutter) 32px; }
-.global-messages { grid-row:2; }
+main { grid-column:2; grid-row:2; min-width:0; padding:0 var(--gutter) 32px; }
+.global-messages { grid-column:2; grid-row:1; }
 .workspace-toolbar { display:flex; align-items:center; justify-content:space-between; gap:32px; padding:40px 0 32px; min-width:0; flex-shrink:0; }
 .page-heading { min-width:0; }
 .page-title { font-size:54px; font-weight:500; letter-spacing:-.04em; line-height:1.1; }
@@ -499,8 +497,20 @@ main { grid-row:3; min-width:0; padding:0 var(--gutter) 32px; }
 
 
 @media(min-width:1600px) { .review-workspace { grid-template-columns:minmax(0,1fr) 490px; } }
-@media(max-width:1100px) { :root { --gutter:28px; } .app-header { gap:24px; } .brand-copy>span { display:none; } .review-workspace { grid-template-columns:minmax(0,1fr) 370px; } .context-copy { gap:10px; } }
-@media(max-width:850px) { .review-workspace { grid-template-columns:minmax(0,1fr) 340px; } .header-actions { gap:12px; } .team-name { display:none; } .main-nav { gap:18px; } .context-copy h2 { font-size:18px; } }
+@media(max-width:1100px) { :root { --gutter:28px; } .app-shell { grid-template-columns:156px minmax(0,1fr); } .app-header { padding-inline:12px; } .main-nav button { gap:8px; padding-inline:8px; font-size:12px; } .review-workspace { grid-template-columns:minmax(0,1fr) 370px; } .context-copy { gap:10px; } }
+@media(max-width:900px) {
+ .app-shell { grid-template-columns:minmax(0,1fr); grid-template-rows:auto auto minmax(0,1fr); }
+ .app-header { grid-column:1; grid-row:1; position:relative; top:auto; height:auto; min-height:76px; flex-direction:row; align-items:center; gap:24px; padding:12px var(--gutter); border-right:0; border-bottom:1px solid var(--line); }
+ .brand { padding:0; } .brand-copy>span { display:none; }
+ .main-nav { display:flex; gap:18px; align-self:stretch; margin-inline:auto; }
+ .main-nav button { padding:8px 2px; border-radius:0; background:transparent; }
+ .main-nav button svg { display:none; }
+ .main-nav button.active,.main-nav button:hover { background:transparent; }
+ .main-nav button.active::after { content:""; position:absolute; height:2px; bottom:-13px; left:0; right:0; background:var(--text); }
+ .header-actions { margin-top:0; padding:0; gap:12px; border:0; } .team-name { display:none; }
+ main { grid-column:1; grid-row:3; } .global-messages { grid-column:1; grid-row:2; }
+}
+@media(max-width:850px) { .review-workspace { grid-template-columns:minmax(0,1fr) 340px; } .context-copy h2 { font-size:18px; } }
 @media(max-width:700px) {
  :root { --gutter:20px; }
  .app-header { padding:14px 20px 0; flex-wrap:wrap; gap:12px; min-height:0; }

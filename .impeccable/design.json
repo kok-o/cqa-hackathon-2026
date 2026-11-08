@@ -120,6 +120,10 @@
       {
         "name": "review-tabs",
         "value": "700px"
+      },
+      {
+        "name": "sidebar-to-header",
+        "value": "900px"
       }
     ]
   },
@@ -151,9 +155,9 @@
     {
       "name": "Application navigation",
       "kind": "nav",
-      "description": "Underlined sections in a warm-paper horizontal header.",
+      "description": "Filled navigation rows in the warm-paper desktop sidebar; underlined sections on compact screens.",
       "html": "<nav class=\"ds-nav\" aria-label=\"Разделы\"><button aria-current=\"page\">Диалоги</button><button>Чек-листы</button><button>Сводка</button></nav>",
-      "css": ".ds-nav{display:flex;gap:26px;align-items:stretch;padding:12px 20px;background:var(--canvas,#f7f6f1)}.ds-nav button{font:500 13px/1.5 \"Manrope\",\"IBM Plex Sans\",sans-serif;padding:8px 2px;min-height:42px;border:0;border-bottom:2px solid transparent;border-radius:0;background:transparent;color:var(--muted,#656b65);cursor:pointer}.ds-nav button[aria-current=page]{border-bottom-color:var(--text,#202522);color:var(--text,#202522)}.ds-nav button:hover{color:var(--text,#202522)}.ds-nav button:focus-visible{outline:2px solid #21804e;outline-offset:2px}"
+      "css": ".ds-nav{display:grid;gap:6px;width:184px;padding:16px;background:#f7f6f1}.ds-nav button{font:500 13px/1.5 \"Manrope\",\"IBM Plex Sans\",sans-serif;padding:10px 12px;min-height:42px;text-align:left;border:0;border-radius:3px;background:transparent;color:#656b65;cursor:pointer}.ds-nav button[aria-current=page]{background:#e5e7de;color:#202522}.ds-nav button:hover{background:#eeeee6;color:#202522}.ds-nav button:focus-visible{outline:2px solid #21804e;outline-offset:2px}"
     },
     {
       "name": "Source evidence",
@@ -174,7 +178,7 @@
     "northStar": "Paper source, graphite assessment",
     "overview": "A user-approved MOONDROP-informed visual direction brings expressive Manrope and Oswald typography to a functional conversation reviewer. A warm-paper source faces a graphite assessment; the full-width dialogue index and light forms stay clear and operational.",
     "keyCharacteristics": [
-      "Warm horizontal header",
+      "Warm reference sidebar",
       "Independent full-width dialogue index",
       "Warm-paper transcript",
       "Graphite assessment focal area",
@@ -208,7 +212,7 @@
       "Do not restore the permanently visible three-column queue.",
       "Do not reintroduce the rejected pale-green card scaffold.",
       "Do not invent confidence, progress or audio capabilities.",
-      "Do not restore the rejected neutral navigation rail or extend the graphite palette to every screen."
+      "Do not extend the graphite palette to every screen."
     ]
   }
 }

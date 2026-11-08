@@ -55,7 +55,7 @@
   padding: 4px 6px;
   border: 0;
   background: transparent;
-  color: var(--primary);
+  color: var(--text);
   text-align: left;
   overflow-wrap: anywhere;
 }

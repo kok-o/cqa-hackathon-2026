@@ -4,8 +4,9 @@ CQA is SetW’s review workspace for the Freedom Broker case. The transcript occ
 
 ## Visual system
 
-- Use bank ink `#0E151C` for the application header, forest `#164734` for primary controls, and leaf `#02B140` for the shield and connection indicator. The two greens come from the public Freedom shield. [Freedom SVG](https://fbroker.kz/images/Logo.svg)
-- Use white `#FFFFFF` for the transcript and form surfaces, canvas `#F2F5F3` around the workspace, and lines `#DCE5DF` to separate panels and transcript turns. Keep amber for items that need attention and red for failures and critical flags.
+- Use bank ink `#0E151C` for the application header, ordinary text and the score meter. Reserve forest `#164734` for primary action buttons, and leaf `#02B140` for the shield and connection indicator. [Freedom SVG](https://fbroker.kz/images/Logo.svg)
+- Use white `#FFFFFF` for transcript and form surfaces, canvas `#F4F5F6`, and lines `#DFE3E7`. Selection, badges, evidence, secondary actions and navigation use neutral grays. Keep amber for items that need attention and red for failures and critical flags.
+- The queue follows the dark header: `#0E151C` canvas, `#182029` controls, `#293540` selected row, `#EEF1F4` text and `#B8C0C8` metadata. Its portaled menus share the same palette.
 - Use the locally bundled IBM Plex Sans. Set the transcript at 15 px and metadata at 11–12 px. Use tabular numerals for turn numbers, weights, and scores.
 - Keep navigation and text fields compact with 7 px corners. Give the workspace and overlays 12 px corners. Reserve shadows for overlays.
 
@@ -13,7 +14,7 @@ CQA is SetW’s review workspace for the Freedom Broker case. The transcript occ
 
 At desktop widths, the queue resizes from 240 to 560 px while leaving at least 320 px for the transcript. Arrow keys, Home and End provide a keyboard alternative. On tablets the queue opens over the workspace and returns focus to its trigger on dismissal. On phones the queue, transcript and assessment use three tabs with 44 px touch targets.
 
-The queue shows actual counts for the current search and dataset filters. Its footer states how many conversations the next batch will include. The selected conversation stays open when it falls outside the filter.
+The queue shows the filtered and total counts beside its heading, with the next batch count inside the run button. State shortcuts live inside the filters panel. The selected conversation stays open when it falls outside the filter. A blocked run keeps its explanation in the accessible description and tooltip.
 
 Transcript numbers refer to the original message positions. A prelude with bot messages can collapse before the first operator response. Evidence reopens the relevant turns, highlights the exact quote or checked range, and offers a return to the same criterion.
 
@@ -22,6 +23,8 @@ Show the launch checklist version beside the result and the checklist for the ne
 ## Rules and submission
 
 The rule editor presents an index and one criterion at a time. Name, weight and instructions are grouped at the top. Drafts stay associated with their source versions when switching sections or versions. Saving creates a new version or a separate checklist.
+
+Instructions use 16 px ink text, 1.7 line height and a white surface. Criterion weights have distinct bordered badges, with white on ink for the active criterion. Text fields, textareas and Select triggers share 1 px borders, 7 px corners and 10×12 px padding.
 
 The submission preview uses the validated JSON 1.0 document returned by the export endpoint. Display the team, dataset, destination path, record count, successful results and processing errors. Download the same document the reviewer inspected.
 

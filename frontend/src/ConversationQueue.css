@@ -1,0 +1,72 @@
+/* Queue chrome follows the existing application header, without changing the
+   document, editor, or assessment palettes. Portaled menus share these tokens. */
+.conversation-sidebar.queue-dark,
+.select-menu.queue-select-menu {
+  --text: #f0f6f2;
+  --muted: #b5c4ba;
+  --line: #2b3b32;
+  --control-line: #445b4d;
+  --surface: #16241e;
+  --subsurface: #203128;
+  --canvas: #1c2b24;
+  --selected: #263d32;
+  --primary: #c2ddce;
+  --danger: #f0a69c;
+  --danger-bg: #432d2c;
+  --warning: #e5c283;
+  color: var(--text);
+  scrollbar-color: #536d5d transparent;
+}
+.conversation-sidebar.queue-dark { background: var(--brand-black); }
+.queue-dark :focus-visible { outline-color: #94c8ab; }
+.queue-dark .sidebar-heading { gap: 9px; padding: 14px 18px; }
+.queue-dark .sidebar-heading h2 { gap: 10px; font-size: 16px; }
+.queue-dark .sidebar-heading h2 > span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+.queue-dark .queue-import { margin-left: auto; }
+.queue-dark .queue-controls { padding: 14px 18px 16px; }
+.queue-dark .queue-search { gap: 9px; }
+.queue-dark .search-field { border-color: var(--control-line); background: var(--surface); }
+.queue-dark .search-field:focus-within { outline-color: #94c8ab; }
+.queue-dark .search-field input { min-height: 42px; font-size: 14px; }
+.queue-dark .filter-toggle { min-height: 42px; width: 38px; background: transparent; border-color: transparent; }
+.queue-dark .filter-toggle.active { border-color: #496955; background: var(--selected); color: var(--primary); }
+.queue-dark .filter-count { background: #c2ddce; color: #12251b; }
+.queue-dark .filters { inset-block-start: 128px; max-height: calc(100% - 140px); border: 1px solid var(--control-line); box-shadow: 0 14px 32px #0006; }
+.queue-dark .queue-state-filter { margin: 0; padding: 0; border: 0; min-width: 0; }
+.queue-dark .queue-state-filter legend { padding: 0; color: var(--muted); font-size: 12px; }
+.queue-dark .queue-views { margin-top: 7px; }
+.queue-dark .queue-view { min-height: 38px; }
+.queue-dark .queue-view[aria-pressed=true] { border-color: #6e987e; color: var(--primary); }
+.queue-dark .queue-view.critical[aria-pressed=true] { border-color: #b77b75; color: var(--danger); }
+.queue-dark .queue-caption { padding: 0 18px 12px; font-size: 11px; }
+.queue-dark .conversation-item { padding: 18px 18px 15px; contain-intrinsic-block-size: auto 116px; }
+.queue-dark .conversation-item:hover { background: #1a2a22; }
+.queue-dark .conversation-item.selected { background: var(--selected); box-shadow: inset 3px 0 #72a489; }
+.queue-dark .conversation-item-top strong { font-size: 15px; }
+.queue-dark .language-tag { padding: 0; background: transparent; }
+.queue-dark .conversation-preview { margin: 8px 0 13px; font-size: 14px; line-height: 1.5; }
+.queue-dark .list-score { color: #f0f6f2; font-size: 16px; }
+.queue-dark .sidebar-footer { padding: 16px 18px; background: var(--brand-black); }
+.queue-dark .button.primary { min-height: 44px; background: #164734; color: #f7fbf8; border-color: #3b624e; }
+.queue-dark .button.primary:hover:not(:disabled) { background: #216046; }
+.queue-dark .button-count { padding: 0; background: transparent; color: #c0d4c8; }
+.queue-dark .queue-resize-handle::after { background: #6e8175; }
+.queue-dark .queue-resize-handle:hover::after,
+.queue-dark .queue-resize-handle:focus-visible::after,
+.queue-dark .queue-resize-handle[data-resizing=true]::after { background: #94c8ab; }
+.select-menu.queue-select-menu { border: 1px solid var(--control-line); background: var(--surface); box-shadow: 0 12px 32px #0006; }
+@media (max-width: 700px) {
+  .queue-dark .sidebar-heading { padding: 5px 14px; }
+  .queue-dark .queue-controls { padding: 12px 14px; }
+  .queue-dark .queue-view { min-height: 44px; }
+  .queue-dark .search-field input { min-height: 44px; font-size: 16px; }
+  .queue-dark .filter-toggle { min-height: 44px; width: 44px; }
+  .queue-dark .filters { inset-block-start: 128px; }
+  .queue-dark .conversation-item { padding: 16px 16px 13px; }
+  .queue-dark .conversation-preview { -webkit-line-clamp: 2; }
+}

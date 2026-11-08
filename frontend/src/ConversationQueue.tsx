@@ -1,4 +1,5 @@
 import Select from "./Select";
+import "./ConversationQueue.css";
 import type { ReactNode } from "react";
 import {
   AlertTriangle,
@@ -71,10 +72,10 @@ type Props = {
 };
 
 export default function ConversationQueue(p: Props) {
-  const filterCount = [p.language, p.channel, p.group, p.view === "clean"].filter(Boolean).length;
-  const resultScope = p.items.length === p.total
-    ? "Весь список"
-    : `В выборке ${p.items.length} из ${p.total}`;
+  const filterCount = [p.language, p.channel, p.group, p.view !== "all"].filter(Boolean).length;
+  const viewLabel = p.view === "clean" ? "Без грубых ошибок"
+    : quickViews.find(([value]) => value === p.view)?.[1];
+  const selectionLabel = [p.group, p.view !== "all" ? viewLabel : ""].filter(Boolean).join(" · ");
   const blocked = p.pending ? "Сначала продолжите сохранённую очередь"
     : !p.configured ? "Подключите модель для оценки"
     : !p.canRun ? "Выберите чек-лист для запуска"
@@ -83,21 +84,22 @@ export default function ConversationQueue(p: Props) {
   return (
     <aside
       id="queue-panel"
-      className="conversation-sidebar"
+      className="conversation-sidebar queue-dark"
       role={p.isMobile ? "tabpanel" : p.drawerOpen ? "dialog" : undefined}
       aria-labelledby={p.isMobile ? "tab-queue" : undefined}
       aria-modal={!p.isMobile && p.drawerOpen || undefined}
       aria-label={p.isMobile ? undefined : "Список диалогов"}
     >
       <header className="sidebar-heading">
-        <h2>Очередь <span className="count-chip">{p.total}</span></h2>
+        <h2>Очередь <span role="status">{p.items.length === p.total ? p.total : `${p.items.length} / ${p.total}`}</span></h2>
         <button
-          className="button secondary small queue-import"
+          className="icon-button queue-import"
+          aria-label={p.importing ? "Импортируем диалоги" : "Импорт JSON"}
+          title="Импорт JSON"
           onClick={p.onImport}
           disabled={p.importing || p.running}
         >
           {p.importing ? <span className="spin" aria-hidden="true"><LoaderCircle size={15} /></span> : <Upload size={15} aria-hidden="true" />}
-          {p.importing ? "Импортируем…" : "Импорт JSON"}
         </button>
         <button className="icon-button queue-close" onClick={p.onClose} aria-label="Закрыть очередь">
           <X size={19} aria-hidden="true" />
@@ -111,7 +113,7 @@ export default function ConversationQueue(p: Props) {
               type="search"
               name="conversation-search"
               autoComplete="off"
-              placeholder="ID или текст диалога…"
+              placeholder="Найти диалог…"
               value={p.query}
               onChange={(e) => p.onQuery(e.target.value)}
               aria-label="Поиск диалога"
@@ -129,9 +131,20 @@ export default function ConversationQueue(p: Props) {
             {filterCount > 0 && <span className="filter-count" aria-hidden="true">{filterCount}</span>}
           </button>
           {p.filtersOpen && <div id="queue-filters" className="filters">
+            <fieldset className="queue-state-filter">
+              <legend>Состояние оценки</legend>
+              <div className="queue-views" role="group" aria-label="Отбор по состоянию оценки">
+                {quickViews.map(([value, label]) => (
+                  <button key={value} type="button" className={`queue-view ${value}`} aria-pressed={p.view === value} onClick={() => p.onView(value)}>
+                    <span>{label}</span>
+                    <strong>{p.scopedItems.filter((item) => matchesView(item, value)).length}</strong>
+                  </button>
+                ))}
+              </div>
+            </fieldset>
             <label className="field">
               Язык
-              <Select value={p.language} onChange={(e) => p.onLanguage(e.target.value)}>
+              <Select menuClassName="queue-select-menu" value={p.language} onChange={(e) => p.onLanguage(e.target.value)}>
                 <option value="">Все языки</option>
                 <option>RU</option>
                 <option>KZ</option>
@@ -140,7 +153,7 @@ export default function ConversationQueue(p: Props) {
             </label>
             <label className="field">
               Канал
-              <Select value={p.channel} onChange={(e) => p.onChannel(e.target.value)}>
+              <Select menuClassName="queue-select-menu" value={p.channel} onChange={(e) => p.onChannel(e.target.value)}>
                 <option value="">Все каналы</option>
                 <option value="agent chat">Чаты</option>
                 <option value="voice call">Звонки</option>
@@ -148,7 +161,7 @@ export default function ConversationQueue(p: Props) {
             </label>
             <label className="field">
               Набор
-              <Select value={p.group} onChange={(e) => p.onGroup(e.target.value)}>
+              <Select menuClassName="queue-select-menu" value={p.group} onChange={(e) => p.onGroup(e.target.value)}>
                 <option value="">Все наборы</option>
                 {p.groups.map((value) => <option key={value}>{value}</option>)}
               </Select>
@@ -156,6 +169,7 @@ export default function ConversationQueue(p: Props) {
             <label className="field">
               Грубые ошибки в последней оценке
               <Select
+                menuClassName="queue-select-menu"
                 value={p.view === "critical" ? "true" : p.view === "clean" ? "false" : ""}
                 onChange={(e) => p.onView(e.target.value === "true" ? "critical" : e.target.value === "false" ? "clean" : "all")}
               >
@@ -170,25 +184,8 @@ export default function ConversationQueue(p: Props) {
             )}
           </div>}
         </div>
-        <div className="queue-views" role="group" aria-label="Отбор по состоянию оценки">
-          {quickViews.map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              className={`queue-view ${value}`}
-              aria-pressed={p.view === value}
-              onClick={() => p.onView(value)}
-            >
-              <span>{label}</span>
-              <strong>{p.scopedItems.filter((item) => matchesView(item, value)).length}</strong>
-            </button>
-          ))}
-        </div>
       </div>
-      <div className="queue-caption">
-        <span>{p.group || "Все наборы"}</span>
-        <span role="status">{p.items.length} из {p.total}</span>
-      </div>
+      {selectionLabel && <div className="queue-caption">{selectionLabel}</div>}
       <div className="conversation-list">
         {p.items.map((item) => {
           const key = conversationKey(item);
@@ -232,17 +229,18 @@ export default function ConversationQueue(p: Props) {
           <div className="small-empty">
             <Search size={24} aria-hidden="true" />
             <strong>Ничего не найдено</strong>
-            <p>Измените запрос или сбросьте фильтры.</p>
             <button className="text-button" onClick={p.onReset}>Сбросить фильтры</button>
           </div>
         )}
       </div>
       <footer className="sidebar-footer">
-        <p>{blocked || resultScope}</p>
+        {blocked && <p id="queue-run-status" className="sr-only">{blocked}</p>}
         <button
           className="button primary full-width"
           disabled={p.running || p.importing || !!blocked || !p.items.length}
           onClick={p.onRun}
+          title={blocked || undefined}
+          aria-describedby={blocked ? "queue-run-status" : undefined}
         >
           <Play size={15} aria-hidden="true" /> Оценить выборку <span className="button-count">{p.items.length}</span>
         </button>

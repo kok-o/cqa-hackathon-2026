@@ -12,7 +12,7 @@ html:has(.editor-workspace) { scroll-padding-block: 72px 90px; }
 
 .editor-meta {
   display: grid;
-  grid-template-columns: minmax(200px, 1fr) 230px auto;
+  grid-template-columns: minmax(0, 1fr) minmax(230px, 260px) auto;
   align-items: end;
   gap: 12px;
   padding: 15px 18px;
@@ -23,8 +23,9 @@ html:has(.editor-workspace) { scroll-padding-block: 72px 90px; }
 
 .editor-meta .field {
   margin: 0;
+  gap: 8px;
 }
-.editor-download { align-self: end; }
+.editor-download { align-self: end; height: 44px; min-height: 44px; white-space: nowrap; }
 
 .editor-body {
   display: grid;
@@ -210,6 +211,7 @@ html:has(.editor-workspace) { scroll-padding-block: 72px 90px; }
   font-weight: 400;
   line-height: 1.5;
 }
+.editor-workspace :is(.editor-meta, .editor-field-grid, .editor-mobile-picker) :is(input:not([type=checkbox]), .select-trigger) { height:44px; }
 .editor-workspace :is(.editor-meta, .editor-field-grid, .editor-mobile-picker) :is(input:not([type=checkbox]), textarea, .select-trigger):hover:not(:disabled) { border-color:#4f5964; }
 .editor-workspace :is(.editor-meta, .editor-field-grid, .editor-mobile-picker) :is(input:not([type=checkbox]), textarea, .select-trigger):focus-visible { border-color:var(--text); outline:2px solid var(--text); outline-offset:2px; }
 .editor-field-grid .field textarea {
@@ -307,7 +309,7 @@ html:has(.editor-workspace) { scroll-padding-block: 72px 90px; }
     padding-inline: 22px;
   }
   .editor-meta {
-    grid-template-columns: minmax(150px, 1fr) 210px 75px;
+    grid-template-columns: minmax(0, 1fr) minmax(200px, 240px) auto;
     gap: 16px;
   }
 }
@@ -398,4 +400,5 @@ html:has(.editor-workspace) { scroll-padding-block: 72px 90px; }
 }
 @media (max-width: 520px) {
   .editor-identity { grid-template-columns: minmax(0, 1fr) 88px; }
+  .editor-field-grid:not(.editor-identity) { grid-template-columns: minmax(0, 1fr); }
 }

@@ -15,7 +15,13 @@
   font-size: 13px;
   line-height: 1.4;
 }
-.select-trigger > span:first-child { flex: 1; min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+.select-trigger > span:first-child {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .select-trigger:hover:not(:disabled) { border-color: #7d8a96; background: var(--subsurface); }
 .select-trigger[data-state=open] { border-color: var(--text); }
 .select-chevron { display: flex; flex-shrink: 0; color: var(--muted); }

@@ -2,17 +2,18 @@
 
 Официальный формат: JSON 1.0 из `docs/briefs/CQA_Student_Guide_Appendix_Results.pdf`.
 
-- `dev/results.json` содержит 65 исходных DEV-диалогов, включая 60 чатов и 5 звонков. Luna/high, 65 `ok`, 0 `error`.
+- `dev/results.json` содержит результаты для 65 исходных DEV-диалогов, включая 60 чатов и 5 звонков. Luna/high/v11, 64 `ok`, 1 `error`: у звонка `p4-ru-005` завершение не определяется по искажённой расшифровке. Все 60 чатов имеют полный ответ.
 - `reference/sol-dev-v3.json`: сохранённые 65 оценок Sol/max/v3 для сравнения; это не Ground Truth и не основной файл сдачи.
 - `prod/results.json`: 10 контрольных чатов, которые выдадут организаторы.
 
 PROD нельзя заменять учебными примерами или дублировать из DEV. Папка PROD и файл
 появятся только после получения и реальной оценки контрольного набора.
 
-Текущий DEV объединяет 57 завершённых оценок Luna/v5 и 8 адресно перепроверенных
-Luna/v6. Ассистент сверил источник и добавил номера реплик к десяти ответам
-N/A. Исходные значения и баллы сохранены. Одно предупреждение осталось.
-Следующие оценки приложение выполняет на v6. [Проверка объединённой версии](../docs/SETW_INTEGRATED.md)
+Текущий DEV пересчитан единым профилем v11. Значения, объяснения и доказательства
+взяты из новых ответов модели; ручной подмены ответов нет. Проверка формата
+и состава прошла, предупреждений о пустых доказательствах нет. Спорные оценки
+отмечены в приложении, исходные ответы сохранены.
+[Проверка разметки и ограничения](../docs/ANNOTATION_QUALITY.md)
 
 ## Через приложение
 
@@ -40,29 +41,33 @@ python -m evaluation.submission validate --dataset data/raw/DEV.json --split dev
 
 ## Повторная выгрузка сохранённых результатов
 
-Основной смешанный набор уже импортирован в локальное приложение. Для сверки
+Все 65 новых оценок уже импортированы в локальное приложение. Для сверки
 выгрузите исходные оценки без новых API-вызовов через форму или HTTP.
 
 ```powershell
 New-Item -ItemType Directory -Force -Path data/runtime | Out-Null
-Invoke-WebRequest 'http://127.0.0.1:8060/api/submission/export?group_id=DEV&split=dev&team_name=SetW&model_name=gpt-6-luna&model_mode=external_api' -OutFile data/runtime/dev-export-original.json
+Invoke-WebRequest 'http://127.0.0.1:8015/api/submission/export?group_id=DEV&split=dev&team_name=SetW&model_name=gpt-6-luna&model_mode=external_api' -OutFile data/runtime/dev-export-original.json
 ```
 
-Порт 8060 соответствует [запуску на демонстрационной копии](../docs/SETW_HANDOFF.md).
-Экспорт отражает снимок до сверки номеров реплик N/A. Для проверки исходного
-снимка укажите его путь в `--input`.
+Порт 8015 соответствует [запуску текущего проекта](../docs/SETW_HANDOFF.md).
+Экспорт совпадает с текущим файлом DEV. Для проверки скачанного файла
+укажите его путь в `--input`.
 Для восстановления локальной базы сначала импортируйте исходный набор DEV,
 затем сохранённые результаты в указанном порядке:
 
 ```powershell
-python scripts/import_benchmark.py --run-dir data/evaluations/full-dev-luna-v5 --dry-run
-python scripts/import_benchmark.py --run-dir data/evaluations/full-dev-luna-v5
-python scripts/import_benchmark.py --predictions data/evaluations/luna-v6-dev-updates.json --dry-run
-python scripts/import_benchmark.py --predictions data/evaluations/luna-v6-dev-updates.json
+python scripts/import_benchmark.py --run-dir data/evaluations/annotation-fix-20261108/pilot-v11 --dry-run
+python scripts/import_benchmark.py --run-dir data/evaluations/annotation-fix-20261108/pilot-v11
+python scripts/import_benchmark.py --run-dir data/evaluations/annotation-fix-20261108/remaining-v11 --dry-run
+python scripts/import_benchmark.py --run-dir data/evaluations/annotation-fix-20261108/remaining-v11
+python scripts/import_benchmark.py --run-dir data/evaluations/annotation-fix-20261108/dev-v11-evidence-retry --dry-run
+python scripts/import_benchmark.py --run-dir data/evaluations/annotation-fix-20261108/dev-v11-evidence-retry
 ```
 
-Файл обновлений содержит только восемь DEV-записей из targeted-v6; синтетические
-примеры не импортируются в рабочую базу. Повторный импорт не создаёт дублей.
+Прогоны содержат соответственно 8, 56 и 1 валидный внутренний DEV-ответ.
+Сбойная запись первого прохода пропускается; её отдельный технический повтор
+сохранён в третьем каталоге. Синтетические примеры не импортируются в рабочую
+базу. Повторный импорт не создаёт дублей.
 Эти приватные артефакты находятся на машине автора, в Git они не включены.
 Для одного нового полного запуска доступен CLI `python -m evaluation.submission export --help`;
 объединять два перекрывающихся прогона без выбора последних

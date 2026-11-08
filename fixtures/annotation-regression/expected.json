@@ -1,0 +1,666 @@
+{
+  "schema_version": 1,
+  "provenance": "synthetic_regression_authored_by_assistant",
+  "not_ground_truth": true,
+  "label_phase": "frozen_before_candidate_predictions",
+  "resampling_unit": "scenario_family_not_translation",
+  "limitations": "24 authored chats in 8 translated families; development regression, not independent accuracy.",
+  "checklist_sha256": "9264b4d2099685078769691b7f72ef1fcb1befe19ec6c9ad94e69a6531cedfaf",
+  "dataset_sha256": "803b7f3aa1af4815e3ccd6bf478fdf353145177c2b28f03d93be76c7ba103957",
+  "items": [
+    {
+      "group_id": "ANNOTATION_REGRESSION_20261108",
+      "conversation_id": "aq-ru-known",
+      "language": "RU",
+      "scenario": "known",
+      "expected_results": [
+        {
+          "criterion_id": "discovery",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "known"
+        },
+        {
+          "criterion_id": "identification",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "known"
+        },
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 20,
+          "gross_error": false,
+          "rationale": "known"
+        },
+        {
+          "criterion_id": "empathy",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "known"
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "known"
+        }
+      ]
+    },
+    {
+      "group_id": "ANNOTATION_REGRESSION_20261108",
+      "conversation_id": "aq-ru-defer",
+      "language": "RU",
+      "scenario": "defer",
+      "expected_results": [
+        {
+          "criterion_id": "identification",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "defer"
+        },
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 20,
+          "gross_error": false,
+          "rationale": "defer"
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "defer"
+        }
+      ]
+    },
+    {
+      "group_id": "ANNOTATION_REGRESSION_20261108",
+      "conversation_id": "aq-ru-leak",
+      "language": "RU",
+      "scenario": "leak",
+      "expected_results": [
+        {
+          "criterion_id": "identification",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "leak"
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": true,
+          "rationale": "leak"
+        }
+      ]
+    },
+    {
+      "group_id": "ANNOTATION_REGRESSION_20261108",
+      "conversation_id": "aq-ru-private",
+      "language": "RU",
+      "scenario": "private",
+      "expected_results": [
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 20,
+          "gross_error": false,
+          "rationale": "private"
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": true,
+          "rationale": "private"
+        }
+      ]
+    },
+    {
+      "group_id": "ANNOTATION_REGRESSION_20261108",
+      "conversation_id": "aq-ru-neutral",
+      "language": "RU",
+      "scenario": "neutral",
+      "expected_results": [
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 10,
+          "gross_error": false,
+          "rationale": "neutral"
+        },
+        {
+          "criterion_id": "empathy",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "neutral"
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "neutral"
+        }
+      ]
+    },
+    {
+      "group_id": "ANNOTATION_REGRESSION_20261108",
+      "conversation_id": "aq-ru-repair",
+      "language": "RU",
+      "scenario": "repair",
+      "expected_results": [
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 20,
+          "gross_error": false,
+          "rationale": "repair"
+        },
+        {
+          "criterion_id": "dialogue",
+          "status": "applicable",
+          "answer": 4,
+          "gross_error": false,
+          "rationale": "repair"
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "repair"
+        }
+      ]
+    },
+    {
+      "group_id": "ANNOTATION_REGRESSION_20261108",
+      "conversation_id": "aq-ru-verify",
+      "language": "RU",
+      "scenario": "verify",
+      "expected_results": [
+        {
+          "criterion_id": "identification",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "verify"
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "verify"
+        }
+      ]
+    },
+    {
+      "group_id": "ANNOTATION_REGRESSION_20261108",
+      "conversation_id": "aq-ru-dismiss",
+      "language": "RU",
+      "scenario": "dismiss",
+      "expected_results": [
+        {
+          "criterion_id": "empathy",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "dismiss"
+        },
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 0,
+          "gross_error": false,
+          "rationale": "dismiss"
+        }
+      ]
+    },
+    {
+      "group_id": "ANNOTATION_REGRESSION_20261108",
+      "conversation_id": "aq-kz-known",
+      "language": "KZ",
+      "scenario": "known",
+      "expected_results": [
+        {
+          "criterion_id": "discovery",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "known"
+        },
+        {
+          "criterion_id": "identification",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "known"
+        },
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 20,
+          "gross_error": false,
+          "rationale": "known"
+        },
+        {
+          "criterion_id": "empathy",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "known"
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "known"
+        }
+      ]
+    },
+    {
+      "group_id": "ANNOTATION_REGRESSION_20261108",
+      "conversation_id": "aq-kz-defer",
+      "language": "KZ",
+      "scenario": "defer",
+      "expected_results": [
+        {
+          "criterion_id": "identification",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "defer"
+        },
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 20,
+          "gross_error": false,
+          "rationale": "defer"
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "defer"
+        }
+      ]
+    },
+    {
+      "group_id": "ANNOTATION_REGRESSION_20261108",
+      "conversation_id": "aq-kz-leak",
+      "language": "KZ",
+      "scenario": "leak",
+      "expected_results": [
+        {
+          "criterion_id": "identification",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "leak"
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": true,
+          "rationale": "leak"
+        }
+      ]
+    },
+    {
+      "group_id": "ANNOTATION_REGRESSION_20261108",
+      "conversation_id": "aq-kz-private",
+      "language": "KZ",
+      "scenario": "private",
+      "expected_results": [
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 20,
+          "gross_error": false,
+          "rationale": "private"
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": true,
+          "rationale": "private"
+        }
+      ]
+    },
+    {
+      "group_id": "ANNOTATION_REGRESSION_20261108",
+      "conversation_id": "aq-kz-neutral",
+      "language": "KZ",
+      "scenario": "neutral",
+      "expected_results": [
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 10,
+          "gross_error": false,
+          "rationale": "neutral"
+        },
+        {
+          "criterion_id": "empathy",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "neutral"
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "neutral"
+        }
+      ]
+    },
+    {
+      "group_id": "ANNOTATION_REGRESSION_20261108",
+      "conversation_id": "aq-kz-repair",
+      "language": "KZ",
+      "scenario": "repair",
+      "expected_results": [
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 20,
+          "gross_error": false,
+          "rationale": "repair"
+        },
+        {
+          "criterion_id": "dialogue",
+          "status": "applicable",
+          "answer": 4,
+          "gross_error": false,
+          "rationale": "repair"
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "repair"
+        }
+      ]
+    },
+    {
+      "group_id": "ANNOTATION_REGRESSION_20261108",
+      "conversation_id": "aq-kz-verify",
+      "language": "KZ",
+      "scenario": "verify",
+      "expected_results": [
+        {
+          "criterion_id": "identification",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "verify"
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "verify"
+        }
+      ]
+    },
+    {
+      "group_id": "ANNOTATION_REGRESSION_20261108",
+      "conversation_id": "aq-kz-dismiss",
+      "language": "KZ",
+      "scenario": "dismiss",
+      "expected_results": [
+        {
+          "criterion_id": "empathy",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "dismiss"
+        },
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 0,
+          "gross_error": false,
+          "rationale": "dismiss"
+        }
+      ]
+    },
+    {
+      "group_id": "ANNOTATION_REGRESSION_20261108",
+      "conversation_id": "aq-en-known",
+      "language": "EN",
+      "scenario": "known",
+      "expected_results": [
+        {
+          "criterion_id": "discovery",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "known"
+        },
+        {
+          "criterion_id": "identification",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "known"
+        },
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 20,
+          "gross_error": false,
+          "rationale": "known"
+        },
+        {
+          "criterion_id": "empathy",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "known"
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "known"
+        }
+      ]
+    },
+    {
+      "group_id": "ANNOTATION_REGRESSION_20261108",
+      "conversation_id": "aq-en-defer",
+      "language": "EN",
+      "scenario": "defer",
+      "expected_results": [
+        {
+          "criterion_id": "identification",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "defer"
+        },
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 20,
+          "gross_error": false,
+          "rationale": "defer"
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "defer"
+        }
+      ]
+    },
+    {
+      "group_id": "ANNOTATION_REGRESSION_20261108",
+      "conversation_id": "aq-en-leak",
+      "language": "EN",
+      "scenario": "leak",
+      "expected_results": [
+        {
+          "criterion_id": "identification",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "leak"
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": true,
+          "rationale": "leak"
+        }
+      ]
+    },
+    {
+      "group_id": "ANNOTATION_REGRESSION_20261108",
+      "conversation_id": "aq-en-private",
+      "language": "EN",
+      "scenario": "private",
+      "expected_results": [
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 20,
+          "gross_error": false,
+          "rationale": "private"
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": true,
+          "rationale": "private"
+        }
+      ]
+    },
+    {
+      "group_id": "ANNOTATION_REGRESSION_20261108",
+      "conversation_id": "aq-en-neutral",
+      "language": "EN",
+      "scenario": "neutral",
+      "expected_results": [
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 10,
+          "gross_error": false,
+          "rationale": "neutral"
+        },
+        {
+          "criterion_id": "empathy",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "neutral"
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "neutral"
+        }
+      ]
+    },
+    {
+      "group_id": "ANNOTATION_REGRESSION_20261108",
+      "conversation_id": "aq-en-repair",
+      "language": "EN",
+      "scenario": "repair",
+      "expected_results": [
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 20,
+          "gross_error": false,
+          "rationale": "repair"
+        },
+        {
+          "criterion_id": "dialogue",
+          "status": "applicable",
+          "answer": 4,
+          "gross_error": false,
+          "rationale": "repair"
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "repair"
+        }
+      ]
+    },
+    {
+      "group_id": "ANNOTATION_REGRESSION_20261108",
+      "conversation_id": "aq-en-verify",
+      "language": "EN",
+      "scenario": "verify",
+      "expected_results": [
+        {
+          "criterion_id": "identification",
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false,
+          "rationale": "verify"
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "verify"
+        }
+      ]
+    },
+    {
+      "group_id": "ANNOTATION_REGRESSION_20261108",
+      "conversation_id": "aq-en-dismiss",
+      "language": "EN",
+      "scenario": "dismiss",
+      "expected_results": [
+        {
+          "criterion_id": "empathy",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "dismiss"
+        },
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 0,
+          "gross_error": false,
+          "rationale": "dismiss"
+        }
+      ]
+    }
+  ]
+}

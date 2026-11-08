@@ -1,0 +1,124 @@
+{
+  "error": "",
+  "isSuccess": true,
+  "data": {
+    "dataset_group_id": "ANNOTATION_IDENTITY_20261108",
+    "total_records": 3,
+    "records": [
+      {
+        "conversation_id": "aq-ru-general-remit",
+        "channel": "agent chat",
+        "language": "RU",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "Мне сказали, что на бесплатном плане нет личного наставника. Вы помогаете только с работой портала?"
+          },
+          {
+            "timestamp": "00:10",
+            "speaker": "operator",
+            "text": "Здравствуйте, я Алиса. Да, наша техподдержка объясняет работу портала. По общим условиям бесплатный план не включает наставника. Ваш профиль я не открываю и наличие услуг в нём не проверяю."
+          },
+          {
+            "timestamp": "00:20",
+            "speaker": "client",
+            "text": "Как загрузить домашнее задание?"
+          },
+          {
+            "timestamp": "00:30",
+            "speaker": "operator",
+            "text": "Откройте «Курс → Задания → Загрузить файл»."
+          },
+          {
+            "timestamp": "00:40",
+            "speaker": "client",
+            "text": "Файл загрузился, спасибо."
+          },
+          {
+            "timestamp": "00:50",
+            "speaker": "operator",
+            "text": "Задание загружено. До свидания!"
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "aq-kz-general-remit",
+        "channel": "agent chat",
+        "language": "KZ",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "Тегін жоспарда жеке тәлімгер болмайды деп айтты. Сіздер тек порталды пайдалануға көмектесесіздер ме?"
+          },
+          {
+            "timestamp": "00:10",
+            "speaker": "operator",
+            "text": "Сәлеметсіз бе, мен Әлия. Иә, техникалық қолдау порталды пайдалануды түсіндіреді. Жалпы шарт бойынша тегін жоспарға тәлімгер кірмейді. Профиліңізді ашпаймын және ондағы қызметтерді тексермеймін."
+          },
+          {
+            "timestamp": "00:20",
+            "speaker": "client",
+            "text": "Үй тапсырмасын қалай жүктеймін?"
+          },
+          {
+            "timestamp": "00:30",
+            "speaker": "operator",
+            "text": "«Курс → Тапсырмалар → Файл жүктеу» бөлімін ашыңыз."
+          },
+          {
+            "timestamp": "00:40",
+            "speaker": "client",
+            "text": "Файл жүктелді, рақмет."
+          },
+          {
+            "timestamp": "00:50",
+            "speaker": "operator",
+            "text": "Тапсырма жүктелді. Сау болыңыз!"
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "aq-en-general-remit",
+        "channel": "agent chat",
+        "language": "EN",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "I was told the free plan has no personal tutor. Do you only help with using the portal?"
+          },
+          {
+            "timestamp": "00:10",
+            "speaker": "operator",
+            "text": "Hello, I'm Alice. Yes, technical support explains how to use the portal. The general free-plan terms do not include a tutor. I am not opening your profile or checking its services."
+          },
+          {
+            "timestamp": "00:20",
+            "speaker": "client",
+            "text": "How can I upload homework?"
+          },
+          {
+            "timestamp": "00:30",
+            "speaker": "operator",
+            "text": "Open Course, then Assignments, then Upload file."
+          },
+          {
+            "timestamp": "00:40",
+            "speaker": "client",
+            "text": "The file uploaded, thank you."
+          },
+          {
+            "timestamp": "00:50",
+            "speaker": "operator",
+            "text": "Your assignment is uploaded. Goodbye!"
+          }
+        ],
+        "audio_url": null
+      }
+    ]
+  }
+}

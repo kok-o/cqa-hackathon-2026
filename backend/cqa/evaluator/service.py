@@ -23,7 +23,7 @@ from .provider import ProviderOutputError, TokenUsage, estimate_cost, extract_co
 from .validation import DraftValidationError, validate_draft
 
 ROOT = Path(__file__).resolve().parents[3]
-PROMPT_VERSION = "cqa-evaluator-v6"
+PROMPT_VERSION = "cqa-evaluator-v11"
 PROMPT_PATH = ROOT / "prompts" / "evaluator.md"
 
 

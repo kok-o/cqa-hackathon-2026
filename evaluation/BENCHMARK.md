@@ -101,6 +101,12 @@ Regenerate reports without provider calls:
 
 Assistant-authored synthetic regression expectations belong in a separate test
 comparator. They must not be relabelled as independent human ground truth.
+
+Known ambiguous expectations can be reviewed without rewriting historical labels.
+Use `evaluation.regression --ambiguities <review.json>` with a review bound to
+the exact expected-file fingerprint. Ambiguous answers are reported outside
+the hard agreement denominator; missing answers and answers outside the reviewed
+alternatives still fail their case. This is assistant adjudication, not human GT.
 For a mixed run, use the comparator's explicit `--group` filter and a distinct
 output file per expectation set; unknown cases inside the selected group still
 fail validation. See [the regression fixture notes](../fixtures/regression/README.md).

@@ -1,0 +1,380 @@
+{
+  "schema_version": 1,
+  "checked_at": "2026-11-08T05:25:56.528740+00:00",
+  "provenance": "assistant_audit_of_model_outputs_not_human_ground_truth",
+  "not_ground_truth": true,
+  "model": "gpt-6-luna",
+  "reasoning_effort": "high",
+  "prompt_version": "cqa-evaluator-v11",
+  "prediction_basis": "original_model_outputs_before_appeals",
+  "manual_answer_or_evidence_edits": false,
+  "dev_runs": [
+    {
+      "run": "pilot-v11",
+      "fingerprint": "6e73cc7637a666643096f73d632b9a3960447bb910d0943c4cef8500fb905aae",
+      "statuses": {
+        "completed": 8
+      },
+      "prompt_sha256": "ff96b12023527645fc7e10260a1c4be670d179de37b6e3918e8f9567c80f2916",
+      "checklist_sha256": "9264b4d2099685078769691b7f72ef1fcb1befe19ec6c9ad94e69a6531cedfaf"
+    },
+    {
+      "run": "remaining-v11",
+      "fingerprint": "0aff3f6500e0f785b2a460f2fc9f0fa600fd3636fa067b2df9147b4e72b06295",
+      "statuses": {
+        "completed": 56,
+        "failed": 1
+      },
+      "prompt_sha256": "ff96b12023527645fc7e10260a1c4be670d179de37b6e3918e8f9567c80f2916",
+      "checklist_sha256": "9264b4d2099685078769691b7f72ef1fcb1befe19ec6c9ad94e69a6531cedfaf"
+    },
+    {
+      "run": "dev-v11-evidence-retry",
+      "fingerprint": "a17f299d112d4d9208446322843a743a6c084ab51fa949addb039741bc56ff04",
+      "statuses": {
+        "completed": 1
+      },
+      "prompt_sha256": "ff96b12023527645fc7e10260a1c4be670d179de37b6e3918e8f9567c80f2916",
+      "checklist_sha256": "9264b4d2099685078769691b7f72ef1fcb1befe19ec6c9ad94e69a6531cedfaf"
+    }
+  ],
+  "dev_validation": {
+    "records": 65,
+    "ok": 64,
+    "errors": 1,
+    "source_coverage_checked": true,
+    "warnings": []
+  },
+  "confirmed_fixes": [
+    {
+      "conversation_id": "p1-en-001",
+      "criterion_id": "discovery",
+      "before": true,
+      "after": null
+    },
+    {
+      "conversation_id": "p1-ru-002",
+      "criterion_id": "identification",
+      "before": false,
+      "after": null
+    },
+    {
+      "conversation_id": "p1-ru-003",
+      "criterion_id": "empathy",
+      "before": false,
+      "after": true
+    },
+    {
+      "conversation_id": "p1-ru-005",
+      "criterion_id": "discovery",
+      "before": false,
+      "after": null
+    },
+    {
+      "conversation_id": "p1-kz-013",
+      "criterion_id": "consultation",
+      "before": 0,
+      "after": 20
+    }
+  ],
+  "changed_decisions": 30,
+  "changed_conversations": 24,
+  "unresolved": [
+    {
+      "conversation_id": "p4-ru-005",
+      "criterion_id": "closure",
+      "reason": "Понятная финальная реплика оператора только благодарит клиента, а последняя реплика сильно искажена в транскрипте. Без разборчивого текста нельзя установить, попрощался ли оператор."
+    }
+  ],
+  "backend_tests": {
+    "passed": 216,
+    "failed": 0,
+    "log": "backend-tests-final.log"
+  },
+  "synthetic_gate": {
+    "initial": [
+      {
+        "fixture": "fixtures/annotation-regression/expected.json",
+        "expectations_sha256": "87f3480e3d7f0851276f76ec5ab24e75bca9eaeb36d84ff9c232da502d157524",
+        "ambiguity_review_sha256": null,
+        "checked_decisions": 66,
+        "passed_decisions": 61,
+        "cases_checked": 24,
+        "cases_all_passed": 23,
+        "ambiguous_decisions": 0,
+        "ambiguous_within_allowed_set": 0
+      },
+      {
+        "fixture": "fixtures/regression/expected.json",
+        "expectations_sha256": "3383a6d4fd5545c328a7733abc2b5ba0b2f93c11a35496d597c561a8fcab5d59",
+        "ambiguity_review_sha256": "ddcd8895afb89abca4661f50d2e21b0e7649c23bf5d9e501ac3d79dd3d5eb43c",
+        "checked_decisions": 47,
+        "passed_decisions": 47,
+        "cases_checked": 6,
+        "cases_all_passed": 6,
+        "ambiguous_decisions": 1,
+        "ambiguous_within_allowed_set": 1
+      },
+      {
+        "fixture": "fixtures/annotation-identity/expected.json",
+        "expectations_sha256": "e6219e327f03656662837ed281c998eac903ae4a8c907c53050ab51e8dac9ac5",
+        "ambiguity_review_sha256": null,
+        "checked_decisions": 9,
+        "passed_decisions": 9,
+        "cases_checked": 3,
+        "cases_all_passed": 3,
+        "ambiguous_decisions": 0,
+        "ambiguous_within_allowed_set": 0
+      },
+      {
+        "fixture": "fixtures/hybrid-holdout/expected.json",
+        "expectations_sha256": "040eb92191964dd4432f6a63c15b055a8c4ef5dd4bde8f19ebc6d9416ccaa270",
+        "ambiguity_review_sha256": "4f6456ed040d8ddc26794480b04b0b4bb237f441b3a717d8e8bcc424e79e8ce6",
+        "checked_decisions": 7,
+        "passed_decisions": 7,
+        "cases_checked": 1,
+        "cases_all_passed": 1,
+        "ambiguous_decisions": 1,
+        "ambiguous_within_allowed_set": 1
+      },
+      {
+        "fixture": "fixtures/regression/speculation-expected.json",
+        "expectations_sha256": "eb7898f018993f7a8b741f72ee382ef79f6baa7d832bccbfa0457d7cbd3cc9e8",
+        "ambiguity_review_sha256": null,
+        "checked_decisions": 1,
+        "passed_decisions": 1,
+        "cases_checked": 1,
+        "cases_all_passed": 1,
+        "ambiguous_decisions": 0,
+        "ambiguous_within_allowed_set": 0
+      }
+    ],
+    "initial_completed": 34,
+    "planned": 35,
+    "initial_strict_passed": 125,
+    "strict_checked": 130,
+    "ambiguous_checked": 2,
+    "technical_recovery": {
+      "conversation_id": "aq-kz-known",
+      "reason": "quote_not_exact on both original attempts",
+      "same_prompt_and_config": true,
+      "strict_passed": 5,
+      "completed": 1
+    },
+    "strict_passed_after_recovery": 130,
+    "translations_are_not_independent_scenarios": true
+  },
+  "costs": {
+    "basis": "usage estimates at configured token rates, not provider invoices",
+    "runs": [
+      {
+        "run": "blocked-action-v9",
+        "states": {
+          "completed": 1
+        },
+        "estimated_usd": 0.00206964,
+        "accounted_usd": 0.00206964,
+        "unknown_cost_records": 0
+      },
+      {
+        "run": "dev-v11-evidence-retry",
+        "states": {
+          "completed": 1
+        },
+        "estimated_usd": 0.00724489,
+        "accounted_usd": 0.00724489,
+        "unknown_cost_records": 0
+      },
+      {
+        "run": "pilot-v10",
+        "states": {
+          "completed": 8
+        },
+        "estimated_usd": 0.02001083,
+        "accounted_usd": 0.02001083,
+        "unknown_cost_records": 0
+      },
+      {
+        "run": "pilot-v11",
+        "states": {
+          "completed": 8
+        },
+        "estimated_usd": 0.02346754,
+        "accounted_usd": 0.02346754,
+        "unknown_cost_records": 0
+      },
+      {
+        "run": "pilot-v9",
+        "states": {
+          "completed": 8
+        },
+        "estimated_usd": 0.02191862,
+        "accounted_usd": 0.02191862,
+        "unknown_cost_records": 0
+      },
+      {
+        "run": "regression-v10",
+        "states": {
+          "completed": 35
+        },
+        "estimated_usd": 0.05369794,
+        "accounted_usd": 0.05369794,
+        "unknown_cost_records": 0
+      },
+      {
+        "run": "regression-v11",
+        "states": {
+          "completed": 34,
+          "failed": 1
+        },
+        "estimated_usd": 0.05487466,
+        "accounted_usd": 0.05487466,
+        "unknown_cost_records": 0
+      },
+      {
+        "run": "regression-v11-evidence-retry",
+        "states": {
+          "completed": 1
+        },
+        "estimated_usd": 0.00162912,
+        "accounted_usd": 0.00162912,
+        "unknown_cost_records": 0
+      },
+      {
+        "run": "regression-v9",
+        "states": {
+          "completed": 30
+        },
+        "estimated_usd": 0.04720052,
+        "accounted_usd": 0.04720052,
+        "unknown_cost_records": 0
+      },
+      {
+        "run": "remaining-v10",
+        "states": {},
+        "estimated_usd": 0,
+        "accounted_usd": 0,
+        "unknown_cost_records": 0
+      },
+      {
+        "run": "remaining-v11",
+        "states": {
+          "completed": 56,
+          "failed": 1
+        },
+        "estimated_usd": 0.12900485,
+        "accounted_usd": 0.12900485,
+        "unknown_cost_records": 0
+      },
+      {
+        "run": "remaining-v9",
+        "states": {
+          "completed": 57
+        },
+        "estimated_usd": 0.13152254,
+        "accounted_usd": 0.13152254,
+        "unknown_cost_records": 0
+      }
+    ],
+    "all_new_experiments_accounted_usd": 0.49264115,
+    "budget_usd": 2,
+    "accepted_dev_including_failed_attempts_usd": 0.15971728
+  },
+  "limitations": [
+    "No organizer or independently verified human DEV ground truth was provided.",
+    "Synthetic checks were used during prompt development; their pass rate is not accuracy.",
+    "Voice evaluations use the supplied transcript; this evaluator did not process audio."
+  ],
+  "review_queue": {
+    "provenance": "assistant_review_not_human_ground_truth",
+    "open_appeals": 15,
+    "conversations": 8,
+    "items": [
+      {
+        "conversation_id": "p4-ru-003",
+        "criteria": [
+          "identification",
+          "critical"
+        ],
+        "status": "ambiguous_policy",
+        "reason": "Текст сообщает об отправке кода на привязанный телефон, но не раскрывает номер. Отдельный вопрос — считать ли само подтверждение наличия брокерского счёта конфиденциальным фактом. Порядок подтверждения личности и статуса поручения виден, политика раскрытия существования счёта не задана."
+      },
+      {
+        "conversation_id": "p1-ru-007",
+        "criteria": [
+          "empathy",
+          "dialogue",
+          "closure"
+        ],
+        "status": "ambiguous_rubric",
+        "reason": "Есть конкретная помощь, затем отписка. Не формализованы полнота реакции на несколько неудобств и минимальный объём итогового резюме. C6=4 не подтверждён: клиент не был вынужден переспрашивать из-за непонятной инструкции. В v11 C6=10; отдельно проверить несвязанную финальную реплику, в рабочей калибровке C6=7."
+      },
+      {
+        "conversation_id": "p4-ru-004",
+        "criteria": [
+          "empathy",
+          "identification",
+          "critical",
+          "dialogue"
+        ],
+        "status": "audio_and_policy_review",
+        "reason": "Тон и неясные ASR-фразы нельзя достоверно оценить по тексту. Корректность отрицательной обратной связи при проверке адреса зависит от неуказанной политики. Исходное аудио новым evaluator не прослушивалось."
+      },
+      {
+        "conversation_id": "p1-ru-006",
+        "criteria": [
+          "discovery"
+        ],
+        "status": "ambiguous_sequence",
+        "reason": "Валюта добавлена после сообщения о передаче обращения. Не задано, обязательна ли она именно перед первичной передачей специалистам."
+      },
+      {
+        "conversation_id": "p1-ru-010",
+        "criteria": [
+          "consultation"
+        ],
+        "status": "ambiguous_next_step",
+        "reason": "Эскалация обещана и вопросы про отчёт закрыты; название бумаги явно не приведено в видимом тексте. Достаточность следующего шага трактуется по-разному."
+      },
+      {
+        "conversation_id": "p4-ru-005",
+        "criteria": [
+          "identification",
+          "closure"
+        ],
+        "status": "garbled_transcript_and_applicability",
+        "reason": "В v11 завершение needs_review из-за искажённой последней реплики. Для идентификации отдельно различить обещание удалить демосчёт позже и фактически выполненное защищённое действие; аудио модель не прослушивала."
+      },
+      {
+        "conversation_id": "p1-ru-009",
+        "criteria": [
+          "dialogue"
+        ],
+        "status": "suspected_model_error",
+        "reason": "В v11 C6=10, однако оператор переключается с вопроса об ограничении вывода на зависание приложения, и клиент возвращает его к исходному вопросу. Это может нарушать требование связности независимо от полноты консультации; проверить ступени 7/4 по источнику."
+      },
+      {
+        "conversation_id": "p1-ru-026",
+        "criteria": [
+          "dialogue"
+        ],
+        "status": "suspected_model_error",
+        "reason": "В v11 C6=10. Клиент повторил уже заданный вопрос после общего «Чем могу помочь?», затем получил расплывчатое «Всё есть в приложении». Проверить связь ответа с известным запросом отдельно от C2/C4; исходная C6=4 также не является GT."
+      }
+    ],
+    "scores_overridden": false
+  },
+  "app_check": {
+    "url": "http://127.0.0.1:8015",
+    "prompt_version": "cqa-evaluator-v11",
+    "history_count": 202,
+    "latest_dev_count": 65,
+    "latest_dev_prompt_versions": {
+      "cqa-evaluator-v11": 65
+    },
+    "submission_semantically_matches_file": true,
+    "submission_exactly_matches_file": true,
+    "originals_unchanged_by_reviews": true,
+    "export_canonical_sha256": "8838554058dd5202fa5ad0b1404c6f12250af07cd37a8a4dbccbda4d67b5e33a"
+  }
+}

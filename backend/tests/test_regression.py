@@ -31,6 +31,41 @@ class AuthoredRegressionTests(unittest.TestCase):
         self.assertIn("not_human_or_organizer_accuracy", report["metric_status"])
         self.assertTrue(report["not_ground_truth"])
 
+    def ambiguity(self):
+        return {"provenance": "assistant_expectation_review", "not_ground_truth": True,
+                "expected_sha256": fingerprint(self.expected), "items": [
+                    {"group_id": "SYNTHETIC", "conversation_id": "case1", "criterion_id": "contact",
+                     "reason": "Two supported readings of an authored example.",
+                     "allowed_results": [{"status": "applicable", "answer": v} for v in (True, False)]}]}
+
+    def test_ambiguous_decisions_are_not_counted_as_hard_agreement(self):
+        report = compare(self.expected, self.manifest, self.checkpoint, ambiguities=self.ambiguity())
+        model = report["models"][0]
+        self.assertEqual(model["checked_decisions"], 0)
+        self.assertIsNone(model["authored_regression_pass_rate"])
+        self.assertEqual(model["ambiguous_within_allowed_set"], 1)
+        self.assertFalse(self.checkpoint["records"]["one"]["original_results"][0]["answer"])
+        self.assertTrue(self.expected["items"][0]["expected_results"][0]["answer"])
+
+    def test_missing_ambiguous_predictions_do_not_pass(self):
+        model = compare(self.expected, self.manifest, {"records": {}}, ambiguities=self.ambiguity())["models"][0]
+        self.assertEqual(model["cases_all_passed"], 0)
+        self.assertEqual(model["ambiguous_within_allowed_set"], 0)
+
+    def test_ambiguity_review_cannot_apply_to_changed_expectations(self):
+        review = self.ambiguity()
+        changed = deepcopy(self.expected)
+        changed["items"][0]["expected_results"][0]["answer"] = False
+        with self.assertRaisesRegex(ValueError, "exact frozen"):
+            compare(changed, self.manifest, self.checkpoint, ambiguities=review)
+
+    def test_ambiguity_review_rejects_unknown_criteria_and_empty_reason(self):
+        for field, value in (("criterion_id", "unknown"), ("reason", "")):
+            review = self.ambiguity()
+            review["items"][0][field] = value
+            with self.assertRaisesRegex(ValueError, "Invalid"):
+                compare(self.expected, self.manifest, self.checkpoint, ambiguities=review)
+
     def test_missing_predictions_fail_checked_expectations(self):
         report = compare(self.expected, self.manifest, {"records": {}})
         self.assertEqual(report["models"][0]["checked_decisions"], 1)

@@ -107,6 +107,13 @@ reporting the result.
 
 ## Targeted v6 development result
 
+For current comparisons, `ambiguities.json` records one reviewed empathy
+ambiguity in `reg-ru-bot-greeting`, bound to the unchanged expected-file hash.
+Pass `--ambiguities fixtures/regression/ambiguities.json` to report 47 strict
+assertions and that ambiguous answer separately. A missing answer still fails.
+This assistant review is not human ground truth and does not retroactively
+change the historical 48-assertion result below.
+
 The 2026-11-07 targeted run using `cqa-evaluator-v6` completed 19/19 evaluations.
 The separate authored comparisons passed 48/48 original, 24/24 tuning, 8/8 queue
 and 1/1 speculation assertions. Completion measures whether validated output was

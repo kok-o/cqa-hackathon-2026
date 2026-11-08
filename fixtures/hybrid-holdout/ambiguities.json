@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "provenance": "assistant_expectation_review",
+  "not_ground_truth": true,
+  "expected_sha256": "040eb92191964dd4432f6a63c15b055a8c4ef5dd4bde8f19ebc6d9416ccaa270",
+  "review_basis": "Previously documented annotation audit, before the v9 regression responses were inspected. Original labels remain frozen.",
+  "items": [
+    {
+      "group_id": "HYBRID_HOLDOUT_20261107",
+      "conversation_id": "hh-ru-08",
+      "criterion_id": "empathy",
+      "reason": "Нейтральная вежливость поддерживает Да; прямой отказ от дальнейшей помощи поддерживает Нет.",
+      "allowed_results": [
+        {
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false
+        },
+        {
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false
+        }
+      ]
+    },
+    {
+      "group_id": "HYBRID_HOLDOUT_20261107",
+      "conversation_id": "hh-en-05",
+      "criterion_id": "empathy",
+      "reason": "Исправлен один запрос, второй пропущен. В чек-листе нет однозначного порога реакции при нескольких неудобствах.",
+      "allowed_results": [
+        {
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false
+        },
+        {
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false
+        }
+      ]
+    },
+    {
+      "group_id": "HYBRID_HOLDOUT_20261107",
+      "conversation_id": "hh-en-07",
+      "criterion_id": "empathy",
+      "reason": "Просьба игнорировать странную реплику бота может считаться замечанием либо отдельной жалобой; оператор выполнил практический запрос.",
+      "allowed_results": [
+        {
+          "status": "applicable",
+          "answer": true,
+          "gross_error": false
+        },
+        {
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false
+        }
+      ]
+    }
+  ]
+}

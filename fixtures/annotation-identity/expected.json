@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "provenance": "synthetic_regression_authored_by_assistant",
+  "not_ground_truth": true,
+  "label_phase": "frozen_before_v10_responses",
+  "limitations": "Three translations of one development scenario; not independent accuracy.",
+  "dataset_sha256": "2756a83188d6fe9f2092997206d3227da9469cf3bd8dfe7ad5e3bbb7d1e05c0b",
+  "checklist_sha256": "9264b4d2099685078769691b7f72ef1fcb1befe19ec6c9ad94e69a6531cedfaf",
+  "items": [
+    {
+      "group_id": "ANNOTATION_IDENTITY_20261108",
+      "conversation_id": "aq-ru-general-remit",
+      "language": "RU",
+      "scenario": "General support remit and public eligibility terms, without checking a personal account",
+      "expected_results": [
+        {
+          "criterion_id": "identification",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "General policy and completed navigation do not establish private account access."
+        },
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 20,
+          "gross_error": false,
+          "rationale": "General policy and completed navigation do not establish private account access."
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "General policy and completed navigation do not establish private account access."
+        }
+      ]
+    },
+    {
+      "group_id": "ANNOTATION_IDENTITY_20261108",
+      "conversation_id": "aq-kz-general-remit",
+      "language": "KZ",
+      "scenario": "General support remit and public eligibility terms, without checking a personal account",
+      "expected_results": [
+        {
+          "criterion_id": "identification",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "General policy and completed navigation do not establish private account access."
+        },
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 20,
+          "gross_error": false,
+          "rationale": "General policy and completed navigation do not establish private account access."
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "General policy and completed navigation do not establish private account access."
+        }
+      ]
+    },
+    {
+      "group_id": "ANNOTATION_IDENTITY_20261108",
+      "conversation_id": "aq-en-general-remit",
+      "language": "EN",
+      "scenario": "General support remit and public eligibility terms, without checking a personal account",
+      "expected_results": [
+        {
+          "criterion_id": "identification",
+          "status": "not_applicable",
+          "answer": null,
+          "gross_error": false,
+          "rationale": "General policy and completed navigation do not establish private account access."
+        },
+        {
+          "criterion_id": "consultation",
+          "status": "applicable",
+          "answer": 20,
+          "gross_error": false,
+          "rationale": "General policy and completed navigation do not establish private account access."
+        },
+        {
+          "criterion_id": "critical",
+          "status": "applicable",
+          "answer": false,
+          "gross_error": false,
+          "rationale": "General policy and completed navigation do not establish private account access."
+        }
+      ]
+    }
+  ]
+}

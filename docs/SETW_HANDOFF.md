@@ -1,35 +1,50 @@
 # SetW · запуск и сдача
 
-Стоп-код по объявлениям организаторов — **8 ноября, 12:00 по Астане (UTC+5)**. Приложение к гайду отводит час на десять контрольных чатов. Ориентир для выдачи — 11:00. Фактические способ получения, идентификатор набора и канал передачи ссылки сверить в Announcements. [Уточнения организаторов](ORGANIZER_CLARIFICATIONS.md) · [формат JSON 1.0](briefs/CQA_Student_Guide_Appendix_Results.pdf)
+Стоп-код по объявлениям организаторов — **8 ноября, 12:00 по Астане (UTC+5)**. Выдача контрольных чатов в **11:00** подтверждена в экспорте Q&A от 8 ноября (#3519); после 12:00 нельзя добавлять коммиты (#3560). Фактические способ получения, идентификатор набора и канал передачи ссылки сверить в Announcements. [Уточнения организаторов](ORGANIZER_CLARIFICATIONS.md) · [формат JSON 1.0](briefs/CQA_Student_Guide_Appendix_Results.pdf)
 
 ## До выдачи контроля
 
-1. Откройте [отчёт объединённой версии](SETW_INTEGRATED.md). Запустите приложение на копии DEV и откройте три примера из локального `data/evaluations/setw-stage2-20261108/defense.md`. Перед контролем поднимите отдельный сервер с пустой базой и официальным чек-листом.
+1. Откройте [текущую проверку оценок](ANNOTATION_QUALITY.md) и [архив проверки интерфейса](SETW_INTEGRATED.md). Запустите приложение из актуального корня проекта. Перед контролем поднимите отдельный сервер с пустой базой и официальным чек-листом.
 2. Дайте двум участникам независимо разметить 15 чатов из локального `data/evaluations/setw-night-20261108/blind-review.md`. Файл ключа и предыдущие выводы откройте после фиксации ответов. Спорные случаи сверяйте с PDF и репликами.
 3. Сверьте требования к публичному GitHub. В основном дереве должны быть код, README с запуском, описание подхода и `results/dev/results.json`. Второй обязательный файл `results/prod/results.json` появится после работы на реальном контроле. Проверьте публикуемые файлы и историю на ключи, подписанные URL, исходные клиентские диалоги и SQLite.
 4. Назначьте ответственных за получение набора, запуск, проверку JSON и GitHub. Изменение видимости, push и передачу ссылки выполняет команда.
 
 ## Запуск на проверенной ветке
 
-На чистом checkout ветки `codex/setw-integrated` выполните `git rev-parse HEAD` и сверьте SHA с передачей. Скопируйте настройки подключения в локальный `.env` по [README](../README.md). Первый запуск — `./scripts/start.ps1 -Setup`. Следующий — `./scripts/start.ps1`. Приложение по умолчанию доступно на `http://127.0.0.1:8000`.
+На актуальном checkout выполните `git rev-parse HEAD` и сверьте SHA с передачей. Скопируйте настройки подключения в локальный `.env` по [README](../README.md). Первый запуск — `./scripts/start.ps1 -Setup`. Следующий — `./scripts/start.ps1`. Приложение по умолчанию доступно на `http://127.0.0.1:8000`.
 
-На машине подготовки корень проекта содержит исходный `.env` и `.venv`, а объединённая ветка открыта в `scratch/setw-integrated`. Из корня проекта выполните `./data/evaluations/setw-stage2-20261108/start-integrated.ps1`. Скрипт запускает копию базы DEV на порту 8060. Для контроля укажите `-ControlDatabase control-20261108.sqlite3` и убедитесь, что имя свободно. Скрипт создаст базу в `data/runtime/` на порту 8061. Эквивалентная команда запуска демо приведена ниже.
+Актуальный код и DEV находятся в корне проекта. Старые checkout в
+`scratch/setw-integrated` и `scratch/setw-release` сохраняют прежние проверки и
+используются для отката; их оценки автоматически не обновляются.
+
+На машине подготовки приложение запускается из корня:
+
+```powershell
+.\.venv\Scripts\python.exe scripts/run.py --port 8015
+```
+
+Для контрольного набора используйте отдельную базу, сохраняя рабочий DEV:
 
 ```powershell
 $project = (Get-Location).Path
-$release = Join-Path $project 'scratch/setw-integrated'
-$python = Join-Path $project '.venv/Scripts/python.exe'
-$config = Join-Path $project '.env'
-$session = Join-Path $project 'data/evaluations/setw-stage2-20261108'
-$env:CQA_DATABASE_PATH = Join-Path $session 'demo.sqlite3'
-$env:CQA_DATA_DIR = Join-Path $project 'data/raw'
-Push-Location -LiteralPath $release
+$controlDatabase = Join-Path $project 'data/runtime/control-20261108.sqlite3'
+if (Test-Path -LiteralPath $controlDatabase) {
+    throw 'База уже существует. Выберите новое имя для нового контрольного запуска.'
+}
+$previousDatabase = $env:CQA_DATABASE_PATH
 try {
-    & $python -m dotenv -f $config run --no-override -- $python scripts/run.py --port 8060
-} finally { Pop-Location }
+    $env:CQA_DATABASE_PATH = $controlDatabase
+    & .\.venv\Scripts\python.exe scripts/run.py --port 8061
+} finally {
+    $env:CQA_DATABASE_PATH = $previousDatabase
+}
 ```
 
-В браузере откройте `http://127.0.0.1:8060` для демо или `http://127.0.0.1:8061` для контроля. `GET /health` проверяет сервер, `GET /api/config` показывает профиль модели. После изменения `.env` перезапустите сервер. Для воспроизведения проверок из корня проверенного checkout используйте Python с зависимостями из `backend/requirements.txt`.
+Откройте `http://127.0.0.1:8015` для DEV или `http://127.0.0.1:8061` для контроля.
+`GET /health` проверяет сервер, `GET /api/config` показывает модель и версию
+промпта. После обновления кода или `.env` перезапустите сервер. Проверяйте версию
+по API, а не только по имени модели. Текущая проверка разметки описана в
+[ANNOTATION_QUALITY.md](ANNOTATION_QUALITY.md).
 
 ```powershell
 python -X utf8 -m pip check
@@ -57,7 +72,7 @@ python -X utf8 scripts/frontend_review_smoke.py --url http://127.0.0.1:8021
 ```powershell
 # Из корня основного проекта на машине подготовки.
 $project = (Get-Location).Path
-$release = Join-Path $project 'scratch/setw-integrated'
+$release = $project
 $python = Join-Path $project '.venv/Scripts/python.exe'
 $controlDataset = (Resolve-Path -LiteralPath (Join-Path $project 'data/raw/PROD.json')).Path
 $source = Get-Content -LiteralPath $controlDataset -Raw -Encoding UTF8 | ConvertFrom-Json
@@ -79,7 +94,7 @@ $candidate = Get-Content -LiteralPath $staged -Raw -Encoding UTF8 | ConvertFrom-
 $candidate.results | Group-Object status | Select-Object Name,Count
 ```
 
-4. Проверьте количество `ok` и каждую строку `error`. Валидный файл может содержать ошибки обработки. `null` в успешном ответе означает неприменимость критерия. Экспорт для организаторов берёт исходные решения модели по утверждённому чек-листу и совпадающему снимку диалога. История оценок с пересмотром скачивается отдельно. В сохранённом DEV проверены и добавлены ссылки на реплики для десяти N/A. Обычный экспорт из демо выдаёт исходный снимок до этой сверки. Для сдачи DEV возьмите проверенный файл из ветки.
+4. Проверьте количество `ok` и каждую строку `error`. Валидный файл может содержать ошибки обработки. `null` в успешном ответе означает неприменимость критерия. Экспорт для организаторов берёт исходные решения модели по утверждённому чек-листу и совпадающему снимку диалога. История оценок с пересмотром скачивается отдельно. Текущий DEV пересчитан единым профилем v11; доказательства сохранены из ответов модели. Сверьте выгрузку работающего приложения с `results/dev/results.json`.
 5. Перенесите проверенный контрольный файл в `results/prod/results.json`. Сверьте DEV по локальному исходнику. Подготовьте коммит из проверенной ветки. Обновите ту ветку публичного репозитория, на которую указывает переданная ссылка, по правилам команды. Откройте обе ссылки без входа до стоп-кода. Подтвердите передачу ссылки по объявленному каналу.
 
 ```powershell

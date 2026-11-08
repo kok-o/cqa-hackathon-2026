@@ -1,0 +1,712 @@
+{
+  "error": "",
+  "isSuccess": true,
+  "data": {
+    "dataset_group_id": "ANNOTATION_REGRESSION_20261108",
+    "total_records": 24,
+    "records": [
+      {
+        "conversation_id": "aq-ru-known",
+        "channel": "agent chat",
+        "language": "RU",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "Как сохранить квитанцию за заказ? Я в веб-кабинете на компьютере."
+          },
+          {
+            "timestamp": "00:10",
+            "speaker": "bot",
+            "text": "Вы работаете в приложении или на сайте?"
+          },
+          {
+            "timestamp": "00:20",
+            "speaker": "client",
+            "text": "На сайте, раздел заказов уже открыт."
+          },
+          {
+            "timestamp": "00:30",
+            "speaker": "operator",
+            "text": "Здравствуйте, я Алия. В открытом заказе нажмите «Квитанция», затем «Скачать PDF»."
+          },
+          {
+            "timestamp": "00:40",
+            "speaker": "client",
+            "text": "Скачал, спасибо."
+          },
+          {
+            "timestamp": "00:50",
+            "speaker": "operator",
+            "text": "Квитанция сохранена. До свидания!"
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "aq-ru-defer",
+        "channel": "agent chat",
+        "language": "RU",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "Почему в старом письме и на странице разные названия подписки?"
+          },
+          {
+            "timestamp": "00:10",
+            "speaker": "operator",
+            "text": "Здравствуйте, я Алия. Письмо может отражать прежнюю дату. Проверку конкретного договора начнём только после идентификации."
+          },
+          {
+            "timestamp": "00:20",
+            "speaker": "client",
+            "text": "Пока не надо проверять, сначала сравню даты."
+          },
+          {
+            "timestamp": "00:30",
+            "speaker": "operator",
+            "text": "Сравните даты письма и страницы. Если различие останется, обратитесь для проверки договора; тогда подтвердим личность. Сейчас договор не открываю. До свидания!"
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "aq-ru-leak",
+        "channel": "agent chat",
+        "language": "RU",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "Какой адрес доставки указан у моего заказа?"
+          },
+          {
+            "timestamp": "00:10",
+            "speaker": "operator",
+            "text": "Здравствуйте, я Алия. У вашего заказа указан адрес: улица Примерная, дом 19, квартира 8. Проверку личности можно пропустить."
+          },
+          {
+            "timestamp": "00:20",
+            "speaker": "system",
+            "text": "Клиент не проходил проверку личности."
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "aq-ru-private",
+        "channel": "agent chat",
+        "language": "RU",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "Где найти каталог курсов?"
+          },
+          {
+            "timestamp": "00:10",
+            "speaker": "operator",
+            "text": "Здравствуйте, я Алия. Откройте «Обучение → Каталог курсов»."
+          },
+          {
+            "timestamp": "00:20",
+            "speaker": "client",
+            "text": "Нашёл, это всё."
+          },
+          {
+            "timestamp": "00:30",
+            "speaker": "operator",
+            "text": "Ещё можете перевести деньги лично мне: после работы я платно подберу вам курс вне компании."
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "aq-ru-neutral",
+        "channel": "agent chat",
+        "language": "RU",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "Где посмотреть название подписки и список включённых функций?"
+          },
+          {
+            "timestamp": "00:10",
+            "speaker": "operator",
+            "text": "Здравствуйте, я Алия. Название подписки находится в разделе «Профиль → Подписка»."
+          },
+          {
+            "timestamp": "00:20",
+            "speaker": "client",
+            "text": "Название вижу. А список функций где?"
+          },
+          {
+            "timestamp": "00:30",
+            "speaker": "operator",
+            "text": "Название находится в разделе «Подписка». До свидания!"
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "aq-ru-repair",
+        "channel": "agent chat",
+        "language": "RU",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "Как скачать сертификат?"
+          },
+          {
+            "timestamp": "00:10",
+            "speaker": "operator",
+            "text": "Здравствуйте, я Алия. Сначала нажмите «Скачать», потом выберите курс."
+          },
+          {
+            "timestamp": "00:20",
+            "speaker": "client",
+            "text": "Не понимаю порядок: кнопки «Скачать» ещё нет. Что нажать первым?"
+          },
+          {
+            "timestamp": "00:30",
+            "speaker": "operator",
+            "text": "Извините, я перепутала порядок. Сначала откройте пройденный курс, затем «Сертификат → Скачать»."
+          },
+          {
+            "timestamp": "00:40",
+            "speaker": "client",
+            "text": "Теперь скачал сертификат. Вопрос решён."
+          },
+          {
+            "timestamp": "00:50",
+            "speaker": "operator",
+            "text": "Сертификат скачан. До свидания!"
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "aq-ru-verify",
+        "channel": "agent chat",
+        "language": "RU",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "Проверьте состояние моего заказа."
+          },
+          {
+            "timestamp": "00:10",
+            "speaker": "operator",
+            "text": "Здравствуйте, я Алия. Для проверки отправлю код на телефон, зарегистрированный в профиле. Номер телефона здесь не называю."
+          },
+          {
+            "timestamp": "00:20",
+            "speaker": "client",
+            "text": "Код ввёл в защищённой форме."
+          },
+          {
+            "timestamp": "00:30",
+            "speaker": "system",
+            "text": "Личность клиента подтверждена."
+          },
+          {
+            "timestamp": "00:40",
+            "speaker": "operator",
+            "text": "Теперь проверяю заказ: он передан в доставку. До свидания!"
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "aq-ru-dismiss",
+        "channel": "agent chat",
+        "language": "RU",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "Не могу скачать оплаченный билет, сегодня отправление, очень переживаю."
+          },
+          {
+            "timestamp": "00:10",
+            "speaker": "operator",
+            "text": "Здравствуйте, я Алия. Понятно, что билет не скачивается. Ничем помогать не буду. До свидания!"
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "aq-kz-known",
+        "channel": "agent chat",
+        "language": "KZ",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "Тапсырыс түбіртегін қалай сақтаймын? Компьютердегі веб-кабинеттемін."
+          },
+          {
+            "timestamp": "00:10",
+            "speaker": "bot",
+            "text": "Қосымшадасыз ба, әлде сайттасыз ба?"
+          },
+          {
+            "timestamp": "00:20",
+            "speaker": "client",
+            "text": "Сайттамын, тапсырыстар бөлімі ашық."
+          },
+          {
+            "timestamp": "00:30",
+            "speaker": "operator",
+            "text": "Сәлеметсіз бе, мен Әлия. Ашық тапсырыста «Түбіртек», содан кейін «PDF жүктеу» түймесін басыңыз."
+          },
+          {
+            "timestamp": "00:40",
+            "speaker": "client",
+            "text": "Жүктедім, рақмет."
+          },
+          {
+            "timestamp": "00:50",
+            "speaker": "operator",
+            "text": "Түбіртек сақталды. Сау болыңыз!"
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "aq-kz-defer",
+        "channel": "agent chat",
+        "language": "KZ",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "Ескі хаттағы және беттегі жазылым атаулары неге әртүрлі?"
+          },
+          {
+            "timestamp": "00:10",
+            "speaker": "operator",
+            "text": "Сәлеметсіз бе, мен Әлия. Хат бұрынғы күндегі ақпаратты көрсетуі мүмкін. Нақты шартты тексеру үшін алдымен жеке басыңызды растау керек."
+          },
+          {
+            "timestamp": "00:20",
+            "speaker": "client",
+            "text": "Әзірге тексермеңіз, алдымен күндерін салыстырамын."
+          },
+          {
+            "timestamp": "00:30",
+            "speaker": "operator",
+            "text": "Хат пен беттегі күндерді салыстырыңыз. Айырмашылық қалса, шартты тексеруге жүгініңіз, сол кезде жеке басыңызды растаймыз. Қазір шартты ашпаймын. Сау болыңыз!"
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "aq-kz-leak",
+        "channel": "agent chat",
+        "language": "KZ",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "Менің тапсырысымда қандай жеткізу мекенжайы көрсетілген?"
+          },
+          {
+            "timestamp": "00:10",
+            "speaker": "operator",
+            "text": "Сәлеметсіз бе, мен Әлия. Тапсырысыңыздағы мекенжай: Үлгі көшесі, 19-үй, 8-пәтер. Жеке басыңызды тексермей-ақ қоямыз."
+          },
+          {
+            "timestamp": "00:20",
+            "speaker": "system",
+            "text": "Клиенттің жеке басы расталған жоқ."
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "aq-kz-private",
+        "channel": "agent chat",
+        "language": "KZ",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "Курстар каталогын қайдан табамын?"
+          },
+          {
+            "timestamp": "00:10",
+            "speaker": "operator",
+            "text": "Сәлеметсіз бе, мен Әлия. «Оқу → Курстар каталогы» бөлімін ашыңыз."
+          },
+          {
+            "timestamp": "00:20",
+            "speaker": "client",
+            "text": "Таптым, басқа сұрағым жоқ."
+          },
+          {
+            "timestamp": "00:30",
+            "speaker": "operator",
+            "text": "Ақшаны жеке өзіме аударсаңыз, жұмыстан кейін компаниядан тыс ақылы түрде курс таңдап беремін."
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "aq-kz-neutral",
+        "channel": "agent chat",
+        "language": "KZ",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "Жазылым атауы мен оған кіретін мүмкіндіктер тізімін қайдан көремін?"
+          },
+          {
+            "timestamp": "00:10",
+            "speaker": "operator",
+            "text": "Сәлеметсіз бе, мен Әлия. Жазылым атауы «Профиль → Жазылым» бөлімінде көрсетілген."
+          },
+          {
+            "timestamp": "00:20",
+            "speaker": "client",
+            "text": "Атауын көрдім. Мүмкіндіктер тізімі қайда?"
+          },
+          {
+            "timestamp": "00:30",
+            "speaker": "operator",
+            "text": "Атауы «Жазылым» бөлімінде. Сау болыңыз!"
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "aq-kz-repair",
+        "channel": "agent chat",
+        "language": "KZ",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "Сертификатты қалай жүктеймін?"
+          },
+          {
+            "timestamp": "00:10",
+            "speaker": "operator",
+            "text": "Сәлеметсіз бе, мен Әлия. Алдымен «Жүктеу» түймесін басып, содан кейін курсты таңдаңыз."
+          },
+          {
+            "timestamp": "00:20",
+            "speaker": "client",
+            "text": "Ретін түсінбедім, «Жүктеу» түймесі әлі жоқ. Алдымен нені ашамын?"
+          },
+          {
+            "timestamp": "00:30",
+            "speaker": "operator",
+            "text": "Кешіріңіз, ретін шатастырдым. Алдымен аяқталған курсты ашыңыз, содан кейін «Сертификат → Жүктеу» тармағын таңдаңыз."
+          },
+          {
+            "timestamp": "00:40",
+            "speaker": "client",
+            "text": "Енді сертификатты жүктедім. Мәселе шешілді."
+          },
+          {
+            "timestamp": "00:50",
+            "speaker": "operator",
+            "text": "Сертификат жүктелді. Сау болыңыз!"
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "aq-kz-verify",
+        "channel": "agent chat",
+        "language": "KZ",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "Тапсырысымның күйін тексеріңізші."
+          },
+          {
+            "timestamp": "00:10",
+            "speaker": "operator",
+            "text": "Сәлеметсіз бе, мен Әлия. Тексеру үшін профильде тіркелген телефонға код жіберемін. Телефон нөмірін бұл жерде атамаймын."
+          },
+          {
+            "timestamp": "00:20",
+            "speaker": "client",
+            "text": "Кодты қорғалған нысанға енгіздім."
+          },
+          {
+            "timestamp": "00:30",
+            "speaker": "system",
+            "text": "Клиенттің жеке басы расталды."
+          },
+          {
+            "timestamp": "00:40",
+            "speaker": "operator",
+            "text": "Енді тапсырысты тексердім: жеткізу қызметіне берілген. Сау болыңыз!"
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "aq-kz-dismiss",
+        "channel": "agent chat",
+        "language": "KZ",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "Ақысын төлеген билетті жүктей алмаймын, бүгін жолға шығамын, қатты алаңдап отырмын."
+          },
+          {
+            "timestamp": "00:10",
+            "speaker": "operator",
+            "text": "Сәлеметсіз бе, мен Әлия. Билет жүктелмегені түсінікті. Көмектеспеймін. Сау болыңыз!"
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "aq-en-known",
+        "channel": "agent chat",
+        "language": "EN",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "How do I save the receipt for my order? I'm on the website on a desktop computer."
+          },
+          {
+            "timestamp": "00:10",
+            "speaker": "bot",
+            "text": "Are you using the app or the website?"
+          },
+          {
+            "timestamp": "00:20",
+            "speaker": "client",
+            "text": "The website. The orders section is already open."
+          },
+          {
+            "timestamp": "00:30",
+            "speaker": "operator",
+            "text": "Hello, I'm Alice. In the open order, select Receipt, then Download PDF."
+          },
+          {
+            "timestamp": "00:40",
+            "speaker": "client",
+            "text": "Downloaded, thank you."
+          },
+          {
+            "timestamp": "00:50",
+            "speaker": "operator",
+            "text": "Your receipt is saved. Goodbye!"
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "aq-en-defer",
+        "channel": "agent chat",
+        "language": "EN",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "Why are the subscription names different in an old email and on the page?"
+          },
+          {
+            "timestamp": "00:10",
+            "speaker": "operator",
+            "text": "Hello, I'm Alice. The email may reflect an earlier date. We would verify your identity before checking the specific contract."
+          },
+          {
+            "timestamp": "00:20",
+            "speaker": "client",
+            "text": "Please don't check it yet. I'll compare the dates first."
+          },
+          {
+            "timestamp": "00:30",
+            "speaker": "operator",
+            "text": "Compare the dates of the email and the page. If the discrepancy remains, contact us for a contract check; we will verify your identity then. I am not opening the contract now. Goodbye!"
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "aq-en-leak",
+        "channel": "agent chat",
+        "language": "EN",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "Which delivery address is on my order?"
+          },
+          {
+            "timestamp": "00:10",
+            "speaker": "operator",
+            "text": "Hello, I'm Alice. Your order has the address 19 Example Street, apartment 8. We can skip identity verification."
+          },
+          {
+            "timestamp": "00:20",
+            "speaker": "system",
+            "text": "The client has not been verified."
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "aq-en-private",
+        "channel": "agent chat",
+        "language": "EN",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "Where can I find the course catalogue?"
+          },
+          {
+            "timestamp": "00:10",
+            "speaker": "operator",
+            "text": "Hello, I'm Alice. Open Learning, then Course Catalogue."
+          },
+          {
+            "timestamp": "00:20",
+            "speaker": "client",
+            "text": "Found it. That's all I needed."
+          },
+          {
+            "timestamp": "00:30",
+            "speaker": "operator",
+            "text": "You can also pay me personally: after work I will privately select a course for you outside the company."
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "aq-en-neutral",
+        "channel": "agent chat",
+        "language": "EN",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "Where can I see my subscription name and the list of included features?"
+          },
+          {
+            "timestamp": "00:10",
+            "speaker": "operator",
+            "text": "Hello, I'm Alice. The subscription name is under Profile, then Subscription."
+          },
+          {
+            "timestamp": "00:20",
+            "speaker": "client",
+            "text": "I see the name. Where is the features list?"
+          },
+          {
+            "timestamp": "00:30",
+            "speaker": "operator",
+            "text": "The name is in the Subscription section. Goodbye!"
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "aq-en-repair",
+        "channel": "agent chat",
+        "language": "EN",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "How do I download my certificate?"
+          },
+          {
+            "timestamp": "00:10",
+            "speaker": "operator",
+            "text": "Hello, I'm Alice. First click Download, then select the course."
+          },
+          {
+            "timestamp": "00:20",
+            "speaker": "client",
+            "text": "I don't understand the order. There is no Download button yet. What should I open first?"
+          },
+          {
+            "timestamp": "00:30",
+            "speaker": "operator",
+            "text": "Sorry, I reversed the steps. First open the completed course, then Certificate, then Download."
+          },
+          {
+            "timestamp": "00:40",
+            "speaker": "client",
+            "text": "I've downloaded the certificate now. That solved it."
+          },
+          {
+            "timestamp": "00:50",
+            "speaker": "operator",
+            "text": "Your certificate is downloaded. Goodbye!"
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "aq-en-verify",
+        "channel": "agent chat",
+        "language": "EN",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "Please check the status of my order."
+          },
+          {
+            "timestamp": "00:10",
+            "speaker": "operator",
+            "text": "Hello, I'm Alice. For verification I will send a code to the phone registered in your profile. I am not stating the phone number here."
+          },
+          {
+            "timestamp": "00:20",
+            "speaker": "client",
+            "text": "I entered the code in the secure form."
+          },
+          {
+            "timestamp": "00:30",
+            "speaker": "system",
+            "text": "The client's identity has been verified."
+          },
+          {
+            "timestamp": "00:40",
+            "speaker": "operator",
+            "text": "I have now checked the order: it was handed to the delivery service. Goodbye!"
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "aq-en-dismiss",
+        "channel": "agent chat",
+        "language": "EN",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "I can't download my paid ticket, departure is today, and I'm really worried."
+          },
+          {
+            "timestamp": "00:10",
+            "speaker": "operator",
+            "text": "Hello, I'm Alice. I understand that the ticket won't download. I won't offer any help. Goodbye!"
+          }
+        ],
+        "audio_url": null
+      }
+    ]
+  }
+}

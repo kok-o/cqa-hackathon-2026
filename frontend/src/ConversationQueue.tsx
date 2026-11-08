@@ -84,7 +84,7 @@ export default function ConversationQueue(p: Props) {
   return (
     <aside
       id="queue-panel"
-      className="conversation-sidebar queue-dark"
+      className="conversation-sidebar queue-neutral"
       role={p.isMobile ? "tabpanel" : p.drawerOpen ? "dialog" : undefined}
       aria-labelledby={p.isMobile ? "tab-queue" : undefined}
       aria-modal={!p.isMobile && p.drawerOpen || undefined}

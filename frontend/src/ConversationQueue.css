@@ -1,71 +1,55 @@
-/* Queue chrome follows the existing application header, without changing the
-   document, editor, or assessment palettes. Portaled menus share these tokens. */
-.conversation-sidebar.queue-dark,
-.select-menu.queue-select-menu {
-  --text: #eef1f4;
-  --muted: #b8c0c8;
-  --line: #2c343d;
-  --control-line: #52606e;
-  --surface: #182029;
-  --subsurface: #222c36;
-  --canvas: #202933;
-  --selected: #293540;
-  --danger: #f0a69c;
-  --danger-bg: #432d2c;
-  --warning: #e5c283;
-  color: var(--text);
-  scrollbar-color: #5d6976 transparent;
-}
-.conversation-sidebar.queue-dark { background: var(--brand-black); }
-.queue-dark :focus-visible { outline-color: #b2bfcc; }
-.queue-dark .sidebar-heading { gap: 9px; padding: 14px 18px; }
-.queue-dark .sidebar-heading h2 { gap: 10px; font-size: 16px; }
-.queue-dark .sidebar-heading h2 > span {
+/* Neutral queue surface belongs to the same workspace as the transcript.
+   Green is reserved for available primary actions. */
+.conversation-sidebar.queue-neutral { background:#f5f7f9; color:var(--text); scrollbar-color:#a3afbb transparent; }
+.queue-neutral :focus-visible { outline-color: #34414e; }
+.queue-neutral .sidebar-heading { gap: 9px; padding: 14px 18px; }
+.queue-neutral .sidebar-heading h2 { gap: 10px; font-size: 16px; }
+.queue-neutral .sidebar-heading h2 > span {
   color: var(--muted);
   font-size: 12px;
   font-weight: 400;
   font-variant-numeric: tabular-nums;
 }
-.queue-dark .queue-import { margin-left: auto; }
-.queue-dark .queue-controls { padding: 14px 18px 16px; }
-.queue-dark .queue-search { gap: 9px; }
-.queue-dark .search-field { border-color: var(--control-line); background: var(--surface); }
-.queue-dark .search-field:focus-within { outline-color: #b2bfcc; }
-.queue-dark .search-field input { min-height: 42px; font-size: 14px; }
-.queue-dark .filter-toggle { min-height: 42px; width: 38px; background: transparent; border-color: transparent; }
-.queue-dark .filter-toggle.active { border-color: #617180; background: var(--selected); color: var(--text); }
-.queue-dark .filter-count { background: #dde4ea; color: #0e151c; }
-.queue-dark .filters { inset-block-start: 128px; max-height: calc(100% - 140px); border: 1px solid var(--control-line); box-shadow: 0 14px 32px #0006; }
-.queue-dark .queue-state-filter { margin: 0; padding: 0; border: 0; min-width: 0; }
-.queue-dark .queue-state-filter legend { padding: 0; color: var(--muted); font-size: 12px; }
-.queue-dark .queue-views { margin-top: 7px; }
-.queue-dark .queue-view { min-height: 38px; }
-.queue-dark .queue-view[aria-pressed=true] { border-color: #748494; color: var(--text); }
-.queue-dark .queue-view.critical[aria-pressed=true] { border-color: #b77b75; color: var(--danger); }
-.queue-dark .queue-caption { padding: 0 18px 12px; font-size: 11px; }
-.queue-dark .conversation-item { padding: 18px 18px 15px; contain-intrinsic-block-size: auto 116px; }
-.queue-dark .conversation-item:hover { background: #202a34; }
-.queue-dark .conversation-item.selected { background: var(--selected); box-shadow: inset 3px 0 #a1adb9; }
-.queue-dark .conversation-item-top strong { font-size: 15px; }
-.queue-dark .language-tag { padding: 0; background: transparent; }
-.queue-dark .conversation-preview { margin: 8px 0 13px; font-size: 14px; line-height: 1.5; }
-.queue-dark .list-score { color: #eef1f4; font-size: 16px; }
-.queue-dark .sidebar-footer { padding: 16px 18px; background: var(--brand-black); }
-.queue-dark .button.primary { min-height: 44px; background: #164734; color: #f7f8fa; border-color: #3b624e; }
-.queue-dark .button.primary:hover:not(:disabled) { background: #216046; }
-.queue-dark .button-count { padding: 0; background: transparent; color: #cbd5df; }
-.queue-dark .queue-resize-handle::after { background: #7a8796; }
-.queue-dark .queue-resize-handle:hover::after,
-.queue-dark .queue-resize-handle:focus-visible::after,
-.queue-dark .queue-resize-handle[data-resizing=true]::after { background: #b2bfcc; }
+.queue-neutral .queue-import { margin-left: auto; }
+.queue-neutral .queue-controls { padding: 14px 18px 16px; }
+.queue-neutral .queue-search { gap: 9px; }
+.queue-neutral .search-field { border-color: var(--control-line); background: var(--surface); }
+.queue-neutral .search-field:focus-within { outline-color: #34414e; }
+.queue-neutral .search-field input { min-height: 42px; font-size: 14px; }
+.queue-neutral .filter-toggle { min-height: 42px; width: 38px; background: transparent; border-color: transparent; }
+.queue-neutral .filter-toggle.active { border-color: #7d8b99; background: var(--selected); color: var(--text); }
+.queue-neutral .filter-count { background: #0e151c; color: #fff; }
+.queue-neutral .filters { inset-block-start: 128px; max-height: calc(100% - 140px); border: 1px solid var(--control-line); box-shadow: 0 14px 32px #0006; }
+.queue-neutral .queue-state-filter { margin: 0; padding: 0; border: 0; min-width: 0; }
+.queue-neutral .queue-state-filter legend { padding: 0; color: var(--muted); font-size: 12px; }
+.queue-neutral .queue-views { margin-top: 7px; }
+.queue-neutral .queue-view { min-height: 38px; }
+.queue-neutral .queue-view[aria-pressed=true] { border-color: #778695; color: var(--text); }
+.queue-neutral .queue-view.critical[aria-pressed=true] { border-color: #b77b75; color: var(--danger); }
+.queue-neutral .queue-caption { padding: 0 18px 12px; font-size: 11px; }
+.queue-neutral .conversation-item { padding: 18px 18px 15px; contain-intrinsic-block-size: auto 116px; }
+.queue-neutral .conversation-item:hover { background: #edf0f3; }
+.queue-neutral .conversation-item.selected { background:#e4e9ef; box-shadow: inset 3px 0 #0e151c; }
+.queue-neutral .conversation-item-top strong { font-size: 15px; }
+.queue-neutral .language-tag { padding: 0; background: transparent; }
+.queue-neutral .conversation-preview { margin: 8px 0 13px; font-size: 14px; line-height: 1.5; }
+.queue-neutral .list-score { color: #0e151c; font-size: 16px; }
+.queue-neutral .sidebar-footer { padding: 16px 18px; background:#f5f7f9; }
+.queue-neutral .button.primary { min-height: 44px; background: #164734; color: #f7f8fa; border-color: #3b624e; }
+.queue-neutral .button.primary:hover:not(:disabled) { background: #216046; }
+.queue-neutral .button-count { padding: 0; background: transparent; color:inherit; }
+.queue-neutral .queue-resize-handle::after { background: #a1adba; }
+.queue-neutral .queue-resize-handle:hover::after,
+.queue-neutral .queue-resize-handle:focus-visible::after,
+.queue-neutral .queue-resize-handle[data-resizing=true]::after { background: #34414e; }
 .select-menu.queue-select-menu { border: 1px solid var(--control-line); background: var(--surface); box-shadow: 0 12px 32px #0006; }
 @media (max-width: 700px) {
-  .queue-dark .sidebar-heading { padding: 5px 14px; }
-  .queue-dark .queue-controls { padding: 12px 14px; }
-  .queue-dark .queue-view { min-height: 44px; }
-  .queue-dark .search-field input { min-height: 44px; font-size: 16px; }
-  .queue-dark .filter-toggle { min-height: 44px; width: 44px; }
-  .queue-dark .filters { inset-block-start: 128px; }
-  .queue-dark .conversation-item { padding: 16px 16px 13px; }
-  .queue-dark .conversation-preview { -webkit-line-clamp: 2; }
+  .queue-neutral .sidebar-heading { padding: 5px 14px; }
+  .queue-neutral .queue-controls { padding: 12px 14px; }
+  .queue-neutral .queue-view { min-height: 44px; }
+  .queue-neutral .search-field input { min-height: 44px; font-size: 16px; }
+  .queue-neutral .filter-toggle { min-height: 44px; width: 44px; }
+  .queue-neutral .filters { inset-block-start: 128px; }
+  .queue-neutral .conversation-item { padding: 16px 16px 13px; }
+  .queue-neutral .conversation-preview { -webkit-line-clamp: 2; }
 }

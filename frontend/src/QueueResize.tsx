@@ -24,7 +24,15 @@ function rememberWidth(width: number) {
 
 export default function QueueResize({ onChange }: { onChange: (width: number) => void }) {
   const handle = useRef<HTMLDivElement>(null);
-  const drag = useRef<{ id: number; x: number; start: number; width: number } | null>(null);
+  const drag = useRef<{
+    id: number;
+    x: number;
+    start: number;
+    width: number;
+    workspace: HTMLElement;
+    original: string;
+    frame: number | null;
+  } | null>(null);
   const [bounds, setBounds] = useState({ width: DEFAULT_QUEUE_WIDTH, max: MAX_WIDTH });
   const [resizing, setResizing] = useState(false);
   const clamp = (width: number) => Math.round(Math.max(MIN_WIDTH, Math.min(bounds.max, width)));
@@ -35,19 +43,23 @@ export default function QueueResize({ onChange }: { onChange: (width: number) =>
     const assessment = workspace?.querySelector<HTMLElement>(".assessment-pane");
     if (!sidebar || !workspace || !assessment) return;
     const observer = new ResizeObserver(() => {
-      setBounds({
-        width: Math.round(sidebar.getBoundingClientRect().width),
-        max: Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, workspace.clientWidth - assessment.offsetWidth - 320)),
-      });
+      const width = Math.round(sidebar.getBoundingClientRect().width);
+      const max = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, workspace.clientWidth - assessment.offsetWidth - 320));
+      setBounds((previous) => previous.width === width && previous.max === max ? previous : { width, max });
     });
     observer.observe(workspace);
     observer.observe(sidebar);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      if (drag.current?.frame != null) cancelAnimationFrame(drag.current.frame);
+    };
   }, []);
 
   function cancel() {
-    if (!drag.current) return;
-    onChange(drag.current.start);
+    const current = drag.current;
+    if (!current) return;
+    if (current.frame != null) cancelAnimationFrame(current.frame);
+    current.workspace.style.setProperty("--queue-width", current.original);
     drag.current = null;
     setResizing(false);
   }
@@ -68,22 +80,39 @@ export default function QueueResize({ onChange }: { onChange: (width: number) =>
       tabIndex={0}
       data-resizing={resizing}
       onPointerDown={(event) => {
-        if (event.button !== 0) return;
+        const workspace = event.currentTarget.closest<HTMLElement>(".review-workspace");
+        if (event.button !== 0 || !workspace) return;
         event.preventDefault();
         event.currentTarget.focus();
         event.currentTarget.setPointerCapture(event.pointerId);
-        drag.current = { id: event.pointerId, x: event.clientX, start: bounds.width, width: bounds.width };
+        drag.current = {
+          id: event.pointerId,
+          x: event.clientX,
+          start: bounds.width,
+          width: bounds.width,
+          workspace,
+          original: workspace.style.getPropertyValue("--queue-width"),
+          frame: null,
+        };
         setResizing(true);
       }}
       onPointerMove={(event) => {
-        if (!drag.current || drag.current.id !== event.pointerId) return;
-        const width = clamp(drag.current.start + event.clientX - drag.current.x);
-        drag.current.width = width;
-        onChange(width);
+        const current = drag.current;
+        if (!current || current.id !== event.pointerId) return;
+        current.width = clamp(current.start + event.clientX - current.x);
+        if (current.frame != null) return;
+        current.frame = requestAnimationFrame(() => {
+          current.frame = null;
+          current.workspace.style.setProperty("--queue-width", `${current.width}px`);
+        });
       }}
       onPointerUp={(event) => {
-        if (!drag.current || drag.current.id !== event.pointerId) return;
-        rememberWidth(drag.current.width);
+        const current = drag.current;
+        if (!current || current.id !== event.pointerId) return;
+        if (current.frame != null) cancelAnimationFrame(current.frame);
+        current.workspace.style.setProperty("--queue-width", `${current.width}px`);
+        onChange(current.width);
+        rememberWidth(current.width);
         drag.current = null;
         setResizing(false);
         event.currentTarget.releasePointerCapture(event.pointerId);

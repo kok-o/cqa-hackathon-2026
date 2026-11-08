@@ -1,0 +1,67 @@
+.quality-summary {
+  max-width: 880px;
+  margin: 0 auto 18px;
+  padding: 20px 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--panel-radius);
+  background: var(--surface);
+}
+.quality-group {
+  display: grid;
+  gap: 6px;
+  max-width: 320px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.quality-totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 14px;
+  margin: 18px 0 0;
+  padding: 14px 0;
+  border-block: 1px solid var(--line);
+}
+.quality-totals dt, .quality-note, .quality-state { color: var(--muted); font-size: 13px; }
+.quality-totals dd { margin: 3px 0 0; font-size: 22px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.quality-summary h2 { margin: 0 0 6px; font-size: 16px; font-weight: 600; }
+.quality-critical, .quality-violations { margin-top: 24px; }
+.quality-critical h2 { display: flex; align-items: center; gap: 8px; }
+.quality-critical h2 svg { color: var(--danger); }
+.quality-critical strong, .quality-count { font-variant-numeric: tabular-nums; }
+.quality-note { margin: 0 0 10px; }
+.quality-state { margin: 16px 0 0; }
+.quality-summary details { border-bottom: 1px solid var(--line); }
+.quality-summary summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 7px 5px;
+  cursor: pointer;
+  list-style: none;
+}
+.quality-summary summary::-webkit-details-marker { display: none; }
+.quality-summary details[open] > summary svg { transform: rotate(90deg); }
+.quality-count { color: var(--muted); white-space: nowrap; }
+.quality-findings { margin: 0; padding: 0 0 4px 20px; list-style: none; }
+.quality-findings button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 4px 6px;
+  border: 0;
+  background: transparent;
+  color: var(--primary);
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.quality-findings button svg { flex: none; }
+.quality-summary summary:hover, .quality-findings button:hover { background: var(--canvas); }
+
+@media (max-width: 700px) {
+  .quality-summary { padding: 16px; }
+}

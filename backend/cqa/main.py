@@ -174,7 +174,7 @@ def create_app(database_path: str | Path | None = None, evaluator=None, evaluato
         return store.import_conversations(conversations, dataset.data.dataset_group_id)
 
     @application.get("/api/conversations")
-    def conversations(group_id: str | None = None, language: Literal["RU", "KZ", "EN"] | None = None, channel: Literal["agent chat", "voice call"] | None = None, gross_error: bool | None = Query(None, description="Признак последней оценки текущего диалога с учётом апелляций. Неоценённые и изменённые диалоги исключены при true/false.")):
+    def conversations(group_id: str | None = None, language: Literal["RU", "KZ", "EN"] | None = None, channel: Literal["agent chat", "voice call"] | None = None, gross_error: bool | None = Query(None, description="Подтверждённый признак по последней оценке текущей версии диалога с учётом апелляций. Неопределённый признак исключён при true/false.")):
         return store.list_conversations(group_id, language, channel, gross_error)
 
     @application.get("/api/conversations/{conversation_id:path}", response_model=Conversation)
@@ -260,6 +260,10 @@ def create_app(database_path: str | Path | None = None, evaluator=None, evaluato
     @application.get("/api/evaluations/{evaluation_id}")
     def evaluation(evaluation_id: str):
         return store.evaluation(evaluation_id)
+
+    @application.get("/api/quality-summary")
+    def quality_summary(group_id: str, checklist_id: str, checklist_version: int = Query(..., ge=1)):
+        return store.quality_summary(group_id, store.checklist(checklist_id, checklist_version))
 
     @application.get("/api/submission/export")
     def official_submission(

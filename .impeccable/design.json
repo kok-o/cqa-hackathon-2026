@@ -1,21 +1,21 @@
 {
   "schemaVersion": 1,
   "colors": {
-    "canvas": "#f4f5f3",
+    "canvas": "#f2f5f3",
     "surface": "#ffffff",
-    "text": "#25312a",
-    "muted": "#667169",
-    "border": "#e4e8e2",
-    "primary": "#216447",
-    "nav": "#ffffff",
-    "selected": "#e8f3ec",
-    "warning": "#875313",
-    "danger": "#a03434"
+    "text": "#17251f",
+    "muted": "#526158",
+    "border": "#dce5df",
+    "primary": "#164734",
+    "nav": "#0e151c",
+    "selected": "#e6f2e9",
+    "warning": "#7b5018",
+    "danger": "#923330"
   },
   "typography": {
     "family": "IBM Plex Sans, sans-serif",
     "body": 14,
-    "heading": 20,
+    "heading": 18,
     "lineHeight": 1.5
   },
   "spacing": [
@@ -27,14 +27,14 @@
     32
   ],
   "radii": {
-    "control": 4,
-    "sheet": 0
+    "control": 7,
+    "sheet": 12
   },
   "interaction": {
     "mobileTouchTarget": 44,
     "evidenceTransitionMs": 160,
-    "resultTransitionMs": 180,
-    "panelTransitionMs": 220,
+    "resultTransitionMs": 200,
+    "panelTransitionMs": 200,
     "reducedMotion": "instant; keep focus and selection visible"
   },
   "layout": {

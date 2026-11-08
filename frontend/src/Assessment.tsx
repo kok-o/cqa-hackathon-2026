@@ -1,8 +1,9 @@
 import Select from "./Select";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
-import type { Dispatch, SetStateAction } from "react";
+import type { Dispatch, ReactNode, SetStateAction } from "react";
 import {
   ArrowUpRight,
+  Bot,
   ChevronDown,
   MessageSquarePlus,
   Check,
@@ -28,12 +29,14 @@ import {
   uid,
 } from "./api";
 import { answerName, date, number, statusName } from "./format";
+import type { EvidenceTarget } from "./Transcript";
 import "./Assessment.css";
 
 type Props = {
   evaluation: Evaluation;
+  initialCriterionId?: string;
   onUpdated: (value: Evaluation) => void;
-  onEvidence: (id: string, endId?: string, criterionId?: string) => void;
+  onEvidence: (target: EvidenceTarget, animate: boolean) => void;
 };
 type AppealProps = Pick<Props, "evaluation" | "onUpdated"> & {
   criterion: Criterion;
@@ -66,14 +69,19 @@ type DraftContextValue = {
 const DraftContext = createContext<DraftContextValue | null>(null);
 const emptyAppealDraft = (): AppealDraft => ({ adding: false, comment: "", busy: false, error: "" });
 
-// The expanded criterion is unmounted on navigation. Keep editable state at the
-// evaluation level so only one detail panel is rendered without losing drafts.
-function useAppealDraft(criterionId: string) {
+export function AssessmentDraftsProvider({ children }: { children: ReactNode }) {
+  const [appeals, setAppeals] = useState<Record<string, AppealDraft>>({});
+  const [decisions, setDecisions] = useState<Record<string, DecisionDraft>>({});
+  return <DraftContext.Provider value={{ appeals, decisions, setAppeals, setDecisions }}>{children}</DraftContext.Provider>;
+}
+
+function useAppealDraft(evaluationId: string, criterionId: string) {
   const { appeals, setAppeals } = useContext(DraftContext)!;
-  const draft = appeals[criterionId] ?? emptyAppealDraft();
+  const key = JSON.stringify([evaluationId, criterionId]);
+  const draft = appeals[key] ?? emptyAppealDraft();
   const update = (patch: Partial<AppealDraft>) => setAppeals(current => ({
     ...current,
-    [criterionId]: { ...(current[criterionId] ?? emptyAppealDraft()), ...patch },
+    [key]: { ...(current[key] ?? emptyAppealDraft()), ...patch },
   }));
   return { draft, update };
 }
@@ -98,22 +106,26 @@ function useDecisionDraft(appealId: string, result: CriterionResult, evaluation:
   });
   return { draft, update, reset };
 }
-const motion = () =>
-  window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ? ("instant" as const)
-    : ("smooth" as const);
-
 export default function Assessment({
   evaluation,
+  initialCriterionId,
   onUpdated,
   onEvidence,
 }: Props) {
   const [showOriginal, setShowOriginal] = useState(false);
-  const [selectedId, setSelectedId] = useState("");
+  const [animateRevision, setAnimateRevision] = useState(false);
+  const [selection, setSelection] = useState({ id: initialCriterionId ?? "", animate: false });
   const [saved, setSaved] = useState(false);
-  const [appealDrafts, setAppealDrafts] = useState<Record<string, AppealDraft>>({});
-  const [decisionDrafts, setDecisionDrafts] = useState<Record<string, DecisionDraft>>({});
   const revisionRef = useRef(evaluation.revision);
+  useEffect(() => {
+    if (!initialCriterionId) return;
+    const frame = window.requestAnimationFrame(() => {
+      const control = document.getElementById(`criterion-${initialCriterionId}`);
+      control?.focus({ preventScroll: true });
+      control?.scrollIntoView({ block: "nearest" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [initialCriterionId]);
   useEffect(() => {
     if (revisionRef.current !== evaluation.revision) {
       revisionRef.current = evaluation.revision;
@@ -123,18 +135,27 @@ export default function Assessment({
     }
   }, [evaluation.revision]);
   const metadata = evaluation.model_info;
+  const testRun = metadata.mode === "test" || metadata.provider === "test" || metadata.provider === "isolated-test-double";
+  const reviewed = evaluation.revision > 1;
+  const currentReview = reviewed && !showOriginal;
+  const latestDecision = evaluation.appeals.reduce<Appeal | null>((latest, item) =>
+    item.decision && (!latest?.decision || item.decision.created_at > latest.decision.created_at) ? item : latest,
+  null);
   const results = showOriginal
     ? evaluation.original_results
     : evaluation.results;
   const score = showOriginal ? evaluation.original_score : evaluation.score;
   const criterion = evaluation.checklist.criteria.find(
-    (item) => item.criterion_id === selectedId,
+    (item) => item.criterion_id === selection.id,
   );
   const result = results.find(
     (item) => item.criterion_id === criterion?.criterion_id,
   );
   const calculated = score.criteria.find(
     (item) => item.criterion_id === criterion?.criterion_id,
+  );
+  const replaced = currentReview && evaluation.appeals.some((appeal) =>
+    appeal.criterion_id === criterion?.criterion_id && appeal.decision?.action === "replace",
   );
   const position = (id: string) =>
     evaluation.conversation.transcript.findIndex(
@@ -152,17 +173,21 @@ export default function Assessment({
               )?.normalized_score === 1
             ? "good"
             : "neutral";
-  function select(id: string) {
-    setSelectedId((current) => (current === id ? "" : id));
+  function select(id: string, animate: boolean) {
+    setSelection((current) => ({ id: current.id === id ? "" : id, animate }));
     window.requestAnimationFrame(() =>
       document
         .getElementById(`criterion-${id}`)
-        ?.scrollIntoView({ behavior: motion(), block: "nearest" }),
+        ?.scrollIntoView({ block: "nearest" }),
     );
+  }
+  function chooseResult(original: boolean, animate: boolean) {
+    setAnimateRevision(animate);
+    setShowOriginal(original);
   }
   const detail = criterion ? (
     <div
-      className="aq-detail"
+      className={`aq-detail${selection.animate ? " aq-detail-motion" : ""}`}
       id="assessment-criterion-detail"
       aria-labelledby={`criterion-${criterion.criterion_id}`}
     >
@@ -180,6 +205,7 @@ export default function Assessment({
         {result?.gross_error ? (
           <span className="aq-danger">Грубая ошибка</span>
         ) : null}
+        {replaced && <span className="badge good">Ответ проверяющего</span>}
       </div>
       {result ? (
         <>
@@ -191,18 +217,17 @@ export default function Assessment({
                   type="button"
                   className="aq-evidence"
                   key={`${evidence.message_id}-${index}`}
-                  onClick={() =>
-                    onEvidence(
-                      evidence.message_id,
-                      undefined,
-                      criterion.criterion_id,
-                    )
-                  }
+                  onClick={(event) => onEvidence({
+                    start: evidence.message_id,
+                    quote: evidence.quote,
+                    criterion: criterion.criterion_id,
+                    title: criterion.title,
+                  }, event.detail > 0)}
                 >
                   <span className="aq-quote">«{evidence.quote}»</span>
                   <span className="aq-evidence-action">
                     К реплике №{position(evidence.message_id)}
-                    <ArrowUpRight size={14} />
+                    <ArrowUpRight size={14} aria-hidden="true" />
                   </span>
                 </button>
               ))}
@@ -212,13 +237,12 @@ export default function Assessment({
             <button
               type="button"
               className="aq-span"
-              onClick={() =>
-                onEvidence(
-                  result.checked_span!.start_message_id,
-                  result.checked_span!.end_message_id,
-                  criterion.criterion_id,
-                )
-              }
+              onClick={(event) => onEvidence({
+                start: result.checked_span!.start_message_id,
+                end: result.checked_span!.end_message_id,
+                criterion: criterion.criterion_id,
+                title: criterion.title,
+              }, event.detail > 0)}
             >
               <span>
                 <strong>Проверенный участок</strong>
@@ -227,7 +251,7 @@ export default function Assessment({
                   {position(result.checked_span.end_message_id)}
                 </small>
               </span>
-              <ArrowUpRight size={15} />
+              <ArrowUpRight size={15} aria-hidden="true" />
             </button>
           ) : null}
         </>
@@ -256,10 +280,14 @@ export default function Assessment({
     </div>
   ) : null;
   return (
-    <DraftContext.Provider value={{ appeals: appealDrafts, decisions: decisionDrafts, setAppeals: setAppealDrafts, setDecisions: setDecisionDrafts }}>
     <section className="assessment aq-panel" aria-label="Оценка диалога">
-      <header className="aq-heading">
-        <button
+      <div className="aq-summary">
+        <div className="aq-heading">
+          <div className="aq-provenance">
+            <span>{currentReview ? <Gavel size={15} aria-hidden="true" /> : <Bot size={16} aria-hidden="true" />}{currentReview ? "Решение проверяющего" : testRun ? "Тестовый расчёт" : "Оценка AI"}</span>
+            <span className="aq-version" title={evaluation.checklist.title}>Правила запуска <strong>v{evaluation.checklist.version}</strong></span>
+          </div>
+          <button
           type="button"
           className="icon-button aq-download"
           aria-label="Скачать выбранную оценку"
@@ -271,27 +299,30 @@ export default function Assessment({
             )
           }
         >
-          <FileDown size={17} />
+          <FileDown size={17} aria-hidden="true" />
         </button>
-      </header>
-      <div className={`aq-score ${saved ? "aq-score-saved" : ""}`}>
-        <div
-          className="aq-score-value"
-          aria-label={`${showOriginal ? "Исходная оценка" : "Итоговая оценка"}: ${number(score.total, 2)} из 100`}
-        >
+        </div>
+      <div className="aq-score">
+        <div className="aq-score-value">
+          <span className="sr-only">{score.total == null ? "Итоговый балл не рассчитан" : showOriginal ? "Исходная оценка" : "Итоговая оценка"}</span>
           <strong>{number(score.total, 2)}</strong>
-          <span>/ 100</span>
+          {score.total != null && <span>/ 100</span>}
         </div>
         <span
-          className={`aq-status ${score.status === "complete" ? "good" : "warning"}`}
+          className={`aq-status badge ${score.status === "complete" ? "good" : "warning"}`}
         >
           {statusName(score.status)}
         </span>
       </div>
+      {score.total != null && (
+        <div className="aq-meter" aria-hidden="true">
+          <span data-animate={animateRevision} style={{ transform: `scaleX(${score.total / 100})` }} />
+        </div>
+      )}
       {score.gross_error ? (
         <p className="aq-critical" role="status">
-          <AlertTriangle size={15} />
-          Грубая ошибка
+          <AlertTriangle size={16} aria-hidden="true" />
+          <span><strong>Грубая ошибка</strong><small>Отдельный флаг оценки</small></span>
         </p>
       ) : null}
       {score.status !== "complete" ? (
@@ -303,30 +334,37 @@ export default function Assessment({
       ) : null}
       {saved ? (
         <p className="aq-saved" role="status">
-          <CheckCheck size={14} />
+          <CheckCheck size={14} aria-hidden="true" />
           Решение сохранено, итог пересчитан
         </p>
       ) : null}
-      {evaluation.revision > 1 ? (
-        <div className="aq-revision" aria-label="Версия результата">
-          <button
-            type="button"
-            aria-pressed={!showOriginal}
-            onClick={() => setShowOriginal(false)}
-          >
-            После пересмотра
-          </button>
+      {reviewed ? (
+        <div className="aq-revision" role="group" aria-label="Версия результата">
           <button
             type="button"
             aria-pressed={showOriginal}
-            onClick={() => setShowOriginal(true)}
+            onClick={(event) => chooseResult(true, event.detail > 0)}
           >
-            Исходная · {number(evaluation.original_score.total, 2)}
+            <span>Исходная</span><strong>{number(evaluation.original_score.total, 2)}</strong>
+          </button>
+          <button
+            type="button"
+            aria-pressed={!showOriginal}
+            onClick={(event) => chooseResult(false, event.detail > 0)}
+          >
+            <span>После пересмотра</span><strong>{number(evaluation.score.total, 2)}</strong>
           </button>
         </div>
       ) : null}
+      {latestDecision?.decision && (
+        <details className="aq-reason">
+          <summary>Последнее решение <ChevronDown size={14} aria-hidden="true" /></summary>
+          <p>{latestDecision.decision.reason}</p>
+        </details>
+      )}
+      </div>
       <div className="aq-criteria-heading">
-        <h3>Критерий</h3>
+        <h3>Критерии</h3>
         <span>Баллы / вес</span>
       </div>
       <div className="aq-criteria-list" aria-label="Критерии оценки">
@@ -351,7 +389,7 @@ export default function Assessment({
                 aria-controls={
                   selected ? "assessment-criterion-detail" : undefined
                 }
-                onClick={() => select(item.criterion_id)}
+                onClick={(event) => select(item.criterion_id, event.detail > 0)}
               >
                 <span className="aq-criterion-name">{item.title}</span>
                 <span className={`aq-criterion-answer ${tone(value)}`}>
@@ -403,6 +441,10 @@ export default function Assessment({
             <dd>{date(evaluation.created_at)}</dd>
           </div>
           <div>
+            <dt>Чек-лист</dt>
+            <dd>{evaluation.checklist.title} · v{evaluation.checklist.version}</dd>
+          </div>
+          <div>
             <dt>Ревизия</dt>
             <dd>{evaluation.revision}</dd>
           </div>
@@ -425,7 +467,6 @@ export default function Assessment({
         </dl>
       </details>
     </section>
-    </DraftContext.Provider>
   );
 }
 
@@ -435,7 +476,7 @@ function CriterionAppeals({
   result,
   onUpdated,
 }: AppealProps) {
-  const { draft, update } = useAppealDraft(criterion.criterion_id);
+  const { draft, update } = useAppealDraft(evaluation.evaluation_id, criterion.criterion_id);
   const { adding, comment, busy, error } = draft;
   const setAdding = (adding: boolean) => update({ adding });
   const setComment = (comment: string) => update({ comment });
@@ -542,6 +583,7 @@ function CriterionAppeals({
               ref={input}
               value={comment}
               onChange={(event) => setComment(event.target.value)}
+              disabled={busy}
               rows={3}
               placeholder="Сошлитесь на реплику или правило чек-листа"
               required

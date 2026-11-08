@@ -68,7 +68,7 @@ def main() -> None:
             assert imported["imported"] == 3
             choose_select(select_control(page, "Версия чек-листа"), json.dumps(["synthetic-checklist", 1], separators=(",", ":")))
             page.get_by_role("button").filter(has_text=conversation_id).click()
-            expect(page.locator(".conversation-context strong")).to_have_text(conversation_id)
+            expect(page.locator("#conversation-title")).to_have_text(conversation_id)
             expect(page.locator(f'[id="message-{conversation_id}:0001"]')).to_be_visible()
             checks.append("synthetic_json_import_and_transcript")
 
@@ -93,6 +93,15 @@ def main() -> None:
             assert original["results"][0]["answer"] is False
             assert original["score"]["total"] < 100
             checks.append("real_job_endpoint_with_explicit_test_double")
+
+            page.get_by_role("button", name="Сводка", exact=True).click()
+            summary = page.get_by_role("region", name="Сводка по нарушениям")
+            summary.get_by_text("Приветствие", exact=True).click()
+            summary.get_by_role("button", name=conversation_id, exact=True).click()
+            expect(page.locator("#assessment-criterion-detail")).to_have_attribute("aria-labelledby", "criterion-example-greeting")
+            page.locator(".aq-evidence").first.click()
+            expect(page.locator(".message.highlighted")).to_have_attribute("id", f"message-{conversation_id}:0001")
+            checks.append("quality_summary_opens_matching_evaluation_and_evidence")
 
             quote_criterion = original["checklist"]["criteria"][1]["criterion_id"]
             page.locator(f'[id="criterion-{quote_criterion}"]').click()
@@ -134,15 +143,32 @@ def main() -> None:
             page.get_by_role("button", name="Добавить критерий", exact=True).click()
             title = "Новый критерий " + token
             page.get_by_label(re.compile("^Название критерия")).last.fill(title)
+            page.get_by_role("spinbutton", name="Вес", exact=True).fill("3")
             page.get_by_label(re.compile("^Инструкция для оценки")).last.fill("Определите, назвал ли оператор своё имя. Ответ true или false; отсутствие проверяйте по всему диалогу.")
+            page.get_by_role("button", name="Диалоги", exact=True).click()
+            page.get_by_role("button", name="Чек-листы", exact=True).click()
+            expect(page.get_by_label(re.compile("^Название критерия")).last).to_have_value(title)
+            expect(page.get_by_role("spinbutton", name="Вес", exact=True)).to_have_value("3")
             with page.expect_response(lambda r: r.request.method == "POST" and r.url.endswith("/versions")) as response:
                 page.get_by_role("button", name="Сохранить новую версию", exact=True).click()
             assert response.value.status == 201, response.value.text()
             version = response.value.json()
             assert version["version"] >= 2 and len(version["criteria"]) == 3
+            assert version["criteria"][-1]["weight"] == 3
             criterion_id = version["criteria"][-1]["criterion_id"]
+            saved_key = json.dumps([version["checklist_id"], version["version"]], separators=(",", ":"))
+            base_key = json.dumps([version["checklist_id"], 1], separators=(",", ":"))
+            picker = select_control(page, "Версия чек-листа")
+            choose_select(picker, base_key)
+            page.get_by_role("spinbutton", name="Вес", exact=True).fill("7")
+            choose_select(picker, saved_key)
+            choose_select(picker, base_key)
+            expect(page.get_by_role("spinbutton", name="Вес", exact=True)).to_have_value("7")
+            expect(page.locator(".editor-save-status")).to_contain_text("Черновик")
+            choose_select(picker, saved_key)
+            checks.append("checklist_draft_survives_tab_and_version_changes")
             page.get_by_role("button", name="Диалоги", exact=True).click()
-            expect_select_value(select_control(page, "Версия чек-листа"), json.dumps([version["checklist_id"], version["version"]], separators=(",", ":")))
+            expect_select_value(select_control(page, "Версия чек-листа"), saved_key)
             rerun = analyze()
             assert rerun["checklist"]["version"] == version["version"]
             assert criterion_id in {r["criterion_id"] for r in rerun["results"]}

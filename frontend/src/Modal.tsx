@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import type { ReactNode } from "react";
 import { X } from "lucide-react";
 export default function Modal({
@@ -11,6 +11,7 @@ export default function Modal({
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const headingId = useId();
   const close = useRef(onClose);
   close.current = onClose;
   useEffect(() => {
@@ -26,7 +27,7 @@ export default function Modal({
     <dialog
       ref={ref}
       className="modal"
-      aria-labelledby="modal-heading"
+      aria-labelledby={headingId}
       onCancel={(e) => {
         e.preventDefault();
         close.current();
@@ -46,14 +47,15 @@ export default function Modal({
     >
       <header>
         <div>
-          <h2 id="modal-heading">{title}</h2>
+          <h2 id={headingId}>{title}</h2>
         </div>
         <button
           className="icon-button"
+          type="button"
           onClick={onClose}
           aria-label="Закрыть окно"
         >
-          <X size={20} />
+          <X size={20} aria-hidden="true" />
         </button>
       </header>
       {children}

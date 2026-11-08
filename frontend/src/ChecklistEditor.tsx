@@ -1,12 +1,11 @@
 import Select from "./Select";
-import { useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import {
   Plus,
   Save,
   Trash2,
   Copy,
   FileDown,
-  Check,
   AlertCircle,
 } from "lucide-react";
 import type { ChecklistVersion, Criterion } from "./contracts";
@@ -15,8 +14,24 @@ import "./ChecklistEditor.css";
 
 type Props = {
   checklist: ChecklistVersion;
-  onSaved: (value: ChecklistVersion) => void;
+  versionKey: string;
+  visible: boolean;
+  onSaved: (value: ChecklistVersion, baseKey: string) => void;
 };
+type EditorDraft = {
+  checklist: ChecklistVersion;
+  selectedId: string;
+  choiceText: Record<string, string>;
+  scaleText: Record<string, string>;
+  dirty: boolean;
+};
+const newDraft = (checklist: ChecklistVersion): EditorDraft => ({
+  checklist,
+  selectedId: checklist.criteria[0]?.criterion_id ?? "",
+  choiceText: {},
+  scaleText: {},
+  dirty: false,
+});
 const answerNames = { boolean: "Да / нет", scale: "Шкала", choice: "Варианты" };
 const freshCriterion = (): Criterion => ({
   criterion_id: `criterion-${uid().slice(0, 8)}`,
@@ -37,40 +52,52 @@ const freshCriterion = (): Criterion => ({
   critical_answer: null,
 });
 
-export default function ChecklistEditor({ checklist, onSaved }: Props) {
-  const [draft, setDraft] = useState<ChecklistVersion>(() =>
-    structuredClone(checklist),
-  );
-  const [selectedId, setSelectedId] = useState(
-    checklist.criteria[0]?.criterion_id ?? "",
-  );
+export default function ChecklistEditor({ checklist, versionKey, visible, onSaved }: Props) {
+  const [drafts, setDrafts] = useState<Record<string, EditorDraft>>({});
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
-  const [dirty, setDirty] = useState(false);
-  const [choiceText, setChoiceText] = useState<Record<string, string>>({});
-  const [scaleText, setScaleText] = useState<Record<string, string>>({});
+  const [failure, setFailure] = useState<{ versionKey: string; message: string } | null>(null);
+  const error = failure?.versionKey === versionKey ? failure.message : "";
   const titleRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLDivElement>(null);
+  const errorRef = useRef<HTMLDivElement>(null);
+  const hasUnsaved = Object.values(drafts).some((item) => item.dirty);
+  useEffect(() => {
+    if (!hasUnsaved) return;
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [hasUnsaved]);
+  useEffect(() => {
+    if (error && visible) errorRef.current?.focus();
+  }, [error, visible]);
+
+  const { checklist: draft, selectedId, dirty, scaleText, choiceText } = drafts[versionKey] ?? newDraft(checklist);
+  function updateDraft(update: (current: EditorDraft) => Partial<EditorDraft>) {
+    setDrafts((current) => {
+      const previous = current[versionKey] ?? newDraft(checklist);
+      return { ...current, [versionKey]: { ...previous, ...update(previous) } };
+    });
+  }
+  const setSelectedId = (id: string) => updateDraft(() => ({ selectedId: id }));
+  const setError = (message: string) => setFailure(message ? { versionKey, message } : null);
+
+  if (!visible) return null;
+
   const selectedIndex = Math.max(
     0,
     draft.criteria.findIndex((item) => item.criterion_id === selectedId),
   );
   const criterion = draft.criteria[selectedIndex];
   const weight = draft.criteria.reduce((sum, item) => sum + item.weight, 0);
-  const markChanged = () => {
-    setDirty(true);
-    setNotice("");
-  };
   const change = (values: Partial<Criterion>) => {
-    markChanged();
-    setDraft((current) => ({
-      ...current,
-      criteria: current.criteria.map((item) =>
-        item.criterion_id === criterion.criterion_id
-          ? { ...item, ...values }
-          : item,
-      ),
+    updateDraft((current) => ({
+      dirty: true,
+      checklist: {
+        ...current.checklist,
+        criteria: current.checklist.criteria.map((item) =>
+          item.criterion_id === criterion.criterion_id ? { ...item, ...values } : item,
+        ),
+      },
     }));
   };
 
@@ -159,7 +186,6 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
 
   async function save(asNew: boolean) {
     setError("");
-    setNotice("");
     try {
       if (!draft.title.trim()) throw new Error("Укажите название чек-листа.");
       const criteria = preparedCriteria();
@@ -179,9 +205,16 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
             `/checklists/${q(checklist.checklist_id)}/versions`,
             body,
           );
-      setDirty(false);
-      setNotice(`Версия ${saved.version} сохранена.`);
-      onSaved(saved);
+      setDrafts((current) => {
+        const next = { ...current };
+        delete next[versionKey];
+        next[JSON.stringify([saved.checklist_id, saved.version])] = {
+          ...newDraft(saved),
+          selectedId: criterion.criterion_id,
+        };
+        return next;
+      });
+      onSaved(saved, versionKey);
     } catch (err) {
       setError(errorText(err));
     } finally {
@@ -191,12 +224,11 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
 
   function addCriterion() {
     const next = freshCriterion();
-    setDraft((current) => ({
-      ...current,
-      criteria: [...current.criteria, next],
+    updateDraft((current) => ({
+      checklist: { ...current.checklist, criteria: [...current.checklist.criteria, next] },
+      selectedId: next.criterion_id,
+      dirty: true,
     }));
-    setSelectedId(next.criterion_id);
-    markChanged();
     requestAnimationFrame(() => {
       formRef.current?.scrollIntoView({ block: "nearest" });
       titleRef.current?.focus({ preventScroll: true });
@@ -207,10 +239,12 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
     const next = draft.criteria.filter(
       (item) => item.criterion_id !== criterion.criterion_id,
     );
-    setDraft((current) => ({ ...current, criteria: next }));
     const selected = next[Math.min(selectedIndex, next.length - 1)];
-    setSelectedId(selected.criterion_id);
-    markChanged();
+    updateDraft((current) => ({
+      checklist: { ...current.checklist, criteria: next },
+      selectedId: selected.criterion_id,
+      dirty: true,
+    }));
     requestAnimationFrame(() =>
       document
         .getElementById(`editor-select-${selected.criterion_id}`)
@@ -237,15 +271,12 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
   }
 
   function setType(type: Criterion["answer_type"]) {
-    setScaleText((current) => {
-      const next = { ...current };
-      delete next[criterion.criterion_id];
-      return next;
-    });
-    setChoiceText((current) => {
-      const next = { ...current };
-      delete next[criterion.criterion_id];
-      return next;
+    updateDraft((current) => {
+      const nextScale = { ...current.scaleText };
+      const nextChoices = { ...current.choiceText };
+      delete nextScale[criterion.criterion_id];
+      delete nextChoices[criterion.criterion_id];
+      return { scaleText: nextScale, choiceText: nextChoices };
     });
     change({
       answer_type: type,
@@ -272,15 +303,9 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
     >
       <h2 id="editor-heading" className="sr-only">Чек-лист</h2>
       {error ? (
-        <div className="notice error editor-feedback" role="alert">
-          <AlertCircle size={18} />
+        <div className="notice error editor-feedback" role="alert" ref={errorRef} tabIndex={-1}>
+          <AlertCircle size={18} aria-hidden="true" />
           <span>{error}</span>
-        </div>
-      ) : null}
-      {notice ? (
-        <div className="notice success editor-feedback" role="status">
-          <Check size={18} />
-          {notice}
         </div>
       ) : null}
       <div className="editor-meta">
@@ -288,10 +313,12 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
           Название
           <input
             value={draft.title}
-            onChange={(event) => {
-              setDraft({ ...draft, title: event.target.value });
-              markChanged();
-            }}
+            name="checklist-title"
+            autoComplete="off"
+            onChange={(event) => updateDraft((current) => ({
+              dirty: true,
+              checklist: { ...current.checklist, title: event.target.value },
+            }))}
             maxLength={200}
             disabled={busy}
           />
@@ -300,14 +327,10 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
           Источник
           <Select
             value={draft.provenance}
-            onChange={(event) => {
-              setDraft({
-                ...draft,
-                provenance: event.target
-                  .value as ChecklistVersion["provenance"],
-              });
-              markChanged();
-            }}
+            onChange={(event) => updateDraft((current) => ({
+              dirty: true,
+              checklist: { ...current.checklist, provenance: event.target.value as ChecklistVersion["provenance"] },
+            }))}
             disabled={busy}
           >
             <option value="synthetic_example">Пользовательский чек-лист</option>
@@ -421,12 +444,14 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
             </button>
           </header>
           <fieldset className="editor-fieldset" disabled={busy}>
-            <legend>Инструкция</legend>
-            <div className="editor-field-grid">
-              <label className="field editor-wide">
+            <legend>Настройки критерия</legend>
+            <div className="editor-field-grid editor-identity">
+              <label className="field">
                 Название критерия
                 <input
                   ref={titleRef}
+                  name="criterion-title"
+                  autoComplete="off"
                   value={criterion.title}
                   onChange={(event) => change({ title: event.target.value })}
                   placeholder="Например, понятность следующего действия"
@@ -434,10 +459,28 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
                   required
                 />
               </label>
+              <label className="field">
+                Вес
+                <input
+                  type="number"
+                  name="criterion-weight"
+                  autoComplete="off"
+                  min="0"
+                  step="any"
+                  value={criterion.weight}
+                  onChange={(event) =>
+                    change({ weight: Number(event.target.value) })
+                  }
+                />
+                {criterion.weight === 0 ? (
+                  <span className="form-help">Вес 0 исключает критерий из итогового балла.</span>
+                ) : null}
+              </label>
               <label className="field editor-wide">
                 Инструкция для оценки
                 <textarea
-                  rows={5}
+                  name="criterion-instruction"
+                  rows={4}
                   value={criterion.instruction}
                   onChange={(event) =>
                     change({ instruction: event.target.value })
@@ -446,24 +489,10 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
                   required
                 />
               </label>
-              <label className="field editor-wide">
-                Раздел
-                <input
-                  value={criterion.section_id ?? ""}
-                  onChange={(event) =>
-                    change({
-                      section_id: event.target.value.trim()
-                        ? event.target.value
-                        : null,
-                    })
-                  }
-                  placeholder="Необязательно"
-                />
-              </label>
             </div>
           </fieldset>
           <fieldset className="editor-fieldset" disabled={busy}>
-            <legend>Вес и шкала</legend>
+            <legend>Ответ и шкала</legend>
             <div className="editor-field-grid">
               <label className="field">
                 Тип ответа
@@ -479,19 +508,20 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
                 </Select>
               </label>
               <label className="field">
-                Вес
+                Раздел
                 <input
-                  type="number"
-                  min="0"
-                  step="any"
-                  value={criterion.weight}
+                  name="criterion-section"
+                  autoComplete="off"
+                  value={criterion.section_id ?? ""}
                   onChange={(event) =>
-                    change({ weight: Number(event.target.value) })
+                    change({
+                      section_id: event.target.value.trim()
+                        ? event.target.value
+                        : null,
+                    })
                   }
+                  placeholder="Необязательно"
                 />
-                {criterion.weight === 0 ? (
-                  <span className="form-help">Не влияет на итоговый балл.</span>
-                ) : null}
               </label>
               {criterion.answer_type === "boolean" ? (
                 <label className="field editor-wide">
@@ -553,13 +583,10 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
                         criterion.allowed_values?.join(", ") ??
                         ""
                       }
-                      onChange={(event) => {
-                        setScaleText((current) => ({
-                          ...current,
-                          [criterion.criterion_id]: event.target.value,
-                        }));
-                        markChanged();
-                      }}
+                      onChange={(event) => updateDraft((current) => ({
+                        dirty: true,
+                        scaleText: { ...current.scaleText, [criterion.criterion_id]: event.target.value },
+                      }))}
                       placeholder="Например: 0, 4, 7, 10"
                     />
                     <span className="form-help">
@@ -580,13 +607,10 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
                         .map(([label, score]) => `${label} = ${score}`)
                         .join("\n")
                     }
-                    onChange={(event) => {
-                      setChoiceText((current) => ({
-                        ...current,
-                        [criterion.criterion_id]: event.target.value,
-                      }));
-                      markChanged();
-                    }}
+                    onChange={(event) => updateDraft((current) => ({
+                      dirty: true,
+                      choiceText: { ...current.choiceText, [criterion.criterion_id]: event.target.value },
+                    }))}
                   />
                   <span className="form-help">
                     По одному варианту на строку: «Частично = 0.5». Баллы от 0
@@ -682,9 +706,10 @@ export default function ChecklistEditor({ checklist, onSaved }: Props) {
         </div>
       </div>
       <footer className="editor-save-bar">
-        {dirty && (
-          <div className="editor-save-status">Изменения не сохранены</div>
-        )}
+        <div className={`editor-save-status${dirty ? " dirty" : ""}`} role="status">
+          <strong>{dirty ? "Черновик" : `Версия v${checklist.version}`}</strong>
+          <span>{dirty ? `Изменения на основе v${checklist.version} ещё не сохранены.` : "Сохраните изменения отдельной версией для нового запуска."}</span>
+        </div>
         <div className="editor-save-actions">
           <button
             className="button secondary"

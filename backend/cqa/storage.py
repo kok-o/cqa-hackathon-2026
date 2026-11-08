@@ -10,7 +10,7 @@ from uuid import uuid4
 
 from .evaluator.validation import validate_draft
 from .models import ChecklistVersion, Conversation, CriterionResult, EvaluationDraft
-from .scoring import calculate_score
+from .scoring import calculate_score, normalize_answer
 
 
 class NotFoundError(Exception):
@@ -31,6 +31,17 @@ def dumps(value) -> str:
 
 def digest(value) -> str:
     return hashlib.sha256(dumps(value).encode("utf-8")).hexdigest()
+
+
+def gross_error_flag(evaluation: dict) -> bool | None:
+    """Distinguish a confirmed flag from a check still awaiting evidence."""
+    if evaluation["score"].get("gross_error", False):
+        return True
+    unresolved = {result["criterion_id"] for result in evaluation["results"] if result["status"] == "needs_review"}
+    if any(criterion.get("gross_error_rule") and criterion["criterion_id"] in unresolved
+           for criterion in evaluation["checklist"]["criteria"]):
+        return None
+    return False
 
 
 class Store:
@@ -151,8 +162,8 @@ class Store:
     def list_conversations(self, group_id=None, language=None, channel=None, gross_error=None):
         """Filter the latest reviewed result only when its source is still current.
 
-        Unassessed or changed conversations have an unknown flag (None), so they
-        match neither gross_error=True nor gross_error=False.
+        Unassessed or changed conversations and unresolved gross-error checks
+        have an unknown flag (None) unless a violation has been confirmed.
         """
         conditions, params = [], []
         for name, value in (("group_id", group_id), ("language", language), ("channel", channel)):
@@ -174,11 +185,16 @@ class Store:
                     if digest(payload["conversation"]) == row["content_hash"]:
                         latest_payload = payload
                         break
-                latest_gross_error = bool(latest_payload["score"].get("gross_error", False)) if latest_payload else None
+                latest_gross_error = gross_error_flag(latest_payload) if latest_payload else None
                 if gross_error is not None and latest_gross_error is not gross_error:
                     continue
                 messages = conversation["transcript"]
-                preview = next((m["text"] for m in messages if m["speaker"] == "client" and m["text"].strip()), messages[0]["text"])
+                if row["channel"] == "voice call":
+                    preview = next((m["text"].strip() for speaker in ("client", "operator")
+                                    for m in messages if m["speaker"] == speaker
+                                    and any(char.isalpha() for char in m["text"])), "")
+                else:
+                    preview = next((m["text"] for m in messages if m["speaker"] == "client" and m["text"].strip()), messages[0]["text"])
                 summaries.append({
                     "conversation_id": row["conversation_id"], "group_id": row["group_id"],
                     "channel": row["channel"], "language": row["language"],
@@ -317,7 +333,7 @@ class Store:
         where = " WHERE " + " AND ".join(conditions) if conditions else ""
         with self.read() as db:
             evaluations = [self._evaluation(db, row["evaluation_id"]) for row in db.execute("SELECT evaluation_id FROM evaluations" + where + " ORDER BY created_at DESC,rowid DESC", params).fetchall()]
-        return [evaluation for evaluation in evaluations if gross_error is None or bool(evaluation["score"].get("gross_error", False)) is gross_error]
+        return [evaluation for evaluation in evaluations if gross_error is None or gross_error_flag(evaluation) is gross_error]
 
     def submission_snapshot(self, group_id: str) -> tuple[list[Conversation], list[dict]]:
         """Read the source set and its evaluation history at the same point in time."""
@@ -338,6 +354,51 @@ class Store:
                 )
             ]
         return conversations, evaluations
+
+    def quality_summary(self, group_id: str, checklist: ChecklistVersion) -> dict:
+        conversations, history = self.submission_snapshot(group_id)
+        sources = {conversation.conversation_id: conversation.model_dump() for conversation in conversations}
+        rules = checklist.model_dump()
+        latest = {}
+        for evaluation in history:
+            source = evaluation["conversation"]
+            identifier = source["conversation_id"]
+            if evaluation["checklist"] == rules and source == sources.get(identifier):
+                latest.setdefault(identifier, evaluation)
+
+        weighted = {c.criterion_id: c for c in checklist.criteria if c.weight > 0}
+        criteria = {key: {"criterion_id": key, "title": c.title, "applicable": 0, "dialogs": []}
+                    for key, c in weighted.items()}
+        critical = []
+        affected = set()
+        complete = incomplete = critical_unknown = 0
+        for identifier, evaluation in latest.items():
+            score = evaluation["score"]
+            complete += score["status"] == "complete"
+            incomplete += score["status"] == "incomplete"
+            ref = {"conversation_id": identifier, "evaluation_id": evaluation["evaluation_id"]}
+            for result in evaluation["results"]:
+                criterion_id = result["criterion_id"]
+                if criterion_id not in criteria or result["status"] != "applicable":
+                    continue
+                entry = criteria[criterion_id]
+                entry["applicable"] += 1
+                if normalize_answer(weighted[criterion_id], result["answer"]) < 1:
+                    entry["dialogs"].append({**ref, "criterion_id": criterion_id})
+                    affected.add(identifier)
+            flag = gross_error_flag(evaluation)
+            if flag:
+                result = next(row for row in evaluation["results"] if row["gross_error"])
+                critical.append({**ref, "criterion_id": result["criterion_id"]})
+                affected.add(identifier)
+            critical_unknown += flag is None
+
+        violations = [entry for entry in criteria.values() if entry["dialogs"]]
+        violations.sort(key=lambda entry: (-len(entry["dialogs"]), entry["title"].casefold()))
+        return {"total": len(conversations), "complete": complete, "incomplete": incomplete,
+                "unrated": len(conversations) - len(latest), "without_points": len(latest) - complete - incomplete,
+                "affected": len(affected), "violations": violations, "critical": critical,
+                "critical_unknown": critical_unknown}
 
     @staticmethod
     def _replay(db, scope, key, request_hash):

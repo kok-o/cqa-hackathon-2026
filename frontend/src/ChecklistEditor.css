@@ -1,9 +1,9 @@
 .editor-workspace.editor-v2 {
   width: 100%;
   margin: 0;
-  padding: 0 0 20px;
   color: var(--text);
 }
+html:has(.editor-workspace) { scroll-padding-block: 72px 90px; }
 
 .editor-feedback {
   margin-bottom: 16px;
@@ -13,11 +13,11 @@
   display: grid;
   grid-template-columns: minmax(200px, 1fr) 230px auto;
   align-items: end;
-  gap: 16px;
-  padding: 18px 20px;
-  background: #fff;
+  gap: 12px;
+  padding: 15px 18px;
+  background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 10px 10px 0 0;
+  border-radius: var(--panel-radius) var(--panel-radius) 0 0;
 }
 
 .editor-meta .field {
@@ -27,20 +27,20 @@
 
 .editor-body {
   display: grid;
-  grid-template-columns: 280px minmax(0, 1fr);
+  grid-template-columns: 278px minmax(0, 1fr);
   align-items: start;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--line);
   border-top: 0;
-  border-radius: 0 0 10px 10px;
+  border-radius: 0 0 var(--panel-radius) var(--panel-radius);
 }
 
 .editor-index {
   position: sticky;
-  top: 16px;
+  top: 72px;
   min-width: 0;
   padding: 0 0 18px;
-  background: #f8f9fa;
+  background: var(--subsurface);
 }
 
 .editor-index-heading {
@@ -49,8 +49,8 @@
   justify-content: space-between;
   gap: 10px;
   padding: 16px 18px;
-  min-height: 64px;
-  font-size: 12px;
+  min-height: 57px;
+  font-size: 13px;
 }
 
 .editor-index-heading strong {
@@ -77,25 +77,22 @@
   align-items: center;
   gap: 12px;
   width: 100%;
-  min-height: 58px;
-  padding: 12px;
+  min-height: 49px;
+  padding: 8px 10px;
   border: 0;
-  border-left: 2px solid transparent;
-  border-radius: 7px;
+  border-radius: var(--control-radius);
   background: transparent;
   text-align: left;
   color: var(--text);
   cursor: pointer;
-  transition: background 120ms;
 }
 
 .editor-criterion-button:hover {
   background: var(--canvas);
 }
 .editor-criterion-button.is-selected {
-  border-left-color: transparent;
-  box-shadow: inset 3px 0 var(--primary);
-  background: #e6eee8;
+  box-shadow: inset 1px 0 var(--primary);
+  background: var(--selected);
 }
 .editor-criterion-label {
   display: grid;
@@ -120,7 +117,7 @@
   min-width: 27px;
   padding: 4px 5px;
   border-radius: 5px;
-  background: #edf0f2;
+  background: var(--canvas);
   text-align: center;
 }
 .editor-add.button {
@@ -147,9 +144,9 @@
 
 .editor-detail-heading h3 {
   margin: 0;
-  font-size: 17px;
+  font-size: 19px;
   line-height: 1.45;
-  font-weight: 500;
+  font-weight: 600;
   overflow-wrap: anywhere;
 }
 .editor-detail-heading .icon-button {
@@ -180,12 +177,14 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 17px 20px;
+  max-width: 850px;
 }
 .editor-field-grid .field {
   min-width: 0;
   margin: 0;
   font-size: 12px;
 }
+.editor-identity { grid-template-columns: minmax(0, 1fr) minmax(105px, 155px); }
 .editor-field-grid .field input,
 .editor-field-grid .field select,
 .editor-field-grid .field textarea,
@@ -195,7 +194,7 @@
   min-width: 0;
   min-height: 38px;
   font-size: 14px;
-  border-radius: 4px;
+  border-radius: var(--control-radius);
 }
 .editor-field-grid .field textarea {
   line-height: 1.55;
@@ -242,11 +241,11 @@
 .editor-inline-note {
   margin: 0;
   padding: 10px 12px;
-  border-left: 2px solid #b58c42;
-  background: #fff9ec;
+  border-radius: var(--control-radius);
+  background: var(--warning-bg);
   font-size: 12px;
   line-height: 1.5;
-  color: #745a2c;
+  color: var(--warning);
 }
 
 .editor-save-bar {
@@ -257,16 +256,20 @@
   justify-content: space-between;
   align-items: center;
   gap: 16px;
-  padding: 14px 0;
+  padding: 10px 12px;
   border-top: 1px solid var(--line);
-  background: var(--canvas);
+  background: var(--surface);
 }
 
 .editor-save-status {
+  display: grid;
+  gap: 2px;
   min-width: 0;
   font-size: 12px;
   color: var(--muted);
 }
+.editor-save-status > strong { font-size: 13px; color: var(--primary); }
+.editor-save-status.dirty > strong { color: var(--warning); }
 .editor-save-actions {
   display: flex;
   margin-left: auto;
@@ -293,6 +296,7 @@
 }
 
 @media (max-width: 760px) {
+  html:has(.editor-workspace) { scroll-padding-block: 65px 164px; }
   .editor-workspace.editor-v2 {
     padding-top: 0;
   }
@@ -364,7 +368,7 @@
   .editor-save-bar {
     flex-wrap: wrap;
     gap: 10px;
-    padding: 12px 0;
+    padding: 9px 10px;
   }
   .editor-save-status {
     width: 100%;
@@ -379,9 +383,6 @@
     justify-content: center;
   }
 }
-
-@media (prefers-reduced-motion: reduce) {
-  .editor-criterion-button {
-    transition: none;
-  }
+@media (max-width: 520px) {
+  .editor-identity { grid-template-columns: minmax(0, 1fr) 88px; }
 }

@@ -1,30 +1,30 @@
 # CQA interface
 
-A compact review tool for checking an assessment against its conversation. The interface uses plain navigation, readable source text and direct actions. Avoid promotional copy, repeated headings, decorative numbering and collections of rounded cards.
+CQA is SetW’s review workspace for the Freedom Broker case. The transcript occupies the central column. The queue selects the conversation and the assessment shows the findings beside the source.
 
-## Tokens
+## Visual system
 
-- Greens sampled from the Freedom shield supplied by the user: leaf `#4FAF3D`, deep green `#145431`. Bank ink `#0E151C`, white surface, canvas `#F5F6F7`, dividers `#E2E5E8`, muted type `#626A72`.
-- Dark application header and selected conversation, light queue and working surfaces. Buttons use deep green with white labels; the leaf green is reserved for small brand and selection accents.
-- IBM Plex Sans, bundled locally. Body 14px, source messages 14–15px, metadata 12px; tabular numerals for scores and weights.
-- Compact controls with 4px corners. Regions are separated by alignment and thin rules, without decorative shadows.
-- Mobile touch targets are at least 44px. Focus remains visible for every action.
+- Use bank ink `#0E151C` for the application header, forest `#164734` for primary controls, and leaf `#02B140` for the shield and connection indicator. The two greens come from the public Freedom shield. [Freedom SVG](https://fbroker.kz/images/Logo.svg)
+- Use white `#FFFFFF` for the transcript and form surfaces, canvas `#F2F5F3` around the workspace, and lines `#DCE5DF` to separate panels and transcript turns. Keep amber for items that need attention and red for failures and critical flags.
+- Use the locally bundled IBM Plex Sans. Set the transcript at 15 px and metadata at 11–12 px. Use tabular numerals for turn numbers, weights, and scores.
+- Keep navigation and text fields compact with 7 px corners. Give the workspace and overlays 12 px corners. Reserve shadows for overlays.
 
-## Review
+## Review workspace
 
-Desktop keeps queue, conversation and assessment together. Tablet opens the queue on demand. Mobile uses Queue, Conversation and Assessment tabs. Evidence opens the exact message or checked range, and the return action restores the selected criterion. Audio seeking requires verified timestamps.
+At desktop widths, the queue resizes from 240 to 560 px while leaving at least 320 px for the transcript. Arrow keys, Home and End provide a keyboard alternative. On tablets the queue opens over the workspace and returns focus to its trigger on dismissal. On phones the queue, transcript and assessment use three tabs with 44 px touch targets.
 
-The selected conversation header belongs to the conversation and assessment columns. The queue starts beside that header and spans the entire workspace height, avoiding a redundant banner above the queue.
+The queue shows actual counts for the current search and dataset filters. Its footer states how many conversations the next batch will include. The selected conversation stays open when it falls outside the filter.
 
-The desktop queue resizes from 240 to 560 px while preserving at least 320 px for the transcript. Drag the divider or use Left/Right (Shift for a larger step), Home/End; double-click resets. Width persists locally. Mobile and tablet retain their existing full-width panel and drawer.
+Transcript numbers refer to the original message positions. A prelude with bot messages can collapse before the first operator response. Evidence reopens the relevant turns, highlights the exact quote or checked range, and offers a return to the same criterion.
 
-## Rules
+Show the launch checklist version beside the result and the checklist for the next launch in the toolbar. The score, its completion status and the critical flag are distinct. After an appeal, the original and reviewed scores are both visible, with the decision reason available alongside them.
 
-The editor aligns with the page title and uses the available width. A metadata row joins a 280 px criterion index and one form; their headings align. On mobile, a full-width selector replaces the horizontal criterion list. Draft values survive selection changes. The save bar distinguishes a new version from a separate checklist; official scales, N/A and critical-answer mappings stay editable.
+## Rules and submission
 
-Keep explanatory text only where it affects a decision, such as discrete scales or an audio limitation. Validation stays explicit. Status changes come from the API; animations use short CSS transitions and disappear under reduced motion.
+The rule editor presents an index and one criterion at a time. Name, weight and instructions are grouped at the top. Drafts stay associated with their source versions when switching sections or versions. Saving creates a new version or a separate checklist.
 
+The submission preview uses the validated JSON 1.0 document returned by the export endpoint. Display the team, dataset, destination path, record count, successful results and processing errors. Download the same document the reviewer inspected.
 
-## Design review
+## Motion
 
-Applied [frontend-design](https://github.com/anthropics/skills/blob/main/skills/frontend-design/SKILL.md). The conversation is the main document; criterion scores and evidence act as adjacent review notes. The distinguishing treatment is the source gutter and the inline criterion ledger. Keep the surrounding shell quiet: no hero, decorative queue numbers, repeated section captions, avatars or promotional empty-state copy. Criterion details open only on request so all eight scores can be scanned first.
+Use 160–200 ms ease-out transitions for evidence, disclosure and asynchronous save feedback. Animate opacity and transform. Keep keyboard navigation immediate and preserve the same focus and selection states under reduced motion.

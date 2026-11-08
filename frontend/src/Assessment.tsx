@@ -114,7 +114,13 @@ export default function Assessment({
 }: Props) {
   const [showOriginal, setShowOriginal] = useState(false);
   const [animateRevision, setAnimateRevision] = useState(false);
-  const [selection, setSelection] = useState({ id: initialCriterionId ?? "", animate: false });
+  const [selection, setSelection] = useState(() => {
+    const attention = evaluation.results.find(item => item.gross_error)
+      ?? evaluation.results.find(item => item.status === "needs_review")
+      ?? evaluation.results.find(item => evaluation.score.criteria.some(row =>
+        row.criterion_id === item.criterion_id && row.normalized_score != null && row.normalized_score < 1));
+    return { id: initialCriterionId ?? attention?.criterion_id ?? "", animate: false };
+  });
   const [saved, setSaved] = useState(false);
   const revisionRef = useRef(evaluation.revision);
   useEffect(() => {
@@ -172,7 +178,20 @@ export default function Assessment({
                 (item) => item.criterion_id === value.criterion_id,
               )?.normalized_score === 1
             ? "good"
-            : "neutral";
+            : value?.status === "applicable"
+              ? "attention"
+              : "neutral";
+  const orderedCriteria = [...evaluation.checklist.criteria].sort((a, b) => {
+    const priority = (id: string) => {
+      const item = evaluation.results.find(result => result.criterion_id === id);
+      if (item?.gross_error) return 0;
+      if (!item || item.status === "needs_review") return 1;
+      const grade = evaluation.score.criteria.find(result => result.criterion_id === id);
+      if (item.status === "applicable" && grade?.normalized_score != null && grade.normalized_score < 1) return 2;
+      return 3;
+    };
+    return priority(a.criterion_id) - priority(b.criterion_id);
+  });
   function select(id: string, animate: boolean) {
     setSelection((current) => ({ id: current.id === id ? "" : id, animate }));
     window.requestAnimationFrame(() =>
@@ -280,7 +299,7 @@ export default function Assessment({
     </div>
   ) : null;
   return (
-    <section className="assessment aq-panel" aria-label="Оценка диалога">
+    <section className="assessment aq-panel" aria-label="Оценка диалога" data-revision-motion={animateRevision}>
       <div className="aq-summary">
         <div className="aq-heading">
           <div className="aq-provenance">
@@ -302,7 +321,7 @@ export default function Assessment({
           <FileDown size={17} aria-hidden="true" />
         </button>
         </div>
-      <div className="aq-score">
+      <div className="aq-score" key={showOriginal ? "original" : "reviewed"}>
         <div className="aq-score-value">
           <span className="sr-only">{score.total == null ? "Итоговый балл не рассчитан" : showOriginal ? "Исходная оценка" : "Итоговая оценка"}</span>
           <strong>{number(score.total, 2)}</strong>
@@ -314,15 +333,10 @@ export default function Assessment({
           {statusName(score.status)}
         </span>
       </div>
-      {score.total != null && (
-        <div className="aq-meter" aria-hidden="true">
-          <span data-animate={animateRevision} style={{ transform: `scaleX(${score.total / 100})` }} />
-        </div>
-      )}
       {score.gross_error ? (
         <p className="aq-critical" role="status">
           <AlertTriangle size={16} aria-hidden="true" />
-          <span><strong>Грубая ошибка</strong><small>Отдельный флаг оценки</small></span>
+          <span><strong>Грубая ошибка</strong></span>
         </p>
       ) : null}
       {score.status !== "complete" ? (
@@ -364,11 +378,11 @@ export default function Assessment({
       )}
       </div>
       <div className="aq-criteria-heading">
-        <h3>Критерии</h3>
+        <h3>Критерии <span className="aq-priority-note">Сначала замечания</span></h3>
         <span>Баллы / вес</span>
       </div>
       <div className="aq-criteria-list" aria-label="Критерии оценки">
-        {evaluation.checklist.criteria.map((item) => {
+        {orderedCriteria.map((item) => {
           const value = results.find(
             (entry) => entry.criterion_id === item.criterion_id,
           );

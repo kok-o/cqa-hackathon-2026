@@ -1,14 +1,15 @@
 import Select from "./Select";
-import QueueResize, { savedQueueWidth } from "./QueueResize";
-import type { CSSProperties } from "react";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import {
   AlertCircle,
   ArrowDownToLine,
   CheckCheck,
   ClipboardList,
-  Headphones,
   List,
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  BarChart3,
   LoaderCircle,
   MessageSquare,
   Play,
@@ -31,13 +32,22 @@ import { assertEvaluation, assertEvaluationHistory, assertJob, assertProviderInf
 import { date, number } from "./format";
 import Assessment, { AssessmentDraftsProvider } from "./Assessment";
 import ChecklistEditor from "./ChecklistEditor";
-import ConversationQueue, { conversationKey, matchesView, type QueueView } from "./ConversationQueue";
+import { conversationKey, matchesView, type QueueView } from "./ConversationQueue";
 import Transcript, { type EvidenceTarget } from "./Transcript";
 import Modal from "./Modal";
 import SubmissionDialog from "./SubmissionDialog";
 import QualitySummary, { type SummaryFinding } from "./QualitySummary";
+import ConversationIndex, { type IndexSort } from "./ConversationIndex";
 import freedomShield from "./freedom-shield.svg";
 
+function routeConversationKey() {
+  if (!window.location.hash.startsWith("#/dialogue/")) return "";
+  try {
+    const key = decodeURIComponent(window.location.hash.slice(11));
+    const value: unknown = JSON.parse(key);
+    return Array.isArray(value) && value.length === 2 && value.every(item => typeof item === "string") ? key : "";
+  } catch { return ""; }
+}
 const checklistKey = (value: ChecklistVersion) =>
   JSON.stringify([value.checklist_id, value.version]);
 const mobileViewport = "(max-width: 700px)";
@@ -85,7 +95,9 @@ export default function App() {
   const [submissionGroup, setSubmissionGroup] = useState<string | null>(null);
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [checklists, setChecklists] = useState<ChecklistVersion[]>([]);
-  const [selectedKey, setSelectedKey] = useState("");
+  const [selectedKey, setSelectedKey] = useState(routeConversationKey);
+  const [reviewOpen, setReviewOpen] = useState(() => !!routeConversationKey());
+  const [runTargets, setRunTargets] = useState<ConversationSummary[] | null>(null);
   const [summaryTarget, setSummaryTarget] = useState<(SummaryFinding & { group_id: string }) | null>(null);
   const [selectedChecklistKey, setSelectedChecklistKey] = useState("");
   const [conversation, setConversation] = useState<Conversation | null>(null);
@@ -93,12 +105,9 @@ export default function App() {
   const [evaluationId, setEvaluationId] = useState("");
   const [highlight, setHighlight] = useState<EvidenceTarget | null>(null);
   const [mobilePanel, setMobilePanel] = useState<
-    "queue" | "transcript" | "assessment"
-  >("queue");
+    "transcript" | "assessment"
+  >("transcript");
   const [queueOpen, setQueueOpen] = useState(false);
-  const [drawerMotion, setDrawerMotion] = useState(false);
-  const [queueWidth, setQueueWidth] = useState(savedQueueWidth);
-  const [filtersOpen, setFiltersOpen] = useState(false);
   const [jobStatus, setJobStatus] = useState<EvaluationJob["status"] | null>(
     null,
   );
@@ -107,6 +116,7 @@ export default function App() {
   const [language, setLanguage] = useState("");
   const [channel, setChannel] = useState("");
   const [group, setGroup] = useState("");
+  const [indexSort, setIndexSort] = useState<IndexSort>(null);
   const [queueView, setQueueView] = useState<QueueView>("all");
   const [initialLoading, setInitialLoading] = useState(true);
   const [overviewFailed, setOverviewFailed] = useState(false);
@@ -155,7 +165,19 @@ export default function App() {
       (!search || `${item.conversation_id} ${item.preview}`.toLocaleLowerCase().includes(search)),
     );
   }, [conversations, language, channel, group, query]);
-  const filtered = useMemo(() => scopedItems.filter((item) => matchesView(item, queueView)), [scopedItems, queueView]);
+  const filtered = useMemo(() => {
+    const rows = scopedItems.filter(item => matchesView(item, queueView));
+    if (!indexSort) return rows;
+    return rows.sort((a, b) => {
+      if (indexSort.field === "score") {
+        if (a.latest_score == null && b.latest_score == null) return 0;
+        if (a.latest_score == null) return 1;
+        if (b.latest_score == null) return -1;
+        return (a.latest_score - b.latest_score) * (indexSort.ascending ? 1 : -1);
+      }
+      return a.conversation_id.localeCompare(b.conversation_id, "ru", { numeric: true }) * (indexSort.ascending ? 1 : -1);
+    });
+  }, [scopedItems, queueView, indexSort]);
   const selectionOutsideQueue = selectedSummary && !filtered.some((item) => conversationKey(item) === selectedKey);
 
   async function refreshProvider() {
@@ -191,6 +213,11 @@ export default function App() {
     if (!mountedRef.current || signal?.aborted) return;
     assertProviderInfo(provider);
     setConversations(list); setChecklists(rules); setConfig(provider);
+    if (routeConversationKey() && !list.some(item => conversationKey(item) === routeConversationKey())) {
+      setReviewOpen(false);
+      setNoticeKind("warning"); setNotice("Диалог по этой ссылке не найден. Выберите его в списке.");
+      window.history.replaceState(null, "", "#/conversations");
+    }
     setSelectedKey(current => list.some(item => conversationKey(item) === current) ? current : list[0] ? conversationKey(list[0]) : '');
     setSelectedChecklistKey(current => rules.some(item => checklistKey(item) === current) ? current : rules[0] ? checklistKey(rules[0]) : '');
   }
@@ -301,7 +328,8 @@ export default function App() {
         } else setSelectedKey(nextKey);
       }
       setTab("review");
-      setMobilePanel("queue");
+      setReviewOpen(false);
+      window.location.hash = "/conversations";
       setNoticeKind('success');
       setImportWarning(result.retained_from_previous_import ? `Набор также содержит ${result.retained_from_previous_import} диалогов из предыдущих импортов. Всего: ${result.current_group_total}.` : '');
       setNotice(
@@ -468,55 +496,35 @@ export default function App() {
   }
   function closeQueue() {
     setQueueOpen(false);
-    setFiltersOpen(false);
     queueButton.current?.focus();
   }
   useEffect(() => {
-    if (!queueOpen && !filtersOpen) return;
-    const escape = (event: KeyboardEvent) => {
-      if (event.defaultPrevented || document.querySelector("dialog[open], .select-menu[data-state=open]")) return;
-      if (event.key === "Tab" && queueOpen) {
-        const controls = [
-          ...document.querySelectorAll<HTMLElement>(
-            "#queue-panel button:not(:disabled), #queue-panel input, #queue-panel select",
-          ),
-        ].filter((element) => element.getClientRects().length > 0);
-        const first = controls[0],
-          last = controls.at(-1);
-        if (event.shiftKey && document.activeElement === first) {
-          event.preventDefault();
-          last?.focus();
-        } else if (!event.shiftKey && document.activeElement === last) {
-          event.preventDefault();
-          first?.focus();
-        }
+    const navigate = () => {
+      const hash = window.location.hash;
+      setQueueOpen(false);
+      const key = routeConversationKey();
+      if (key) {
+        setSelectedKey(key); setReviewOpen(true); setTab("review");
+      } else {
+        setReviewOpen(false);
+        setTab(hash === "#/checklists" ? "checklist" : hash === "#/summary" ? "summary" : "review");
       }
-      if (event.key !== "Escape") return;
-      if (filtersOpen) {
-        setFiltersOpen(false);
-        document.querySelector<HTMLButtonElement>(".filter-toggle")?.focus();
-      } else if (queueOpen) closeQueue();
     };
-    const adjacent = [
-      document.getElementById("transcript-panel"),
-      document.getElementById("assessment-panel"),
-    ];
-    if (queueOpen)
-      adjacent.forEach((element) => element?.setAttribute("inert", ""));
-    const viewport = window.matchMedia(
-      "(min-width: 701px) and (max-width: 1199px)",
-    );
-    const resized = () => {
-      if (!viewport.matches) setQueueOpen(false);
-    };
-    viewport.addEventListener("change", resized);
-    document.addEventListener("keydown", escape);
-    return () => {
-      document.removeEventListener("keydown", escape);
-      viewport.removeEventListener("change", resized);
-      adjacent.forEach((element) => element?.removeAttribute("inert"));
-    };
-  }, [queueOpen, filtersOpen]);
+    navigate();
+    window.addEventListener("hashchange", navigate);
+    return () => window.removeEventListener("hashchange", navigate);
+  }, []);
+  function openConversation(item: ConversationSummary) {
+    setSummaryTarget(null);
+    setSelectedKey(conversationKey(item));
+    setReviewOpen(true); setQueueOpen(false); setMobilePanel("transcript");
+    window.location.hash = `/dialogue/${encodeURIComponent(conversationKey(item))}`;
+    requestAnimationFrame(() => document.getElementById("conversation-title")?.focus({ preventScroll: true }));
+  }
+  function requestRun(items: ConversationSummary[]) {
+    if (!config?.provider_configured) { setShowSetup(true); return; }
+    setRunTargets(items);
+  }
   useEffect(() => {
     setHighlight(null);
   }, [evaluationId]);
@@ -530,8 +538,9 @@ export default function App() {
 
   function openTab(value: typeof tab) {
     setQueueOpen(false);
-    setFiltersOpen(false);
     setTab(value);
+    setReviewOpen(false);
+    window.location.hash = value === "checklist" ? "/checklists" : value === "summary" ? "/summary" : "/conversations";
   }
 
   function openSummaryFinding(groupId: string, finding: SummaryFinding) {
@@ -541,7 +550,9 @@ export default function App() {
     resetFilters();
     setGroup(groupId);
     setMobilePanel("assessment");
-    openTab("review");
+    setTab("review");
+    setReviewOpen(true);
+    window.location.hash = `/dialogue/${encodeURIComponent(conversationKey(target))}`;
   }
 
   function savedChecklist(value: ChecklistVersion, baseKey: string) {
@@ -557,8 +568,8 @@ export default function App() {
   }
 
   const workspace = (
-    <div className="app-shell">
-      <a className="skip-link" href="#main-content">
+    <div className={`app-shell redesign-shell ${reviewOpen && tab === "review" ? "detail-view" : "index-view"}`}>
+      <a className="skip-link" href="#main-content" onClick={event => { event.preventDefault(); document.getElementById("main-content")?.focus(); }}>
         Перейти к рабочей области
       </a>
       <header className="app-header">
@@ -580,21 +591,21 @@ export default function App() {
             onClick={() => openTab("review")}
             aria-current={tab === "review" ? "page" : undefined}
           >
-            Диалоги
+            <MessageSquare size={17} aria-hidden="true" /> Диалоги
           </button>
           <button
             className={tab === "checklist" ? "active" : ""}
             onClick={() => openTab("checklist")}
             aria-current={tab === "checklist" ? "page" : undefined}
           >
-            Чек-листы
+            <ClipboardList size={17} aria-hidden="true" /> Чек-листы
           </button>
           <button
             className={tab === "summary" ? "active" : ""}
             onClick={() => openTab("summary")}
             aria-current={tab === "summary" ? "page" : undefined}
           >
-            Сводка
+            <BarChart3 size={17} aria-hidden="true" /> Сводка
           </button>
         </nav>
         <div className="header-actions">
@@ -704,12 +715,11 @@ export default function App() {
       </div>
       <main id="main-content" tabIndex={-1}>
         <div className="workspace-toolbar">
-          <h1 className="page-title">
-            {tab === "review" ? "Диалоги" : tab === "summary" ? "Сводка" : "Чек-листы"}
-          </h1>
+          {tab === "review" && reviewOpen ? <button className="button ghost back-to-index" onClick={() => openTab("review")}><ArrowLeft size={17} /> Все диалоги</button> : <div className="page-heading"><h1 className="page-title">{tab === "review" ? "Диалоги" : tab === "summary" ? "Сводка" : "Чек-листы"}</h1><p>{tab === "review" ? `${conversations.length} разговоров в рабочей области` : tab === "summary" ? "Результаты проверки и повторяющиеся ошибки" : "Правила оценки и их версии"}</p></div>}
           <div className="toolbar-actions">
+            {tab !== "review" && (
             <label className="checklist-select">
-              <span className="checklist-label">{tab === "review" ? "Чек-лист для запуска" : tab === "summary" ? "Чек-лист для сводки" : "Версия для редактирования"}</span>
+              <span className="checklist-label">{tab === "summary" ? "Чек-лист для сводки" : "Версия для редактирования"}</span>
               <Select
                 aria-label="Версия чек-листа"
                 value={selectedChecklist ? checklistKey(selectedChecklist) : ""}
@@ -730,13 +740,41 @@ export default function App() {
                 ))}
               </Select>
             </label>
-            {tab === "review" && conversations.length > 0 && (
+            )}
+            {tab === "review" && !reviewOpen && conversations.length > 0 && (
               <button className="button secondary submission-button" onClick={openSubmission} aria-haspopup="dialog">
                 <ArrowDownToLine size={16} aria-hidden="true" /> <span>Файл для сдачи</span>
               </button>
             )}
           </div>
         </div>
+        {runTargets && <Modal title="Запуск оценки" onClose={() => setRunTargets(null)}>
+          <div className="run-setup"><p>Будут оценены {runTargets.length} диалогов. Результаты сохранятся как новый запуск.</p>
+            <label className="checklist-select">
+              <span className="checklist-label">Чек-лист для запуска</span>
+              <Select
+                aria-label="Версия чек-листа"
+                value={selectedChecklist ? checklistKey(selectedChecklist) : ""}
+                onChange={(event) => setSelectedChecklistKey(event.target.value)}
+                disabled={!checklists.length}
+                selectedLabel={selectedChecklist ? (
+                  <span className="version-selection">
+                    <ClipboardList size={15} aria-hidden="true" />
+                    <span title={selectedChecklist.title}>{selectedChecklist.title}</span>
+                    <strong>v{selectedChecklist.version}</strong>
+                  </span>
+                ) : initialLoading ? "Загружаем…" : "Чек-лист недоступен"}
+              >
+                {checklists.map((item) => (
+                  <option value={checklistKey(item)} key={checklistKey(item)}>
+                    {item.title} — v{item.version}
+                  </option>
+                ))}
+              </Select>
+            </label>
+          <p className="run-provider">Модель {config?.model || config?.provider}</p>
+          <div className="button-row"><button className="button secondary" onClick={() => setRunTargets(null)}>Отмена</button><button className="button primary" disabled={!selectedChecklist || running || !!pendingQueue || importing} onClick={() => { const targets = runTargets; setRunTargets(null); void run(targets); }}><Play size={15} /> Начать оценку</button></div></div>
+        </Modal>}
         <input
           type="file"
           accept="application/json,.json"
@@ -924,35 +962,16 @@ export default function App() {
               </ol>
             </div>
           </section>
+        ) : !reviewOpen ? (
+          <ConversationIndex sort={indexSort} setSort={setIndexSort} items={filtered} allItems={conversations} groups={groups} query={query} setQuery={setQuery} language={language} setLanguage={setLanguage} channel={channel} setChannel={setChannel} group={group} setGroup={setGroup} view={queueView} setView={setQueueView} onOpen={openConversation} onImport={() => inputRef.current?.click()} importing={importing} onRun={requestRun} running={running || !!pendingQueue} canRun={!!selectedChecklist} />
         ) : (
           <div
-            className={`review-workspace mobile-${mobilePanel} ${queueOpen ? "queue-open" : ""}`}
-            data-drawer-motion={drawerMotion}
-            style={{ "--queue-width": `${queueWidth}px` } as CSSProperties}
+            className={`review-workspace mobile-${mobilePanel}`}
           >
             <div className="review-context">
-              <button
-                ref={queueButton}
-                className="button secondary small tablet-queue-button"
-                onClick={(event) => {
-                  setDrawerMotion(event.detail > 0);
-                  setQueueOpen(true);
-                  requestAnimationFrame(() =>
-                    document
-                      .querySelector<HTMLInputElement>(".queue-search input")
-                      ?.focus(),
-                  );
-                }}
-                aria-expanded={queueOpen}
-                aria-controls="queue-panel"
-              >
-                <List size={16} /> Очередь
-              </button>
+              <button ref={queueButton} className="button ghost small quick-queue-button" onClick={() => setQueueOpen(true)} aria-haspopup="dialog"><List size={16} /> Очередь</button>
               {selectedSummary && (
                 <div className="conversation-context">
-                  <span className="context-icon" aria-hidden="true">
-                    {selectedSummary.channel === "voice call" ? <Headphones size={19} /> : <MessageSquare size={19} />}
-                  </span>
                   <div className="context-copy">
                     <h2 id="conversation-title" tabIndex={-1} translate="no">{selectedSummary.conversation_id}</h2>
                     <div className="context-tags">
@@ -964,114 +983,16 @@ export default function App() {
                   </div>
                 </div>
               )}
+              <div className="review-pagination"><span>{Math.max(0, filtered.findIndex(item => conversationKey(item) === selectedKey) + 1)} / {filtered.length}</span><button className="icon-button" aria-label="Предыдущий диалог" disabled={filtered.findIndex(item => conversationKey(item) === selectedKey) <= 0} onClick={() => openConversation(filtered[filtered.findIndex(item => conversationKey(item) === selectedKey) - 1])}><ChevronLeft size={18} /></button><button className="icon-button" aria-label="Следующий диалог" disabled={filtered.findIndex(item => conversationKey(item) === selectedKey) < 0 || filtered.findIndex(item => conversationKey(item) === selectedKey) >= filtered.length - 1} onClick={() => openConversation(filtered[filtered.findIndex(item => conversationKey(item) === selectedKey) + 1])}><ChevronRight size={18} /></button></div>
             </div>
             <nav
               className="mobile-panel-tabs"
               role="tablist"
               aria-label="Панели разбора"
             >
-              {(["queue", "transcript", "assessment"] as const).map(
-                (panel, index) => (
-                  <button
-                    key={panel}
-                    id={`tab-${panel}`}
-                    role="tab"
-                    aria-selected={mobilePanel === panel}
-                    aria-controls={
-                      panel === "queue" ? "queue-panel" : `${panel}-panel`
-                    }
-                    tabIndex={mobilePanel === panel ? 0 : -1}
-                    onKeyDown={(event) => {
-                      if (
-                        ["ArrowRight", "ArrowLeft", "Home", "End"].includes(
-                          event.key,
-                        )
-                      ) {
-                        event.preventDefault();
-                        const next =
-                          event.key === "Home"
-                            ? "queue"
-                            : event.key === "End"
-                              ? "assessment"
-                              : (
-                                  ["queue", "transcript", "assessment"] as const
-                                )[
-                                  (index +
-                                    (event.key === "ArrowRight" ? 1 : 2)) %
-                                    3
-                                ];
-                        setMobilePanel(next);
-                        document.getElementById(`tab-${next}`)?.focus();
-                      }
-                    }}
-                    onClick={() => setMobilePanel(panel)}
-                  >
-                    {index === 0 ? (
-                      <List size={16} />
-                    ) : index === 1 ? (
-                      <MessageSquare size={16} />
-                    ) : (
-                      <ClipboardList size={16} />
-                    )}
-                    {["Очередь", "Диалог", "Оценка"][index]}
-                    {panel === "assessment" && evaluation && (
-                      <span className="tab-result-dot" aria-hidden="true" />
-                    )}
-                  </button>
-                ),
-              )}
+              {(["transcript", "assessment"] as const).map((panel, index) => <button key={panel} id={`tab-${panel}`} role="tab" aria-selected={mobilePanel === panel} aria-controls={`${panel}-panel`} tabIndex={mobilePanel === panel ? 0 : -1} onClick={() => setMobilePanel(panel)} onKeyDown={event => { if (["ArrowRight", "ArrowLeft", "Home", "End"].includes(event.key)) { event.preventDefault(); const next = event.key === "Home" ? "transcript" : event.key === "End" ? "assessment" : panel === "transcript" ? "assessment" : "transcript"; setMobilePanel(next); document.getElementById(`tab-${next}`)?.focus(); } }}>{index === 0 ? "Разговор" : "Оценка"}</button>)}
             </nav>
-              {queueOpen && (
-                <button
-                  className="queue-backdrop"
-                  aria-label="Закрыть список диалогов"
-                tabIndex={-1}
-                  onClick={closeQueue}
-                />
-              )}
-              <ConversationQueue
-                resizeHandle={<QueueResize onChange={setQueueWidth} />}
-                items={filtered}
-                scopedItems={scopedItems}
-                total={conversations.length}
-                selectedKey={selectedKey}
-                groups={groups}
-                query={query}
-                language={language}
-                channel={channel}
-                group={group}
-                view={queueView}
-                filtersOpen={filtersOpen}
-                drawerOpen={queueOpen}
-                isMobile={isMobile}
-                running={running}
-                pending={!!pendingQueue}
-                importing={importing}
-                configured={!!config?.provider_configured}
-                canRun={!!selectedChecklist}
-                onQuery={setQuery}
-                onLanguage={setLanguage}
-                onChannel={setChannel}
-                onGroup={setGroup}
-                onView={setQueueView}
-                onFilters={() => {
-                  setFiltersOpen(!filtersOpen);
-                  if (filtersOpen) document.querySelector<HTMLButtonElement>(".filter-toggle")?.focus();
-                }}
-                onSelect={(item) => {
-                  if (selectedKey !== conversationKey(item)) setSummaryTarget(null);
-                  setSelectedKey(conversationKey(item));
-                  setMobilePanel("transcript");
-                  setQueueOpen(false);
-                  setFiltersOpen(false);
-                  if (queueOpen || isMobile)
-                    requestAnimationFrame(() => document.getElementById("conversation-title")?.focus({ preventScroll: true }));
-                }}
-                onReset={resetFilters}
-                onImport={() => inputRef.current?.click()}
-                onRun={() => void run(filtered)}
-                onClose={closeQueue}
-              />
+            {queueOpen && <Modal title="Диалоги в выборке" onClose={closeQueue}><div className="quick-queue"><label className="sr-only" htmlFor="quick-queue-search">Поиск в очереди</label><input id="quick-queue-search" type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Найти диалог" />{filtered.map(item => <button key={conversationKey(item)} className={conversationKey(item) === selectedKey ? "selected" : ""} onClick={() => openConversation(item)}><span><strong>{item.conversation_id}</strong><span>{item.preview}</span></span><span>{number(item.latest_score, 2)}</span></button>)}{!filtered.length && <p>Диалоги не найдены. Измените поиск.</p>}</div></Modal>}
               <Transcript
                 key={JSON.stringify([selectedKey, evaluationId])}
                 source={source}
@@ -1093,7 +1014,7 @@ export default function App() {
                 <div className="assessment-actions">
                   <h2>Оценка</h2>
                   <button
-                    className="button primary small"
+                    className="button secondary small"
                     disabled={
                       !selectedSummary ||
                       running ||
@@ -1104,7 +1025,7 @@ export default function App() {
                       !selectedChecklist
                     }
                     onClick={() =>
-                      selectedSummary && void run([selectedSummary])
+                      selectedSummary && requestRun([selectedSummary])
                     }
                   >
                     {running ? (

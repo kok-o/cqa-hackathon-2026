@@ -25,7 +25,7 @@ Dataset JSON import, versioned editable criteria, asynchronous real model assess
 ## Product Principles
 
 - Use compact controls and direct labels; keep explanatory text where it affects a decision.
-- Keep the source conversation next to the assessment on desktop; use Queue, Conversation and Assessment panels on mobile.
+- Give dialogue selection its own searchable, sortable index. Keep the source next to the assessment on desktop; on mobile use Conversation and Assessment tabs, with the queue available on demand.
 - Preserve the selected criterion and review context when opening evidence and returning.
 - Edit one criterion at a time; retain draft changes while switching criteria and save a new checklist version explicitly.
 - Make uncertainty and source provenance explicit.

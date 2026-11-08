@@ -1,52 +1,181 @@
 {
-  "schemaVersion": 1,
-  "colors": {
-    "canvas": "#f2f5f3",
-    "surface": "#ffffff",
-    "text": "#17251f",
-    "muted": "#526158",
-    "border": "#dce5df",
-    "primary": "#164734",
-    "nav": "#0e151c",
-    "selected": "#e6f2e9",
-    "warning": "#7b5018",
-    "danger": "#923330"
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-08T05:44:52Z",
+  "title": "Design System: SetW CQA",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Working green"
+      },
+      "brand-green": {
+        "role": "brand",
+        "displayName": "Freedom shield green"
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Navigation gray"
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "White working surface"
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Graphite"
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Secondary slate"
+      },
+      "evidence-mark": {
+        "role": "selection",
+        "displayName": "Exact source highlight"
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Page heading",
+        "purpose": "Index, rules and summary section titles."
+      },
+      "transcript": {
+        "displayName": "Conversation text",
+        "purpose": "Readable original messages, 68ch maximum measure; 15px on mobile."
+      },
+      "control": {
+        "displayName": "Controls",
+        "purpose": "Short, explicit actions."
+      }
+    },
+    "shadows": [
+      {
+        "name": "dialog",
+        "value": "0 18px 70px #10251c38",
+        "purpose": "Native modal only; work surfaces stay flat."
+      }
+    ],
+    "motion": [
+      {
+        "name": "control-feedback",
+        "value": "150ms ease-out",
+        "purpose": "Hover color changes on controls and navigation."
+      },
+      {
+        "name": "criterion-and-dialog",
+        "value": "160ms ease-out",
+        "purpose": "Criterion disclosure, revision feedback and modal entry."
+      },
+      {
+        "name": "evidence",
+        "value": "180ms ease-out",
+        "purpose": "Source-selection wash."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "instant",
+        "purpose": "Preserve focus and selection without smooth scrolling or entrance transitions."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "wide-review",
+        "value": "1600px"
+      },
+      {
+        "name": "compact-rail",
+        "value": "1100px"
+      },
+      {
+        "name": "top-navigation",
+        "value": "900px"
+      },
+      {
+        "name": "index-and-editor-mobile",
+        "value": "760px"
+      },
+      {
+        "name": "review-tabs",
+        "value": "700px"
+      }
+    ]
   },
-  "typography": {
-    "family": "IBM Plex Sans, sans-serif",
-    "body": 14,
-    "heading": 18,
-    "lineHeight": 1.5
-  },
-  "spacing": [
-    4,
-    8,
-    12,
-    16,
-    24,
-    32
+  "components": [
+    {
+      "name": "Primary action",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "One main action in the current context.",
+      "html": "<button class=\"ds-primary\">Импорт JSON</button>",
+      "css": ".ds-primary{font:600 13px/1.35 \"IBM Plex Sans\",sans-serif;min-height:40px;padding:8px 13px;border:1px solid transparent;border-radius:var(--control-radius,6px);background:var(--primary,#167345);color:#fff;cursor:pointer}.ds-primary:hover{background:var(--primary-hover,#105d36)}.ds-primary:focus-visible{outline:2px solid #21804e;outline-offset:2px}.ds-primary:disabled{opacity:.55;cursor:not-allowed}"
+    },
+    {
+      "name": "Secondary action",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "An available action that does not dominate the task.",
+      "html": "<button class=\"ds-secondary\">Фильтры</button>",
+      "css": ".ds-secondary{font:600 13px/1.35 \"IBM Plex Sans\",sans-serif;min-height:40px;padding:8px 13px;border:1px solid var(--control-line,#b8bec6);border-radius:var(--control-radius,6px);background:var(--surface,#fff);color:var(--text,#20252b);cursor:pointer}.ds-secondary:hover{background:var(--canvas,#f6f7f8);border-color:#9099a4}.ds-secondary:focus-visible{outline:2px solid #21804e;outline-offset:2px}"
+    },
+    {
+      "name": "Text field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Explicit visible labels and quiet native input treatment.",
+      "html": "<label class=\"ds-field\">Название критерия<input placeholder=\"Название\" /></label>",
+      "css": ".ds-field{display:grid;gap:8px;font:400 13px/1.5 \"IBM Plex Sans\",sans-serif;color:var(--muted,#626c78)}.ds-field input{font:400 14px/1.5 \"IBM Plex Sans\",sans-serif;min-height:40px;padding:8px 11px;border:1px solid var(--control-line,#b8bec6);border-radius:6px;background:var(--surface,#fff);color:var(--text,#20252b);caret-color:var(--primary,#167345)}.ds-field input:hover{border-color:#9099a4}.ds-field input:focus-visible{outline:2px solid #21804e;outline-offset:2px;border-color:var(--primary,#167345)}.ds-field input::placeholder{color:var(--muted,#626c78)}"
+    },
+    {
+      "name": "Application navigation",
+      "kind": "nav",
+      "description": "Neutral rail selection instead of a dark brand bar.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Разделы\"><button aria-current=\"page\">Диалоги</button><button>Чек-листы</button><button>Сводка</button></nav>",
+      "css": ".ds-nav{display:grid;gap:6px;width:160px;padding:16px;background:var(--canvas,#f6f7f8)}.ds-nav button{font:500 14px/1.5 \"IBM Plex Sans\",sans-serif;padding:10px 12px;min-height:42px;text-align:left;border:0;border-radius:6px;background:transparent;color:var(--muted,#626c78);cursor:pointer}.ds-nav button[aria-current=page]{background:#e4e8eb;color:var(--text,#20252b)}.ds-nav button:hover{background:#e9ecef;color:var(--text,#20252b)}.ds-nav button:focus-visible{outline:2px solid #21804e;outline-offset:2px}"
+    },
+    {
+      "name": "Source evidence",
+      "kind": "custom",
+      "description": "Selected original message with exact quoted substring and source position.",
+      "html": "<article class=\"ds-evidence\"><span class=\"ds-position\">№4</span><div><strong>Оператор</strong><p>Пример оформления. <mark>Точная цитата</mark> сохраняет исходный текст.</p></div></article>",
+      "css": ".ds-evidence{display:grid;grid-template-columns:25px minmax(0,1fr);gap:14px;padding:14px 12px 20px;background:#edf6f0;border-radius:6px;font-family:\"IBM Plex Sans\",sans-serif;color:#20252b}.ds-position{font-size:11px;color:#11733d;padding-top:3px}.ds-evidence strong{font-size:13px;font-weight:600}.ds-evidence p{margin:7px 0 0;font-size:16px;line-height:1.65;max-width:68ch}.ds-evidence mark{background:#c9e8d4;color:#163b25;border-radius:2px;padding-block:2px}"
+    }
   ],
-  "radii": {
-    "control": 7,
-    "sheet": 12
-  },
-  "interaction": {
-    "mobileTouchTarget": 44,
-    "evidenceTransitionMs": 160,
-    "resultTransitionMs": 200,
-    "panelTransitionMs": 200,
-    "reducedMotion": "instant; keep focus and selection visible"
-  },
-  "layout": {
-    "desktop": "queue, transcript, assessment",
-    "tablet": "queue on demand, transcript and assessment",
-    "mobile": "single pane with Queue/Conversation/Assessment tabs",
-    "editor": "criterion index and single detail form"
-  },
-  "principles": [
-    "Compact review tool",
-    "Functional labels without repeated explanations",
-    "Dividers and alignment instead of decorative cards",
-    "Visible focus and explicit validation"
-  ]
+  "narrative": {
+    "northStar": "Conversation review workbench",
+    "overview": "A neutral, precise working environment that separates finding a conversation from inspecting its source and assessment. The transcript-to-evidence connection is the signature interaction.",
+    "keyCharacteristics": [
+      "Independent dialogue index",
+      "Two-area review",
+      "Neutral navigation",
+      "Readable original content",
+      "Contextual launch and export"
+    ],
+    "rules": [
+      {
+        "name": "Source stays inspectable",
+        "body": "Evidence always returns to the original quote or checked range, preserving source position and criterion focus.",
+        "section": "components"
+      },
+      {
+        "name": "Meaningful color",
+        "body": "Green is for actions, selection and evidence. Warning and critical states retain independent amber and red meaning.",
+        "section": "colors"
+      },
+      {
+        "name": "Flat working surface",
+        "body": "Use alignment and light rules for working regions. Elevation belongs to temporary overlays.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Use real conversation data and actual status counts.",
+      "Keep score and gross-error flags independent.",
+      "Preserve version-bound drafts and original assessments.",
+      "Respect reduced motion and keyboard focus."
+    ],
+    "donts": [
+      "Do not restore the permanently visible three-column queue.",
+      "Do not reintroduce the rejected pale-green card scaffold.",
+      "Do not invent confidence, progress or audio capabilities."
+    ]
+  }
 }

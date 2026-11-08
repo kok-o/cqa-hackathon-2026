@@ -4,6 +4,7 @@ import { downloadJson, errorText, request } from "./api";
 import type { ProviderInfo, SubmissionFile } from "./contracts";
 import Modal from "./Modal";
 import Select from "./Select";
+import "./SubmissionDialog.css";
 
 type Split = "dev" | "prod";
 type Form = {
@@ -94,10 +95,10 @@ export default function SubmissionDialog({ config, group, groupSizes, onClose, o
           else void prepare();
         }}
       >
-        <p className="form-help">
-          JSON 1.0 организаторов. В файл входят все диалоги выбранного набора и исходные оценки модели по официальному чек-листу.
+        <p className="submission-intro">
+          Все диалоги выбранного набора и исходные оценки модели по официальному чек-листу. Формат организаторов JSON 1.0.
         </p>
-        <div className="submission-fields">
+        {!preview && <div className="submission-fields">
           <label className="field">
             Команда
             <input name="team_name" value={form.team} required disabled={loading} onChange={(event) => update({ team: event.target.value })} />
@@ -127,12 +128,20 @@ export default function SubmissionDialog({ config, group, groupSizes, onClose, o
             Модель для сдачи
             <input name="model_name" value={form.model} required disabled={loading} spellCheck={false} onChange={(event) => update({ model: event.target.value })} />
           </label>
-        </div>
+        </div>}
         {error && <p className="notice error" role="alert"><AlertCircle size={17} aria-hidden="true" />{error}</p>}
         {preview ? (
           <section className="submission-preview" aria-labelledby="submission-preview-heading">
-            <h3 ref={previewHeading} id="submission-preview-heading" tabIndex={-1}>Файл готов к скачиванию</h3>
-            <p>{preview.team_name} / {form.group} <code>results/{form.split}/results.json</code></p>
+            <div className="submission-preview-title">
+              <h3 ref={previewHeading} id="submission-preview-heading" tabIndex={-1}>Файл готов к скачиванию</h3>
+              <button type="button" className="text-button" onClick={() => setPreview(null)}>Изменить параметры</button>
+            </div>
+            <dl className="submission-file-details">
+              <div><dt>Команда</dt><dd>{preview.team_name}</dd></div>
+              <div><dt>Набор</dt><dd>{form.group}</dd></div>
+              <div><dt>Модель</dt><dd>{preview.model.name}</dd></div>
+              <div><dt>Путь для сдачи</dt><dd><code>results/{form.split}/results.json</code></dd></div>
+            </dl>
             <dl className="submission-totals">
               <div><dt>Записей</dt><dd>{preview.results.length}</dd></div>
               <div className="good"><dt>Успешных</dt><dd>{ok}</dd></div>
@@ -150,7 +159,7 @@ export default function SubmissionDialog({ config, group, groupSizes, onClose, o
         ) : (
           <p className="submission-path"><FileJson size={16} aria-hidden="true" /> <span>{groupCount} записей в наборе <code>results/{form.split}/results.json</code></span></p>
         )}
-        <footer className="button-row">
+        <footer className="button-row submission-actions">
           <button className="button primary" type="submit" disabled={loading}>
             {loading ? <span className="spin" aria-hidden="true"><LoaderCircle size={16} /></span>
               : preview ? <Download size={16} aria-hidden="true" /> : <FileJson size={16} aria-hidden="true" />}

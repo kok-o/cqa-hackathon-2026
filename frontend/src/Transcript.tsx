@@ -3,6 +3,7 @@ import { ArrowLeft, Bot, ChevronDown, Link2, MessageSquare, RefreshCw } from "lu
 import CallAudio from "./CallAudio";
 import type { Conversation, Evaluation, Message, Speaker } from "./contracts";
 import { turnsLabel } from "./format";
+import "./Transcript.css";
 
 const names: Record<Speaker, string> = {
   operator: "Оператор",
@@ -68,7 +69,7 @@ export default function Transcript({ source, evaluation, highlight, loading, isM
         data-range-boundary={isStart ? "start" : isEnd ? "end" : undefined}
         aria-label={`Реплика ${index + 1}, ${names[message.speaker]}`}
       >
-        <span className="message-position" aria-hidden="true">№{index + 1}</span>
+        <span className="message-position" aria-hidden="true">{index + 1}</span>
         <div className="message-body">
           <div className="message-meta">
             <strong>{names[message.speaker]}</strong>
@@ -92,12 +93,12 @@ export default function Transcript({ source, evaluation, highlight, loading, isM
       aria-busy={loading}
     >
       <header className="panel-heading">
-        <h2>Транскрипт {messages && <span className="subtle">{turnsLabel(messages.length)}</span>}</h2>
+        <h2>Разговор {messages && <span className="subtle">{turnsLabel(messages.length)}</span>}</h2>
         <div className="transcript-tags">
           {source?.channel === "voice call" && !source.audio_url && <span className="source-version">Без записи</span>}
           {evaluation && (
             <span className="source-version" title={`Сохранённый транскрипт запуска по чек-листу v${evaluation.checklist.version}`}>
-              Снимок оценки
+              Текст на момент оценки
             </span>
           )}
         </div>
@@ -106,7 +107,7 @@ export default function Transcript({ source, evaluation, highlight, loading, isM
         <div className="evidence-return">
           <Link2 size={17} aria-hidden="true" />
           <div>
-            <strong>{highlight.end ? `Проверенный участок: ${start + 1}–${end + 1}` : `Доказательство · реплика ${start + 1}`}</strong>
+            <strong>{highlight.end ? `Реплики ${start + 1}–${end + 1}` : `Реплика ${start + 1}`}</strong>
             <span title={highlight.title}>{highlight.title}</span>
           </div>
           <button className="text-button" onClick={(event) => onReturn(event.detail > 0)}>
@@ -123,7 +124,7 @@ export default function Transcript({ source, evaluation, highlight, loading, isM
           hasAudio={Boolean(source.audio_url)}
         />
       )}
-      <div className="transcript-content">
+      <div className="transcript-content" tabIndex={0} aria-label="Текст разговора">
         {loading ? (
           <div className="transcript-skeleton" role="status">
             <span className="sr-only">Загружаем транскрипт…</span>

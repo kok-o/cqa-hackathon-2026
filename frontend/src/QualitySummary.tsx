@@ -82,12 +82,15 @@ export default function QualitySummary({ groups, initialGroup, checklistId, vers
   const open = (finding: SummaryFinding) => onOpen(group, finding);
   return (
     <section className="quality-summary" aria-label="Сводка по нарушениям">
+      <div className="quality-scope">
       <label className="quality-group">
         <span>Набор</span>
         <Select value={group} onChange={(event) => setSelected(event.target.value)}>
           {groups.map((item) => <option key={item} value={item}>{item}</option>)}
         </Select>
       </label>
+      <p className="quality-scope-note">Оценки по выбранному чек-листу, версия {version}. Откройте нарушение, чтобы перейти к его доказательству.</p>
+      </div>
       {state?.error ? (
         <div className="quality-state" role="alert">
           <p>{state.error}</p>
@@ -105,18 +108,19 @@ export default function QualitySummary({ groups, initialGroup, checklistId, vers
           {data.total === data.unrated ? <p className="quality-state">У этого набора ещё нет оценок по выбранной версии чек-листа.</p> : (
             <>
               <div className="quality-critical">
-                <h2>{data.critical.length > 0 ? <AlertTriangle size={16} aria-hidden="true" /> : null} Грубые нарушения <strong>{data.critical.length}</strong></h2>
+                <div className="quality-section-heading"><h2>{data.critical.length > 0 ? <AlertTriangle size={16} aria-hidden="true" /> : null} Грубые нарушения</h2><strong className={data.critical.length ? "quality-critical-count" : "quality-count"}>{data.critical.length}</strong></div>
                 {data.critical_unknown > 0 ? <p className="quality-note">Ещё проверяются на грубые нарушения — {data.critical_unknown}.</p> : null}
                 {data.critical.length > 0 ? (
                   <details>
                     <summary><ChevronRight size={15} aria-hidden="true" /> Показать диалоги</summary>
                     <FindingList findings={data.critical} onOpen={open} />
                   </details>
-                ) : null}
+                ) : <p className="quality-note">Грубых нарушений в завершённых проверках не найдено.</p>}
               </div>
               <div className="quality-violations">
                 <h2>Частые нарушения</h2>
                 <p className="quality-note">Диалогов со снижениями или грубыми нарушениями — {data.affected}. В строках — число снижений среди диалогов, где критерий применим и оценён.</p>
+                {data.violations.length > 0 && <div className="quality-table-heading" aria-hidden="true"><span>Критерий</span><span>Диалоги</span></div>}
                 {data.violations.length > 0 ? data.violations.map((item) => (
                   <details key={item.criterion_id}>
                     <summary>

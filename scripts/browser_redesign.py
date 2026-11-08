@@ -157,7 +157,9 @@ def main():
             expect(page.locator(".job-errors")).to_have_count(0)
 
         def screenshot(name):
-            page.screenshot(path=str(shots / f"redesign-{name}.png"), full_page=True)
+            # Fixed dialogs and sticky save controls belong to the visible viewport.
+            # Full-page stitching would place those controls over unrelated content.
+            page.screenshot(path=str(shots / f"redesign-{name}.png"), full_page=not name.startswith(("checklists-", "export-")))
 
         try:
             page.route("**/api/conversations", lambda route: route.fulfill(status=503, json={"detail": "Synthetic initial list failure"}))

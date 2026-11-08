@@ -7,34 +7,34 @@ html:has(.editor-workspace) { scroll-padding-block: 80px 100px; }
 .editor-body { display: grid; grid-template-columns: 260px minmax(0, 1fr); align-items: start; min-height: 560px; }
 .editor-index { position: sticky; top: 24px; min-width: 0; padding: 24px 24px 24px 0; }
 .editor-index-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; font-size: 13px; }
-.editor-index-heading strong { font-weight: 600; }
+.editor-index-heading strong { font-family: var(--font-display); font-size: 20px; font-weight: 500; letter-spacing: -.01em; }
 .editor-index-heading strong span { margin-left: 5px; font-weight: 400; color: var(--muted); }
 .editor-index-heading > span { color: var(--muted); font-variant-numeric: tabular-nums; }
 .editor-criterion-list { display: grid; gap: 4px; }
 .editor-mobile-picker { display: none; }
-.editor-criterion-button { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 11px 12px; border: 0; border-radius: 5px; background: transparent; color: var(--text); text-align: left; cursor: pointer; }
-.editor-criterion-button:hover { background: #f6f7f8; }
-.editor-criterion-button.is-selected { background: #eceff1; }
-.editor-criterion-button.is-selected .editor-criterion-label strong { font-weight: 600; }
+.editor-criterion-button { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 11px 12px; border: 0; border-radius: 2px; background: transparent; color: var(--text); text-align: left; cursor: pointer; }
+.editor-criterion-button:hover { background: #efefe7; }
+.editor-criterion-button.is-selected { background: #e9ece2; }
+.editor-criterion-button.is-selected .editor-criterion-label strong { font-weight: 600; color: var(--primary); }
 .editor-criterion-label { display: grid; flex: 1; min-width: 0; gap: 4px; }
 .editor-criterion-label strong { font-size: 14px; line-height: 1.4; font-weight: 400; overflow-wrap: anywhere; }
 .editor-criterion-label small { font-size: 12px; color: var(--muted); }
-.editor-weight { flex: none; font-size: 13px; font-variant-numeric: tabular-nums; color: var(--muted); }
+.editor-weight { flex: none; font-family: var(--font-display); font-size: 20px; font-variant-numeric: tabular-nums; color: var(--muted); }
 .editor-add.button { margin-top: 20px; min-height: 38px; font-size: 13px; width: 100%; justify-content: center; }
 .editor-detail { min-width: 0; border-left: 1px solid var(--line); padding: 28px 0 36px 40px; scroll-margin-top: 24px; }
 .editor-detail-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding-bottom: 28px; }
-.editor-detail-heading h3 { margin: 0; font-size: 22px; line-height: 1.35; font-weight: 500; letter-spacing: -.025em; overflow-wrap: anywhere; }
+.editor-detail-heading h3 { margin: 0; font-family: var(--font-display); font-size: 30px; line-height: 1.22; font-weight: 500; letter-spacing: -.015em; overflow-wrap: anywhere; }
 .editor-detail-heading p { margin: 8px 0 0; font-size: 13px; line-height: 1.5; color: var(--muted); }
 .editor-detail-heading .icon-button { flex-shrink: 0; }
 .editor-fieldset { min-width: 0; margin: 0; padding: 28px 0; border: 0; border-top: 1px solid var(--line); }
 .editor-fieldset:first-of-type { padding-top: 0; border-top: 0; }
 .editor-fieldset:last-child { padding-bottom: 0; }
-.editor-fieldset legend { float: left; width: 100%; margin-bottom: 20px; padding: 0; font-size: 15px; font-weight: 500; }
+.editor-fieldset legend { float: left; width: 100%; margin-bottom: 20px; padding: 0; font-family: var(--font-display); font-size: 22px; font-weight: 500; letter-spacing: -.01em; }
 .editor-fieldset:first-of-type legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .editor-field-grid { clear: both; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; max-width: 900px; }
 .editor-field-grid .field { min-width: 0; margin: 0; font-size: 13px; line-height: 1.5; gap: 8px; }
 .editor-identity { grid-template-columns: minmax(0, 1fr) 120px; }
-.editor-field-grid .field input, .editor-field-grid .field select, .editor-field-grid .field textarea, .editor-meta .field input, .editor-meta .field select { width: 100%; min-width: 0; min-height: 40px; font-size: 14px; border-radius: 5px; }
+.editor-field-grid .field input, .editor-field-grid .field select, .editor-field-grid .field textarea, .editor-meta .field input, .editor-meta .field select { width: 100%; min-width: 0; min-height: 40px; font-size: 14px; border-radius: 2px; }
 .editor-field-grid .field textarea { line-height: 1.65; resize: vertical; padding: 12px; }
 .editor-field-grid .form-help { margin-top: 0; font-size: 12px; line-height: 1.5; color: var(--muted); }
 .editor-wide { grid-column: 1 / -1; }
@@ -71,7 +71,7 @@ html:has(.editor-workspace) { scroll-padding-block: 80px 100px; }
   .editor-add.button { width: auto; min-height: 44px; margin-top: 12px; }
   .editor-detail { padding: 24px 0; border-left: 0; }
   .editor-detail-heading { padding-bottom: 24px; }
-  .editor-detail-heading h3 { font-size: 20px; }
+  .editor-detail-heading h3 { font-size: 27px; }
   .editor-field-grid { gap: 20px 16px; }
   .editor-field-grid .field input, .editor-field-grid .field select, .editor-field-grid .field textarea, .editor-meta .field input, .editor-meta .field select { min-height: 44px; font-size: 16px; }
   .editor-toggle { grid-column: 1 / -1; min-height: 44px; padding-top: 4px; }

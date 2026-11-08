@@ -1003,6 +1003,7 @@ export default function App() {
                 isMobile={isMobile}
                 onRetry={() => setDetailAttempt((current) => current + 1)}
                 onReturn={returnToCriterion}
+                onNavigateEvidence={openEvidence}
               />
               <aside
                 id="assessment-panel"

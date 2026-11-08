@@ -183,10 +183,10 @@ export default function Assessment({
               : "neutral";
   const orderedCriteria = [...evaluation.checklist.criteria].sort((a, b) => {
     const priority = (id: string) => {
-      const item = evaluation.results.find(result => result.criterion_id === id);
+      const item = results.find(result => result.criterion_id === id);
       if (item?.gross_error) return 0;
       if (!item || item.status === "needs_review") return 1;
-      const grade = evaluation.score.criteria.find(result => result.criterion_id === id);
+      const grade = score.criteria.find(result => result.criterion_id === id);
       if (item.status === "applicable" && grade?.normalized_score != null && grade.normalized_score < 1) return 2;
       return 3;
     };

@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState } from "react";
+import { useLayoutEffect, useMemo, useState } from "react";
 import { ArrowLeft, Bot, ChevronDown, Link2, MessageSquare, RefreshCw } from "lucide-react";
 import CallAudio from "./CallAudio";
 import type { Conversation, Evaluation, Message, Speaker } from "./contracts";
@@ -29,7 +29,40 @@ type Props = {
   error: string;
   onRetry: () => void;
   onReturn: (animate: boolean) => void;
+  onNavigateEvidence?: (target: EvidenceTarget, animate: boolean) => void;
 };
+
+type SourceAnchor = { key: string; first: number; last: number; references: EvidenceTarget[] };
+
+/** Group real source positions, never model confidence or invented events. */
+function sourceAnchors(source: Conversation | null, evaluation: Evaluation | null): SourceAnchor[] {
+  if (!source || !evaluation || source.transcript.length <= 8 ||
+      source.conversation_id !== evaluation.conversation.conversation_id ||
+      source.group_id !== evaluation.conversation.group_id) return [];
+  const positions = new Map(source.transcript.map((message, index) => [message.message_id, index]));
+  const titles = new Map(evaluation.checklist.criteria.map(criterion => [criterion.criterion_id, criterion.title]));
+  const groups = new Map<string, SourceAnchor>();
+  function add(target: EvidenceTarget) {
+    const start = positions.get(target.start);
+    const end = target.end ? positions.get(target.end) : start;
+    if (start == null || end == null) return;
+    const key = JSON.stringify([target.start, target.end || target.start]);
+    const group = groups.get(key) ?? { key, first: Math.min(start, end) + 1, last: Math.max(start, end) + 1, references: [] };
+    if (!group.references.some(reference => reference.criterion === target.criterion && reference.quote === target.quote)) group.references.push(target);
+    groups.set(key, group);
+  }
+  for (const result of evaluation.results) {
+    const title = titles.get(result.criterion_id);
+    if (!title) continue;
+    for (const evidence of result.evidence) {
+      const position = positions.get(evidence.message_id);
+      if (position == null || !evidence.quote || !source.transcript[position].text.includes(evidence.quote)) continue;
+      add({ start: evidence.message_id, quote: evidence.quote, criterion: result.criterion_id, title });
+    }
+    if (result.checked_span) add({ start: result.checked_span.start_message_id, end: result.checked_span.end_message_id, criterion: result.criterion_id, title });
+  }
+  return [...groups.values()].sort((a, b) => a.first - b.first || a.last - b.last);
+}
 
 function MessageText({ text, quote }: { text: string; quote?: string }) {
   const offset = quote ? text.indexOf(quote) : -1;
@@ -39,9 +72,10 @@ function MessageText({ text, quote }: { text: string; quote?: string }) {
   );
 }
 
-export default function Transcript({ source, evaluation, highlight, loading, isMobile, error, onRetry, onReturn }: Props) {
+export default function Transcript({ source, evaluation, highlight, loading, isMobile, error, onRetry, onReturn, onNavigateEvidence }: Props) {
   const [introOpen, setIntroOpen] = useState(false);
   const messages = source?.transcript;
+  const anchors = useMemo(() => sourceAnchors(source, evaluation), [source, evaluation]);
   const start = messages?.findIndex((item) => item.message_id === highlight?.start) ?? -1;
   const endIndex = highlight?.end ? messages?.findIndex((item) => item.message_id === highlight.end) ?? -1 : start;
   const end = endIndex < 0 ? start : endIndex;
@@ -93,16 +127,39 @@ export default function Transcript({ source, evaluation, highlight, loading, isM
       aria-busy={loading}
     >
       <header className="panel-heading">
-        <h2>Разговор {messages && <span className="subtle">{turnsLabel(messages.length)}</span>}</h2>
+        <div className="transcript-heading-copy">
+          <h2>Разговор</h2>
+          {messages && <span className="transcript-source-meta">{turnsLabel(messages.length)}<span aria-hidden="true">/</span>{source && { RU: "Русский", KZ: "Қазақша", EN: "English" }[source.language]}</span>}
+        </div>
         <div className="transcript-tags">
           {source?.channel === "voice call" && !source.audio_url && <span className="source-version">Без записи</span>}
           {evaluation && (
             <span className="source-version" title={`Сохранённый транскрипт запуска по чек-листу v${evaluation.checklist.version}`}>
-              Текст на момент оценки
+              Снимок оценки <span>v{evaluation.checklist.version}</span>
             </span>
           )}
         </div>
       </header>
+      {!loading && !error && anchors.length > 0 && onNavigateEvidence && (
+        <nav className="transcript-source-nav" aria-label="Доказательства в разговоре">
+          <span className="source-nav-label">Реплики с доказательствами</span>
+          <div className="source-nav-track">
+            {anchors.map(anchor => {
+              const current = anchor.references.find(reference => reference.start === highlight?.start &&
+                (reference.end || reference.start) === (highlight?.end || highlight?.start) && reference.criterion === highlight?.criterion && reference.quote === highlight?.quote);
+              const target = current ?? anchor.references[0];
+              const location = anchor.first === anchor.last ? `Реплика ${anchor.first}` : `Реплики ${anchor.first}–${anchor.last}`;
+              const description = anchor.references.map(reference => `${reference.title}${reference.quote ? `: «${reference.quote}»` : ": проверенный диапазон"}`).join("\n");
+              return <button type="button" key={anchor.key} className="source-nav-marker"
+                aria-label={`${location}. ${anchor.references.map(reference => reference.title).join("; ")}`}
+                aria-current={current ? "location" : undefined} title={description}
+                onClick={event => onNavigateEvidence(target, event.detail > 0)}>
+                <span>{anchor.first === anchor.last ? anchor.first : `${anchor.first}–${anchor.last}`}</span>
+              </button>;
+            })}
+          </div>
+        </nav>
+      )}
       {highlight && start >= 0 && (
         <div className="evidence-return">
           <Link2 size={17} aria-hidden="true" />

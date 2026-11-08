@@ -152,7 +152,7 @@ export default function ConversationIndex(p: ConversationIndexProps) {
           return <tr key={key} className={isSelected ? "is-selected" : undefined}>
             <td className="ci-checkbox-cell"><label className="ci-check"><input type="checkbox" aria-label={`Выбрать ${item.conversation_id} из ${item.group_id}`} checked={isSelected} onChange={() => toggleItem(item)} /></label></td>
             <td className="ci-dialogue-cell"><button type="button" className="ci-open-dialogue" onClick={() => p.onOpen(item)} aria-label={`Открыть диалог ${item.conversation_id} из ${item.group_id}`}>
-              <span className="ci-preview">{item.preview.trim() || (item.channel === "voice call" ? "Транскрипт звонка" : "Транскрипт чата")}</span>
+              <span className="ci-preview" lang={item.preview.trim() ? { RU: "ru", KZ: "kk", EN: "en" }[item.language] : "ru"}>{item.preview.trim() || (item.channel === "voice call" ? "Транскрипт звонка" : "Транскрипт чата")}</span>
               <span className="ci-dialogue-meta"><span translate="no">{item.conversation_id}</span><span translate="no">{item.group_id}</span><span>{turnsLabel(item.message_count)}</span></span>
             </button></td>
             <td className="ci-channel-cell">{item.channel === "voice call" ? "Звонок" : "Чат"}</td>

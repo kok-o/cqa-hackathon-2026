@@ -3,7 +3,6 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 import type { Dispatch, ReactNode, SetStateAction } from "react";
 import {
   ArrowUpRight,
-  Bot,
   ChevronDown,
   MessageSquarePlus,
   Check,
@@ -134,8 +133,6 @@ export default function Assessment({
       return () => window.clearTimeout(timer);
     }
   }, [evaluation.revision]);
-  const metadata = evaluation.model_info;
-  const testRun = metadata.mode === "test" || metadata.provider === "test" || metadata.provider === "isolated-test-double";
   const reviewed = evaluation.revision > 1;
   const currentReview = reviewed && !showOriginal;
   const latestDecision = evaluation.appeals.reduce<Appeal | null>((latest, item) =>
@@ -191,17 +188,25 @@ export default function Assessment({
       id="assessment-criterion-detail"
       aria-labelledby={`criterion-${criterion.criterion_id}`}
     >
-      <div className="aq-detail-meta">
-        <span className={`aq-result-label ${tone(result)}`}>
+      <dl className="aq-result-metrics">
+        <div>
+          <dt>Ответ</dt>
+          <dd className={`aq-result-label ${tone(result)}`}>
           {result?.status === "not_applicable"
-            ? "N/A · Не применимо"
+            ? "Не применимо"
             : result
               ? answerName(result)
               : "Нет результата"}
-        </span>
+          </dd>
+        </div>
         {calculated?.contribution != null ? (
-          <span>В итог: {number(calculated.contribution, 2)} из 100</span>
+          <div>
+            <dt>Вклад в итог</dt>
+            <dd><strong>{number(calculated.contribution, 2)}</strong><span>из 100</span></dd>
+          </div>
         ) : null}
+      </dl>
+      <div className="aq-detail-meta">
         {result?.gross_error ? (
           <span className="aq-danger">Грубая ошибка</span>
         ) : null}
@@ -209,6 +214,7 @@ export default function Assessment({
       </div>
       {result ? (
         <>
+          <h4 className="aq-explanation-label">Обоснование</h4>
           <p className="aq-explanation">{result.explanation}</p>
           {result.evidence.length ? (
             <div className="aq-evidence-list">
@@ -283,10 +289,7 @@ export default function Assessment({
     <section className="assessment aq-panel" aria-label="Оценка диалога">
       <div className="aq-summary">
         <div className="aq-heading">
-          <div className="aq-provenance">
-            <span>{currentReview ? <Gavel size={15} aria-hidden="true" /> : <Bot size={16} aria-hidden="true" />}{currentReview ? "Решение проверяющего" : testRun ? "Тестовый расчёт" : "Оценка AI"}</span>
-            <span className="aq-version" title={evaluation.checklist.title}>Правила запуска <strong>v{evaluation.checklist.version}</strong></span>
-          </div>
+          <h3 className="aq-summary-title">{showOriginal ? "Исходная оценка" : currentReview ? "После пересмотра" : "Итоговая оценка"}</h3>
           <button
           type="button"
           className="icon-button aq-download"
@@ -339,7 +342,7 @@ export default function Assessment({
         </p>
       ) : null}
       {reviewed ? (
-        <div className="aq-revision" role="group" aria-label="Версия результата">
+        <div className="aq-revision" role="group" aria-label="Сравнение оценок">
           <button
             type="button"
             aria-pressed={showOriginal}
@@ -426,46 +429,6 @@ export default function Assessment({
           </dl>
         </details>
       ) : null}
-      <details className="aq-run-details">
-        <summary>
-          Данные запуска
-          <ChevronDown size={14} />
-        </summary>
-        <dl>
-          <div>
-            <dt>Модель</dt>
-            <dd>{String(metadata.model ?? "Не указана")}</dd>
-          </div>
-          <div>
-            <dt>Создано</dt>
-            <dd>{date(evaluation.created_at)}</dd>
-          </div>
-          <div>
-            <dt>Чек-лист</dt>
-            <dd>{evaluation.checklist.title} · v{evaluation.checklist.version}</dd>
-          </div>
-          <div>
-            <dt>Ревизия</dt>
-            <dd>{evaluation.revision}</dd>
-          </div>
-          {metadata.elapsed_ms != null ? (
-            <div>
-              <dt>Длительность</dt>
-              <dd>{number(Number(metadata.elapsed_ms) / 1000)} с</dd>
-            </div>
-          ) : null}
-          {metadata.prompt_version != null ? (
-            <div>
-              <dt>Инструкция</dt>
-              <dd>{String(metadata.prompt_version)}</dd>
-            </div>
-          ) : null}
-          <div>
-            <dt>ID запуска</dt>
-            <dd>{evaluation.evaluation_id}</dd>
-          </div>
-        </dl>
-      </details>
     </section>
   );
 }

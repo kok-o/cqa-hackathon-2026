@@ -123,7 +123,7 @@ def main():
             page.get_by_role('button', name='Закрыть сообщение об ошибке').click()
             checks.extend(['upsert_residual_group_warning','invalid_empty_transcript_error_visible'])
 
-            choose_select(select_control(page, 'Версия чек-листа'), json.dumps(['synthetic-checklist', 1], separators=(',', ':')))
+            choose_select(select_control(page, 'Чек-лист'), json.dumps(['synthetic-checklist', 1], separators=(',', ':')))
             page.get_by_role('button',name=re.compile(r'^Оценить выборку\s*10$')).click()
             expect(page.locator('.batch-banner')).to_contain_text('Обработка завершена',timeout=60000)
             expect(page.locator('.batch-banner')).to_contain_text('Обработано 10 из 10')
@@ -139,7 +139,7 @@ def main():
             page.get_by_role('searchbox', name='Поиск диалога').fill(cid)
             page.locator('.conversation-item').filter(has_text=cid).click()
             official_key = json.dumps([official['checklist_id'], official['version']], separators=(',', ':'))
-            choose_select(select_control(page, 'Версия чек-листа'), official_key)
+            choose_select(select_control(page, 'Чек-лист'), official_key)
             with page.expect_response(lambda r: r.request.method == 'POST' and r.url.endswith('/api/evaluation-jobs')) as pending:
                 page.get_by_role('button', name='Оценить снова', exact=True).click()
             assert pending.value.status == 202

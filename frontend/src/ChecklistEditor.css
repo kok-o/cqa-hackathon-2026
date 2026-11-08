@@ -1,4 +1,5 @@
 .editor-workspace.editor-v2 {
+  --editor-control-border: #7d8791;
   width: 100%;
   margin: 0;
   color: var(--text);
@@ -11,7 +12,7 @@ html:has(.editor-workspace) { scroll-padding-block: 72px 90px; }
 
 .editor-meta {
   display: grid;
-  grid-template-columns: minmax(200px, 1fr) 230px auto;
+  grid-template-columns: minmax(0, 1fr) minmax(230px, 260px) auto;
   align-items: end;
   gap: 12px;
   padding: 15px 18px;
@@ -22,8 +23,9 @@ html:has(.editor-workspace) { scroll-padding-block: 72px 90px; }
 
 .editor-meta .field {
   margin: 0;
+  gap: 8px;
 }
-.editor-download { align-self: end; }
+.editor-download { align-self: end; height: 44px; min-height: 44px; white-space: nowrap; }
 
 .editor-body {
   display: grid;
@@ -50,7 +52,9 @@ html:has(.editor-workspace) { scroll-padding-block: 72px 90px; }
   gap: 10px;
   padding: 16px 18px;
   min-height: 57px;
-  font-size: 13px;
+  font-size: 14px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 8px;
 }
 
 .editor-index-heading strong {
@@ -58,11 +62,15 @@ html:has(.editor-workspace) { scroll-padding-block: 72px 90px; }
 }
 .editor-index-heading strong span {
   margin-left: 4px;
-  color: var(--muted);
-  font-weight: 400;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #e5e8eb;
+  color: var(--text);
+  font-weight: 600;
 }
 .editor-index-heading > span {
-  color: var(--muted);
+  color: var(--text);
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 .editor-criterion-list {
@@ -91,7 +99,7 @@ html:has(.editor-workspace) { scroll-padding-block: 72px 90px; }
   background: var(--canvas);
 }
 .editor-criterion-button.is-selected {
-  box-shadow: inset 1px 0 var(--primary);
+  box-shadow: inset 3px 0 var(--text);
   background: var(--selected);
 }
 .editor-criterion-label {
@@ -107,19 +115,22 @@ html:has(.editor-workspace) { scroll-padding-block: 72px 90px; }
   overflow-wrap: anywhere;
 }
 .editor-criterion-label small {
-  font-size: 11px;
-  color: var(--muted);
+  font-size: 12px;
+  color: #45515d;
 }
 .editor-weight {
-  font-size: 12px;
-  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  color: #0e151c;
   font-variant-numeric: tabular-nums;
-  min-width: 27px;
+  min-width: 30px;
   padding: 4px 5px;
   border-radius: 5px;
-  background: var(--canvas);
+  border: 1px solid #b4bec8;
+  background: #edf0f3;
   text-align: center;
 }
+.editor-criterion-button.is-selected .editor-weight { background:#0e151c; border-color:#0e151c; color:#fff; }
 .editor-add.button {
   margin: 14px 16px 0;
   min-height: 38px;
@@ -156,7 +167,7 @@ html:has(.editor-workspace) { scroll-padding-block: 72px 90px; }
 .editor-fieldset {
   min-width: 0;
   margin: 0;
-  padding: 20px 24px 24px;
+  padding: 24px;
   border: 0;
   border-top: 1px solid var(--line);
 }
@@ -169,42 +180,50 @@ html:has(.editor-workspace) { scroll-padding-block: 72px 90px; }
   width: 100%;
   margin-bottom: 17px;
   padding: 0;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
 }
 .editor-field-grid {
   clear: both;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 17px 20px;
+  gap: 20px;
   max-width: 850px;
 }
 .editor-field-grid .field {
   min-width: 0;
   margin: 0;
-  font-size: 12px;
+  gap: 8px;
+  color: #35404b;
+  font-size: 13px;
 }
 .editor-identity { grid-template-columns: minmax(0, 1fr) minmax(105px, 155px); }
-.editor-field-grid .field input,
-.editor-field-grid .field select,
-.editor-field-grid .field textarea,
-.editor-meta .field input,
-.editor-meta .field select {
+.editor-workspace :is(.editor-meta, .editor-field-grid, .editor-mobile-picker) :is(input:not([type=checkbox]), textarea, .select-trigger) {
   width: 100%;
   min-width: 0;
-  min-height: 38px;
-  font-size: 14px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--editor-control-border);
   border-radius: var(--control-radius);
+  background: #fff;
+  color: #0e151c;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.5;
 }
+.editor-workspace :is(.editor-meta, .editor-field-grid, .editor-mobile-picker) :is(input:not([type=checkbox]), .select-trigger) { height:44px; }
+.editor-workspace :is(.editor-meta, .editor-field-grid, .editor-mobile-picker) :is(input:not([type=checkbox]), textarea, .select-trigger):hover:not(:disabled) { border-color:#4f5964; }
+.editor-workspace :is(.editor-meta, .editor-field-grid, .editor-mobile-picker) :is(input:not([type=checkbox]), textarea, .select-trigger):focus-visible { border-color:var(--text); outline:2px solid var(--text); outline-offset:2px; }
 .editor-field-grid .field textarea {
-  line-height: 1.55;
+  min-height: 144px;
   resize: vertical;
 }
+.editor-workspace .editor-field-grid textarea[name=criterion-instruction] { min-height:180px; font-size:16px; line-height:1.7; }
 .editor-field-grid .form-help {
   margin-top: 2px;
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+  color: #45515d;
 }
 .editor-wide {
   grid-column: 1 / -1;
@@ -223,7 +242,7 @@ html:has(.editor-workspace) { scroll-padding-block: 72px 90px; }
   width: 16px;
   height: 16px;
   margin: 2px 0;
-  accent-color: var(--primary);
+  accent-color: var(--text);
 }
 .editor-toggle > span {
   display: grid;
@@ -268,7 +287,7 @@ html:has(.editor-workspace) { scroll-padding-block: 72px 90px; }
   font-size: 12px;
   color: var(--muted);
 }
-.editor-save-status > strong { font-size: 13px; color: var(--primary); }
+.editor-save-status > strong { font-size: 13px; color: var(--text); }
 .editor-save-status.dirty > strong { color: var(--warning); }
 .editor-save-actions {
   display: flex;
@@ -290,7 +309,7 @@ html:has(.editor-workspace) { scroll-padding-block: 72px 90px; }
     padding-inline: 22px;
   }
   .editor-meta {
-    grid-template-columns: minmax(150px, 1fr) 210px 75px;
+    grid-template-columns: minmax(0, 1fr) minmax(200px, 240px) auto;
     gap: 16px;
   }
 }
@@ -349,13 +368,9 @@ html:has(.editor-workspace) { scroll-padding-block: 72px 90px; }
     padding: 20px 14px;
   }
   .editor-field-grid {
-    gap: 17px;
+    gap: 16px;
   }
-  .editor-field-grid .field input,
-  .editor-field-grid .field select,
-  .editor-field-grid .field textarea,
-  .editor-meta .field input,
-  .editor-meta .field select {
+  .editor-workspace :is(.editor-meta, .editor-field-grid, .editor-mobile-picker) :is(input:not([type=checkbox]), textarea, .select-trigger) {
     min-height: 44px;
     font-size: 16px;
   }
@@ -385,4 +400,5 @@ html:has(.editor-workspace) { scroll-padding-block: 72px 90px; }
 }
 @media (max-width: 520px) {
   .editor-identity { grid-template-columns: minmax(0, 1fr) 88px; }
+  .editor-field-grid:not(.editor-identity) { grid-template-columns: minmax(0, 1fr); }
 }

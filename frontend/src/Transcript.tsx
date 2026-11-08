@@ -93,14 +93,6 @@ export default function Transcript({ source, evaluation, highlight, loading, isM
     >
       <header className="panel-heading">
         <h2>Транскрипт {messages && <span className="subtle">{turnsLabel(messages.length)}</span>}</h2>
-        <div className="transcript-tags">
-          {source?.channel === "voice call" && !source.audio_url && <span className="source-version">Без записи</span>}
-          {evaluation && (
-            <span className="source-version" title={`Сохранённый транскрипт запуска по чек-листу v${evaluation.checklist.version}`}>
-              Снимок оценки
-            </span>
-          )}
-        </div>
       </header>
       {highlight && start >= 0 && (
         <div className="evidence-return">

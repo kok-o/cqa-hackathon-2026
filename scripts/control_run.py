@@ -30,6 +30,8 @@ from backend.cqa.importer import normalize
 from backend.cqa.models import ChecklistVersion, DatasetExport
 from evaluation.submission import _read, export_submission, load_approved_checklist, validate_submission
 
+CONTROL_MODELS = ("gpt-6-luna", "gpt-6.1-sol")
+
 
 class RunError(RuntimeError):
     pass
@@ -109,14 +111,16 @@ def load_dataset(path, allow_test_mode=False):
     return dataset
 
 
-def checked_config(config, test=False):
+def checked_config(config, test=False, expected_model="gpt-6-luna"):
+    if expected_model not in CONTROL_MODELS:
+        raise RunError("Unsupported expected control model.")
     if not isinstance(config, dict):
         raise RunError("Product configuration is malformed.")
     if not test and (config.get("mode") != "live" or config.get("provider_configured") is not True
-                     or config.get("model") != "gpt-6-luna" or config.get("prompt_version") != PROMPT_VERSION
+                     or config.get("model") != expected_model or config.get("prompt_version") != PROMPT_VERSION
                      or config.get("api_style") != "responses" or config.get("json_mode") != "json_schema"
                      or config.get("reasoning_effort") != "high"):
-        raise RunError("Product must use live gpt-6-luna/current prompt with responses, json_schema and high reasoning.")
+        raise RunError(f"Product must use live {expected_model}/current prompt with responses, json_schema and high reasoning.")
     if test and config.get("mode") != "test":
         raise RunError("--allow-test-mode requires a product explicitly configured in test mode.")
     if not config.get("model") or not config.get("prompt_version"):
@@ -199,7 +203,7 @@ def run(args, client=None):
     api = API(client, time.monotonic() + duration, args.request_timeout)
     try:
         configuration = api.request("GET", "/api/config")
-        config = checked_config(configuration, args.allow_test_mode)
+        config = checked_config(configuration, args.allow_test_mode, args.model)
         team = (args.team_name or configuration.get("team_name") or "").strip()
         if not team:
             raise RunError("Supply --team-name or configure CQA_TEAM_NAME in the product.")
@@ -248,7 +252,7 @@ def run(args, client=None):
                             break
                         if job["status"] not in {"pending", "dispatching"} or job["job_id"]:
                             continue
-                        if checked_config(api.request("GET", "/api/config"), args.allow_test_mode) != config:
+                        if checked_config(api.request("GET", "/api/config"), args.allow_test_mode, args.model) != config:
                             raise RunError("Product configuration changed during the run; dispatch stopped.")
                         if sha256((ROOT / "prompts/evaluator.md").read_bytes()).hexdigest() != identity["prompt_sha256"]:
                             raise RunError("Local prompt content changed during the run; dispatch stopped.")
@@ -320,6 +324,8 @@ def parser():
     result = argparse.ArgumentParser(description=__doc__)
     result.add_argument("--dataset", required=True)
     result.add_argument("--base-url", default="http://127.0.0.1:8061")
+    result.add_argument("--model", choices=CONTROL_MODELS, default="gpt-6-luna",
+                        help="Expected live product model; never changes configuration or falls back automatically")
     result.add_argument("--team-name")
     result.add_argument("--state")
     result.add_argument("--out")

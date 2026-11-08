@@ -1,0 +1,252 @@
+{
+  "schema_version": 1,
+  "provenance": "synthetic_regression_authored_by_assistant",
+  "not_ground_truth": true,
+  "purpose": "preregistered_synthetic_control_review_regression",
+  "created_at": "2026-11-08",
+  "checklist_sha256": "9264b4d2099685078769691b7f72ef1fcb1befe19ec6c9ad94e69a6531cedfaf",
+  "dataset_sha256": "0599e4266e59c87f90741120719b705e12bb539b8a0c094fbbd80d5f099c750a",
+  "limitations": "Fresh assistant-authored synthetic assertions, registered before any model call on these cases. Not human labels, organizer ground truth, independent accuracy evidence, or a model ranking. The author did not read raw FBroker/control conversations or actual control predictions. Scope is only clearly determined discovery and dialogue decisions.",
+  "items": [
+    {
+      "group_id": "SYNTHETIC-CONTROL-REVIEW-v1",
+      "conversation_id": "cr-ru-procedure",
+      "language": "RU",
+      "scenario": "General conditional procedure without a private account status lookup",
+      "expected_results": [
+        {
+          "criterion_id": "discovery",
+          "status": "not_applicable",
+          "answer": null,
+          "rationale": "The request is for a general conditional route, not the actual status of a private profile. The supplied help text and requested action suffice."
+        },
+        {
+          "criterion_id": "dialogue",
+          "status": "applicable",
+          "answer": 10,
+          "rationale": "The conditional branches are explicit and connected to the question; no hold or confusion is present."
+        }
+      ]
+    },
+    {
+      "group_id": "SYNTHETIC-CONTROL-REVIEW-v1",
+      "conversation_id": "cr-ru-missing-clarified",
+      "language": "RU",
+      "scenario": "Essential document variant clarified before a tailored answer",
+      "expected_results": [
+        {
+          "criterion_id": "discovery",
+          "status": "applicable",
+          "answer": true,
+          "rationale": "The model determines which of two instructions is applicable and was initially missing. The operator obtains it before selecting a document."
+        },
+        {
+          "criterion_id": "dialogue",
+          "status": "applicable",
+          "answer": 10,
+          "rationale": "The relevant clarification and subsequent answer form a clear sequence."
+        }
+      ]
+    },
+    {
+      "group_id": "SYNTHETIC-CONTROL-REVIEW-v1",
+      "conversation_id": "cr-ru-missing-assumed",
+      "language": "RU",
+      "scenario": "Essential document variant guessed without clarification",
+      "expected_results": [
+        {
+          "criterion_id": "discovery",
+          "status": "applicable",
+          "answer": false,
+          "rationale": "The pump model is indispensable to selecting the matching manual. Neither the client nor any other source supplies it, and the operator selects one without asking."
+        },
+        {
+          "criterion_id": "dialogue",
+          "status": "applicable",
+          "answer": 10,
+          "rationale": "The answer is linguistically clear and easy to follow. Its unsupported selection is a discovery/consultation issue, with no separate dialogue-flow failure."
+        }
+      ]
+    },
+    {
+      "group_id": "SYNTHETIC-CONTROL-REVIEW-v1",
+      "conversation_id": "cr-ru-hold-unwarned",
+      "language": "RU",
+      "scenario": "Explicit operator handling hold with no advance operator warning",
+      "expected_results": [
+        {
+          "criterion_id": "discovery",
+          "status": "not_applicable",
+          "answer": null,
+          "rationale": "The client supplies both visible options and the desired format, so no clarification is required."
+        },
+        {
+          "criterion_id": "dialogue",
+          "status": "applicable",
+          "answer": 7,
+          "rationale": "A SYSTEM event explicitly starts and ends waiting during assigned operator handling. The operator never warns beforehand. This is one flow failure; the final instruction remains clear."
+        }
+      ]
+    },
+    {
+      "group_id": "SYNTHETIC-CONTROL-REVIEW-v1",
+      "conversation_id": "cr-kz-queue",
+      "language": "KZ",
+      "scenario": "Bot-announced queue before the first operator joins",
+      "expected_results": [
+        {
+          "criterion_id": "discovery",
+          "status": "not_applicable",
+          "answer": null,
+          "rationale": "The visible link and desired public document are already known before the operator joins."
+        },
+        {
+          "criterion_id": "dialogue",
+          "status": "applicable",
+          "answer": 10,
+          "rationale": "The waiting belongs entirely to the pre-operator queue and the bot warned about it. The first operator reply is clear; no operator hold or flow failure occurs."
+        }
+      ]
+    },
+    {
+      "group_id": "SYNTHETIC-CONTROL-REVIEW-v1",
+      "conversation_id": "cr-kz-hold-warned",
+      "language": "KZ",
+      "scenario": "Operator announces a handling hold before the system starts it",
+      "expected_results": [
+        {
+          "criterion_id": "discovery",
+          "status": "not_applicable",
+          "answer": null,
+          "rationale": "The requested format and matching visible option are explicit from the start."
+        },
+        {
+          "criterion_id": "dialogue",
+          "status": "applicable",
+          "answer": 10,
+          "rationale": "The operator gives an explicit advance warning before the SYSTEM-confirmed handling hold and returns with a clear answer."
+        }
+      ]
+    },
+    {
+      "group_id": "SYNTHETIC-CONTROL-REVIEW-v1",
+      "conversation_id": "cr-kz-negated-wait",
+      "language": "KZ",
+      "scenario": "Client explicitly denies waiting; no hold event",
+      "expected_results": [
+        {
+          "criterion_id": "discovery",
+          "status": "not_applicable",
+          "answer": null,
+          "rationale": "The desired evening programme is specified, and both link labels are given."
+        },
+        {
+          "criterion_id": "dialogue",
+          "status": "applicable",
+          "answer": 10,
+          "rationale": "The reference to waiting is explicitly negated. There is no actual hold or warning obligation established by the transcript."
+        }
+      ]
+    },
+    {
+      "group_id": "SYNTHETIC-CONTROL-REVIEW-v1",
+      "conversation_id": "cr-kz-missing-clarified",
+      "language": "KZ",
+      "scenario": "Missing delivery format clarified before selecting an option",
+      "expected_results": [
+        {
+          "criterion_id": "discovery",
+          "status": "applicable",
+          "answer": true,
+          "rationale": "The desired delivery format was genuinely missing and determines which option to select. The operator asks and uses the answer before advising."
+        },
+        {
+          "criterion_id": "dialogue",
+          "status": "applicable",
+          "answer": 10,
+          "rationale": "The clarification precedes a concise instruction that uses the supplied preference."
+        }
+      ]
+    },
+    {
+      "group_id": "SYNTHETIC-CONTROL-REVIEW-v1",
+      "conversation_id": "cr-en-clock-gap",
+      "language": "EN",
+      "scenario": "Timestamps alone without evidence of an operator hold",
+      "expected_results": [
+        {
+          "criterion_id": "discovery",
+          "status": "not_applicable",
+          "answer": null,
+          "rationale": "The desired public document and visible link are already specified; no private state is relevant."
+        },
+        {
+          "criterion_id": "dialogue",
+          "status": "applicable",
+          "answer": 10,
+          "rationale": "Only a timestamp gap precedes the first reply. There is no explicit operator handling hold, and the checklist excludes a first-response threshold."
+        }
+      ]
+    },
+    {
+      "group_id": "SYNTHETIC-CONTROL-REVIEW-v1",
+      "conversation_id": "cr-en-check-complete",
+      "language": "EN",
+      "scenario": "A completed check immediately includes the answer",
+      "expected_results": [
+        {
+          "criterion_id": "discovery",
+          "status": "not_applicable",
+          "answer": null,
+          "rationale": "The client names both options and the intended format, leaving no required detail missing."
+        },
+        {
+          "criterion_id": "dialogue",
+          "status": "applicable",
+          "answer": 10,
+          "rationale": "The operator reports a completed check and gives the answer in the same turn. This does not establish a waiting period needing an advance warning."
+        }
+      ]
+    },
+    {
+      "group_id": "SYNTHETIC-CONTROL-REVIEW-v1",
+      "conversation_id": "cr-en-missing-assumed",
+      "language": "EN",
+      "scenario": "Essential revision omitted and one revision selected without asking",
+      "expected_results": [
+        {
+          "criterion_id": "discovery",
+          "status": "applicable",
+          "answer": false,
+          "rationale": "The scanner revision is essential to matching its guide. No source supplies it, and the operator chooses revision Y without clarification."
+        },
+        {
+          "criterion_id": "dialogue",
+          "status": "applicable",
+          "answer": 10,
+          "rationale": "The instruction is clear as wording and sequence. The missing prerequisite concerns discovery and correctness, not a separate communication-flow defect."
+        }
+      ]
+    },
+    {
+      "group_id": "SYNTHETIC-CONTROL-REVIEW-v1",
+      "conversation_id": "cr-en-hold-unwarned",
+      "language": "EN",
+      "scenario": "System-confirmed waiting during operator handling without notice",
+      "expected_results": [
+        {
+          "criterion_id": "discovery",
+          "status": "not_applicable",
+          "answer": null,
+          "rationale": "The requested content and exact visible link are known from the first message."
+        },
+        {
+          "criterion_id": "dialogue",
+          "status": "applicable",
+          "answer": 7,
+          "rationale": "The SYSTEM events explicitly establish a hold during the assigned operator handling. No operator warning precedes it. The otherwise clear answer leaves exactly one visible flow failure."
+        }
+      ]
+    }
+  ]
+}

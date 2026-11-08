@@ -2,6 +2,7 @@ param(
     [Parameter(Mandatory = $true)][string]$Dataset,
     [string]$RuntimeRoot,
     [string]$BaseUrl = 'http://127.0.0.1:8061',
+    [ValidateSet('gpt-6-luna', 'gpt-6.1-sol')][string]$Model = 'gpt-6-luna',
     [switch]$CheckOnly,
     [switch]$RetryFailed,
     [switch]$Publish
@@ -18,7 +19,7 @@ $state = Join-Path $projectRoot 'data/runtime/control-run/state.json'
 $candidate = Join-Path $projectRoot 'data/runtime/control-run/results.json'
 Push-Location -LiteralPath $projectRoot
 try {
-    $runArgs = @('scripts/control_run.py', '--dataset', $datasetPath, '--base-url', $BaseUrl, '--state', $state, '--out', $candidate)
+    $runArgs = @('scripts/control_run.py', '--dataset', $datasetPath, '--base-url', $BaseUrl, '--model', $Model, '--state', $state, '--out', $candidate)
     if ($CheckOnly) { $runArgs += '--check-only' }
     if ($RetryFailed) { $runArgs += '--retry-failed' }
     & $pythonExe -X utf8 @runArgs
@@ -34,10 +35,10 @@ try {
     if (-not (Test-Path -LiteralPath $state)) { throw 'Run state is missing; refusing an unbound export.' }
     $savedState = Get-Content -LiteralPath $state -Raw -Encoding UTF8 | ConvertFrom-Json
     $candidateHash = (Get-FileHash -LiteralPath $candidate -Algorithm SHA256).Hash.ToLowerInvariant()
-    if ($savedState.output_sha256 -ne $candidateHash -or $savedState.status -notin @('completed', 'incomplete') -or $savedState.identity.test_mode) {
+    if ($savedState.output_sha256 -ne $candidateHash -or $savedState.status -notin @('completed', 'incomplete') -or $savedState.identity.test_mode -or $savedState.identity.config.model -ne $Model) {
         throw 'The candidate is not a verified output of this real control run.'
     }
-    $publishArgs = @('scripts/control_publish.py', '--dataset', $datasetPath, '--input', $candidate)
+    $publishArgs = @('scripts/control_publish.py', '--dataset', $datasetPath, '--input', $candidate, '--model', $Model)
     if ($Publish) { $publishArgs += '--publish' }
     & $pythonExe -X utf8 @publishArgs
     if ($LASTEXITCODE -ne 0) { throw 'Submission validation or publication failed. Saved evaluations remain available.' }

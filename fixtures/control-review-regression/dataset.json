@@ -1,0 +1,311 @@
+{
+  "error": "",
+  "isSuccess": true,
+  "data": {
+    "dataset_group_id": "SYNTHETIC-CONTROL-REVIEW-v1",
+    "total_records": 12,
+    "records": [
+      {
+        "conversation_id": "cr-ru-procedure",
+        "channel": "agent chat",
+        "language": "RU",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "Как в общем порядке запросить исправление адреса в анкете? В справке написано: «Если редактирование недоступно, отправьте обращение через раздел Помощь». Не прошу проверять мою анкету."
+          },
+          {
+            "timestamp": "00:10",
+            "speaker": "operator",
+            "text": "Здравствуйте, я Лев. Откройте анкету и проверьте, доступно ли редактирование адреса. Если доступно, внесите исправление; если нет, отправьте обращение через «Помощь», как указано в вашей справке."
+          },
+          {
+            "timestamp": "00:20",
+            "speaker": "client",
+            "text": "Порядок понятен, спасибо."
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "cr-ru-missing-clarified",
+        "channel": "agent chat",
+        "language": "RU",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "В каталоге есть два руководства: «Датчик Астер-1» и «Датчик Астер-2». Нужна инструкция именно для моего датчика, но модель я пока не указал."
+          },
+          {
+            "timestamp": "00:08",
+            "speaker": "operator",
+            "text": "Здравствуйте, я Вера. Какая модель написана на вашем датчике: Астер-1 или Астер-2?"
+          },
+          {
+            "timestamp": "00:18",
+            "speaker": "client",
+            "text": "Астер-2."
+          },
+          {
+            "timestamp": "00:23",
+            "speaker": "operator",
+            "text": "Откройте руководство «Датчик Астер-2»: название совпадает с указанной моделью."
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "cr-ru-missing-assumed",
+        "channel": "agent chat",
+        "language": "RU",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "В каталоге есть руководства «Насос Берег-3» и «Насос Берег-4». Нужна инструкция именно для моего насоса, но модель я пока не указал."
+          },
+          {
+            "timestamp": "00:08",
+            "speaker": "operator",
+            "text": "Здравствуйте, я Мирон. Откройте руководство «Насос Берег-4»."
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "cr-ru-hold-unwarned",
+        "channel": "agent chat",
+        "language": "RU",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "В публичном списке вижу «Запись лекции» и «Текст лекции». Мне нужен текст."
+          },
+          {
+            "timestamp": "00:06",
+            "speaker": "operator",
+            "text": "Здравствуйте, я Рада. Вы хотите открыть текст лекции."
+          },
+          {
+            "timestamp": "00:07",
+            "speaker": "system",
+            "text": "Оператор начал проверку раздела. Клиент переведён в ожидание ответа; оператор остаётся назначенным на диалог."
+          },
+          {
+            "timestamp": "03:20",
+            "speaker": "system",
+            "text": "Проверка оператором завершена. Ожидание клиента окончено."
+          },
+          {
+            "timestamp": "03:24",
+            "speaker": "operator",
+            "text": "Откройте «Текст лекции». Там находится нужный текст."
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "cr-kz-queue",
+        "channel": "agent chat",
+        "language": "KZ",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "Кітапхана сайтында «Оқу залының ережесі» деген сілтемені көріп тұрмын. Ережені қайдан ашамын?"
+          },
+          {
+            "timestamp": "00:03",
+            "speaker": "bot",
+            "text": "Қазір бос маман жоқ. Кезекте күте тұрыңыз, маман қосылғанда жауап береді."
+          },
+          {
+            "timestamp": "00:04",
+            "speaker": "system",
+            "text": "Клиент кезекке қойылды. Оператор әлі тағайындалмаған және диалогқа қосылмаған."
+          },
+          {
+            "timestamp": "08:30",
+            "speaker": "system",
+            "text": "Оператор диалогқа қосылды."
+          },
+          {
+            "timestamp": "08:34",
+            "speaker": "operator",
+            "text": "Сәлеметсіз бе! Менің атым — Нұрай. Ережені ашу үшін «Оқу залының ережесі» сілтемесін басыңыз."
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "cr-kz-hold-warned",
+        "channel": "agent chat",
+        "language": "KZ",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "Мұрағатта «Аудио жазба» және «Жазбаша нұсқа» бар. Маған жазбаша нұсқасы керек."
+          },
+          {
+            "timestamp": "00:06",
+            "speaker": "operator",
+            "text": "Сәлеметсіз бе! Менің атым — Саян. Бөлімді тексеру үшін біраз уақыт керек, өтінемін, жауапты күте тұрыңыз."
+          },
+          {
+            "timestamp": "00:07",
+            "speaker": "system",
+            "text": "Оператор бөлімді тексеруді бастады. Клиент оператордың жауабын күтіп отыр."
+          },
+          {
+            "timestamp": "03:20",
+            "speaker": "system",
+            "text": "Оператордың тексеруі және клиенттің күтуі аяқталды."
+          },
+          {
+            "timestamp": "03:24",
+            "speaker": "operator",
+            "text": "Күткеніңізге рақмет. «Жазбаша нұсқа» сілтемесін ашыңыз."
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "cr-kz-negated-wait",
+        "channel": "agent chat",
+        "language": "KZ",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "Мен жауапты күтіп отырған жоқпын, сұрағымды енді жаздым. Бетте «Күндізгі бағдарлама» және «Кешкі бағдарлама» бар. Маған кешкісі керек."
+          },
+          {
+            "timestamp": "00:08",
+            "speaker": "operator",
+            "text": "Сәлеметсіз бе! Менің атым — Әсем. Кешкі іс-шараларды көру үшін «Кешкі бағдарлама» сілтемесін ашыңыз."
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "cr-kz-missing-clarified",
+        "channel": "agent chat",
+        "language": "KZ",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "Тапсырыс формасында «Қағаз көшірме» және «Электрондық файл» деген екі нұсқа бар. Маған керегін таңдауға көмектесіңіз, бірақ қай түрде алғым келетінін әлі айтқан жоқпын."
+          },
+          {
+            "timestamp": "00:09",
+            "speaker": "operator",
+            "text": "Сәлеметсіз бе! Менің атым — Ермек. Құжатты қағаз түрінде ме, әлде электрондық файл ретінде алғыңыз келе ме?"
+          },
+          {
+            "timestamp": "00:17",
+            "speaker": "client",
+            "text": "Электрондық файл ретінде."
+          },
+          {
+            "timestamp": "00:23",
+            "speaker": "operator",
+            "text": "Онда «Электрондық файл» нұсқасын таңдаңыз."
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "cr-en-clock-gap",
+        "channel": "agent chat",
+        "language": "EN",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "The public page has a link called Visitor map. I want the map showing the rooms. Which link should I open?"
+          },
+          {
+            "timestamp": "09:10",
+            "speaker": "operator",
+            "text": "Hello, I am Rowan. Open Visitor map to see the room map."
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "cr-en-check-complete",
+        "channel": "agent chat",
+        "language": "EN",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "The directory shows a link named Transcript beside a link named Audio. I want the written version."
+          },
+          {
+            "timestamp": "00:08",
+            "speaker": "operator",
+            "text": "Hello, I am Tessa. I have checked the two labels you supplied: choose Transcript for the written version."
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "cr-en-missing-assumed",
+        "channel": "agent chat",
+        "language": "EN",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "There are setup guides for the Cedar scanner revision X and revision Y. I need the guide for my scanner, but I have not told you its revision."
+          },
+          {
+            "timestamp": "00:08",
+            "speaker": "operator",
+            "text": "Hello, I am Ellis. Use the Cedar revision Y setup guide."
+          }
+        ],
+        "audio_url": null
+      },
+      {
+        "conversation_id": "cr-en-hold-unwarned",
+        "channel": "agent chat",
+        "language": "EN",
+        "transcript": [
+          {
+            "timestamp": "00:00",
+            "speaker": "client",
+            "text": "The public collection page shows Captions and Image gallery. I need the written captions."
+          },
+          {
+            "timestamp": "00:06",
+            "speaker": "operator",
+            "text": "Hello, I am Maren. You need the written captions."
+          },
+          {
+            "timestamp": "00:07",
+            "speaker": "system",
+            "text": "The assigned operator began checking the collection page. The customer was placed on hold awaiting the operator response."
+          },
+          {
+            "timestamp": "03:20",
+            "speaker": "system",
+            "text": "The operator check completed and the customer hold ended."
+          },
+          {
+            "timestamp": "03:24",
+            "speaker": "operator",
+            "text": "Open Captions to read the written descriptions."
+          }
+        ],
+        "audio_url": null
+      }
+    ]
+  }
+}

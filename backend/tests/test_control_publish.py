@@ -74,6 +74,26 @@ class ControlPublishTests(unittest.TestCase):
         self.write()
         self.assertEqual(self.run_cli(), 2)
 
+    def test_sol_metadata_requires_explicit_matching_model(self):
+        self.assertEqual(self.run_cli("--model", "gpt-6.1-sol"), 2)
+        self.document["model"]["name"] = "gpt-6.1-sol"
+        self.write()
+        before = self.candidate.read_bytes()
+        self.assertEqual(self.run_cli(), 2)
+        self.assertEqual(self.run_cli("--model", "gpt-6-luna"), 2)
+        self.assertEqual(self.run_cli("--model", "gpt-6.1-sol"), 0)
+        self.assertEqual(self.candidate.read_bytes(), before)
+        self.assertEqual(list(self.root.iterdir()), [])
+        self.document["model"]["mode"] = "local"
+        self.write()
+        self.assertEqual(self.run_cli("--model", "gpt-6.1-sol"), 2)
+
+    def test_arbitrary_expected_model_is_rejected(self):
+        with self.assertRaises(SystemExit):
+            self.run_cli("--model", "arbitrary-model")
+        with self.assertRaisesRegex(ValueError, "Unsupported"):
+            control.validate_candidate(self.dataset, self.candidate, expected_model="arbitrary-model")
+
     def test_rejects_missing_duplicate_voice_and_mismatched_ids(self):
         original = deepcopy(self.source)
         for mutation in [lambda d: d["data"]["records"].pop(),

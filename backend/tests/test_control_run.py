@@ -1,12 +1,14 @@
 """Mechanical product-route checks only: these tests never call a model provider."""
 from copy import deepcopy
 from contextlib import redirect_stdout, redirect_stderr
+from datetime import datetime, timezone
 import io
 import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 import httpx
 from fastapi.testclient import TestClient
@@ -156,6 +158,52 @@ class ControlRunTests(unittest.TestCase):
         self.args.out = str(runner.ROOT / "results/prod/results.json")
         with self.assertRaises(runner.RunError):
             self.run_quietly()
+
+    def test_live_model_selection_is_explicit_and_keeps_configuration_guards(self):
+        config = {"mode": "live", "provider": "openai", "provider_configured": True,
+                  "model": "gpt-6-luna", "prompt_version": runner.PROMPT_VERSION,
+                  "api_style": "responses", "json_mode": "json_schema", "reasoning_effort": "high"}
+        self.assertEqual(runner.parser().parse_args(["--dataset", "source.json"]).model, "gpt-6-luna")
+        self.assertEqual(runner.checked_config(config)["model"], "gpt-6-luna")
+        with self.assertRaises(runner.RunError):
+            runner.checked_config(config, expected_model="gpt-6.1-sol")
+        config["model"] = "gpt-6.1-sol"
+        with self.assertRaises(runner.RunError):
+            runner.checked_config(config)
+        self.assertEqual(runner.checked_config(config, expected_model="gpt-6.1-sol")["model"], "gpt-6.1-sol")
+        for field, bad in [("mode", "test"), ("provider_configured", False),
+                           ("prompt_version", "old"), ("api_style", "chat_completions"),
+                           ("json_mode", "json_object"), ("reasoning_effort", "low")]:
+            with self.subTest(field=field), self.assertRaises(runner.RunError):
+                runner.checked_config({**config, field: bad}, expected_model="gpt-6.1-sol")
+        with self.assertRaises(runner.RunError):
+            runner.checked_config(config, expected_model="arbitrary-model")
+        with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+            runner.parser().parse_args(["--dataset", "source.json", "--model", "arbitrary-model"])
+
+    def test_explicit_sol_live_preflight_passes_without_dispatch_and_default_rejects(self):
+        self.dataset["data"]["dataset_group_id"] = "PROD"
+        self.source.write_text(json.dumps(self.dataset), encoding="utf-8")
+        self.args.allow_test_mode = False
+        self.args.check_only = True
+        self.args.model = "gpt-6.1-sol"
+        underlying = self.client
+        class LiveSolConfig:
+            def request(wrapper, method, path, **kwargs):
+                if path == "/api/config":
+                    return httpx.Response(200, json={"mode": "live", "provider": "openai",
+                        "provider_configured": True, "model": "gpt-6.1-sol",
+                        "prompt_version": runner.PROMPT_VERSION, "api_style": "responses",
+                        "json_mode": "json_schema", "reasoning_effort": "high"})
+                return underlying.request(method, path, **kwargs)
+        with patch.object(runner, "datetime", wraps=datetime) as clock:
+            clock.now.return_value = datetime(2026, 11, 8, 6, tzinfo=timezone.utc)
+            self.assertEqual(self.run_quietly(LiveSolConfig()), 0)
+            self.args.model = "gpt-6-luna"
+            with self.assertRaisesRegex(runner.RunError, "live gpt-6-luna"):
+                self.run_quietly(LiveSolConfig())
+        self.assertEqual(self.calls, 0)
+        self.assertFalse(Path(self.args.state).exists())
 
     def test_extra_existing_group_record_stops_before_paid_jobs(self):
         existing = deepcopy(self.dataset)

@@ -23,6 +23,7 @@ from evaluation.submission import _read, validate_submission
 TARGET = "results/prod/results.json"
 DEADLINE = datetime(2026, 11, 8, 7, 0, tzinfo=timezone.utc)
 COMMIT_MESSAGE = "Submit validated PROD results for SetW"
+CONTROL_MODELS = ("gpt-6-luna", "gpt-6.1-sol")
 
 
 def before_deadline() -> None:
@@ -30,7 +31,10 @@ def before_deadline() -> None:
         raise ValueError("Publication cutoff passed (2026-11-08 12:00 UTC+5); no new commit or push allowed")
 
 
-def validate_candidate(dataset_path: Path, input_path: Path, *, allow_errors: bool = False):
+def validate_candidate(dataset_path: Path, input_path: Path, *, allow_errors: bool = False,
+                       expected_model: str = "gpt-6-luna"):
+    if expected_model not in CONTROL_MODELS:
+        raise ValueError("Unsupported expected control model")
     dataset = DatasetExport.model_validate(_read(dataset_path))
     group = dataset.data.dataset_group_id
     if dataset.error.strip():
@@ -39,8 +43,8 @@ def validate_candidate(dataset_path: Path, input_path: Path, *, allow_errors: bo
         raise ValueError("DEV, test, or synthetic dataset groups cannot be published")
     conversations = normalize(dataset)
     document = _read(input_path)
-    if document.get("team_name") != "SetW" or document.get("model") != {"name": "gpt-6-luna", "mode": "external_api"}:
-        raise ValueError("Control metadata must be SetW / gpt-6-luna / external_api")
+    if document.get("team_name") != "SetW" or document.get("model") != {"name": expected_model, "mode": "external_api"}:
+        raise ValueError(f"Control metadata must be SetW / {expected_model} / external_api")
     report = validate_submission(document, conversations=conversations, split="prod")
     if report["errors"] and not allow_errors:
         raise ValueError("Export contains error rows; --allow-errors is required to publish them unchanged")
@@ -138,12 +142,15 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dataset", required=True, type=Path)
     parser.add_argument("--input", required=True, type=Path)
+    parser.add_argument("--model", choices=CONTROL_MODELS, default="gpt-6-luna",
+                        help="Expected model in the candidate metadata; must match exactly")
     parser.add_argument("--publish", action="store_true")
     parser.add_argument("--allow-errors", action="store_true", help="Explicitly preserve and submit visible error rows")
     args = parser.parse_args(argv)
     try:
         protect_paths(ROOT, args.dataset, args.input)
-        document, report = validate_candidate(args.dataset, args.input, allow_errors=args.allow_errors)
+        document, report = validate_candidate(args.dataset, args.input, allow_errors=args.allow_errors,
+                                              expected_model=args.model)
         report["dry_run"] = not args.publish
         if args.publish:
             report.update(publish(ROOT, document, args.dataset, args.input))

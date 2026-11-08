@@ -118,6 +118,7 @@ code { overflow-wrap: anywhere; font-size: .92em; }
 }
 .button.primary { background: var(--primary); color: white; }
 .button.primary:hover:not(:disabled) { background: var(--primary-hover); }
+.button.primary:disabled { opacity:1; background:#e1e6eb; color:#697581; border-color:#cbd3dc; }
 .button.secondary {
   background: var(--surface);
   border-color: var(--control-line);
@@ -669,7 +670,7 @@ body:has(.queue-resize-handle[data-resizing=true]) { cursor: col-resize; user-se
   overflow-y: auto;
   overscroll-behavior: contain;
   scroll-padding-block: 54px 6px;
-  background: var(--subsurface);
+  background: var(--surface);
 }
 .assessment-actions {
   position: sticky;
@@ -679,23 +680,22 @@ body:has(.queue-resize-handle[data-resizing=true]) { cursor: col-resize; user-se
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 7px;
-  min-height: 53px;
-  padding: 9px 13px;
-  background: var(--subsurface);
+  gap: 10px;
+  min-height: 64px;
+  padding: 14px 20px;
+  background: var(--surface);
 }
 .assessment-actions h2 { font-size: 16px; }
 .history-select {
-  display: flex;
-  align-items: center;
+  display: grid;
   gap: 8px;
-  margin: 0 13px 9px;
+  margin: 0 20px 20px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
 }
 .history-select > span { flex-shrink: 0; }
-.history-select .select-trigger { min-height: 34px; font-size: 12px; padding: 5px 7px; }
+.history-select .select-trigger { min-height: 40px; font-size: 13px; padding: 8px 10px; }
 .history-select .select-trigger > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .assessment-empty { padding: 26px 18px; border-top: 1px solid var(--line); color: var(--muted); }
 .assessment-empty h3 { margin: 9px 0 5px; color: var(--text); }

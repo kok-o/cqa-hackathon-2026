@@ -129,7 +129,7 @@ def main() -> None:
             page.goto(base)
             page.wait_for_load_state('networkidle')
             expect(page.get_by_role('heading', level=1, name=re.compile(r'^Диалоги'))).to_be_visible()
-            choose_select(select_control(page, 'Версия чек-листа'), json.dumps(['synthetic-checklist', 1], separators=(',', ':')))
+            choose_select(select_control(page, 'Чек-лист'), json.dumps(['synthetic-checklist', 1], separators=(',', ':')))
             set_filters_open(page, True)
             choose_select(select_control(page, 'Набор'), group)
             set_filters_open(page, False)

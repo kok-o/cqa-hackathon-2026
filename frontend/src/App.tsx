@@ -134,6 +134,11 @@ export default function App() {
   const selectedChecklist =
     checklists.find((item) => checklistKey(item) === selectedChecklistKey) ??
     checklists[0];
+  const latestChecklistVersions = useMemo(() => {
+    const latest = new Map<string, number>();
+    for (const item of checklists) latest.set(item.checklist_id, Math.max(latest.get(item.checklist_id) ?? 0, item.version));
+    return latest;
+  }, [checklists]);
   const selectedSummary = conversations.find(
     (item) => conversationKey(item) === selectedKey,
   );
@@ -552,7 +557,7 @@ export default function App() {
     setSelectedChecklistKey(current => current === baseKey ? checklistKey(value) : current);
     setNoticeKind("success");
     setNotice(
-      `Чек-лист «${value.title}» v${value.version} сохранён. Выберите эту версию для следующей оценки.`,
+      `Чек-лист «${value.title}» сохранён.`,
     );
   }
 
@@ -709,9 +714,9 @@ export default function App() {
           </h1>
           <div className="toolbar-actions">
             <label className="checklist-select">
-              <span className="checklist-label">{tab === "review" ? "Чек-лист для запуска" : tab === "summary" ? "Чек-лист для сводки" : "Версия для редактирования"}</span>
+              <span className="checklist-label">Чек-лист</span>
               <Select
-                aria-label="Версия чек-листа"
+                aria-label="Чек-лист"
                 value={selectedChecklist ? checklistKey(selectedChecklist) : ""}
                 onChange={(event) => setSelectedChecklistKey(event.target.value)}
                 disabled={!checklists.length}
@@ -719,13 +724,12 @@ export default function App() {
                   <span className="version-selection">
                     <ClipboardList size={15} aria-hidden="true" />
                     <span title={selectedChecklist.title}>{selectedChecklist.title}</span>
-                    <strong>v{selectedChecklist.version}</strong>
                   </span>
                 ) : initialLoading ? "Загружаем…" : "Чек-лист недоступен"}
               >
                 {checklists.map((item) => (
                   <option value={checklistKey(item)} key={checklistKey(item)}>
-                    {item.title} — v{item.version}
+                    {item.title}{item.version < (latestChecklistVersions.get(item.checklist_id) ?? item.version) ? ` · архив ${item.version}` : ""}
                   </option>
                 ))}
               </Select>
@@ -918,7 +922,7 @@ export default function App() {
             <div className="onboarding-steps">
               <h3>Как проходит проверка</h3>
               <ol>
-                <li><strong>Выберите правила</strong><span>Укажите версию чек-листа для запуска.</span></li>
+                <li><strong>Выберите правила</strong><span>Укажите чек-лист для оценки.</span></li>
                 <li><strong>Запустите оценку</strong><span>Оцените один диалог или всю выборку.</span></li>
                 <li><strong>Проверьте выводы</strong><span>Откройте цитаты из диалога и при необходимости подайте апелляцию.</span></li>
               </ol>
@@ -1125,7 +1129,7 @@ export default function App() {
                 </div>
                 {evaluations.length > 0 && (
                   <label className="history-select">
-                    <span>История запусков</span>
+                    <span>История оценок</span>
                     <Select
                       aria-label="История оценок"
                       value={evaluationId}
@@ -1137,7 +1141,7 @@ export default function App() {
                           key={item.evaluation_id}
                           value={item.evaluation_id}
                         >
-                          {date(item.created_at)} · v{item.checklist.version} ·{" "}
+                          {date(item.created_at)} ·{" "}
                           {number(item.score.total, 2)}
                         </option>
                       ))}
@@ -1168,7 +1172,7 @@ export default function App() {
                     <h3>{evaluations.length ? "Открыт текущий диалог" : "Диалог ещё не оценён"}</h3>
                     <p>
                       {selectedChecklist
-                        ? `Для следующего запуска выбрана версия v${selectedChecklist.version} (${selectedChecklist.criteria.length} критериев).`
+                        ? `${selectedChecklist.criteria.length} критериев для оценки.`
                         : "Выберите чек-лист для оценки."}
                     </p>
                     <button

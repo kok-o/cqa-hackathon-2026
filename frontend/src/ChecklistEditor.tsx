@@ -327,6 +327,7 @@ export default function ChecklistEditor({ checklist, versionKey, visible, onSave
           Источник
           <Select
             value={draft.provenance}
+            selectedLabel={draft.provenance === "organizer" ? "Организаторы" : "Свой чек-лист"}
             onChange={(event) => updateDraft((current) => ({
               dirty: true,
               checklist: { ...current.checklist, provenance: event.target.value as ChecklistVersion["provenance"] },
@@ -706,24 +707,21 @@ export default function ChecklistEditor({ checklist, versionKey, visible, onSave
         </div>
       </div>
       <footer className="editor-save-bar">
-        <div className={`editor-save-status${dirty ? " dirty" : ""}`} role="status">
-          <strong>{dirty ? "Черновик" : `Версия v${checklist.version}`}</strong>
-          <span>{dirty ? `Изменения на основе v${checklist.version} ещё не сохранены.` : "Сохраните изменения отдельной версией для нового запуска."}</span>
-        </div>
+        {dirty && <div className="editor-save-status dirty" role="status">Есть несохранённые изменения</div>}
         <div className="editor-save-actions">
           <button
             className="button secondary"
             onClick={() => void save(true)}
             disabled={busy}
           >
-            <Copy size={16} /> Сохранить как новый
+            <Copy size={16} /> Сохранить копию
           </button>
           <button
             className="button primary"
             onClick={() => void save(false)}
             disabled={busy}
           >
-            <Save size={16} /> {busy ? "Сохраняем…" : "Сохранить новую версию"}
+            <Save size={16} /> {busy ? "Сохраняем…" : "Сохранить изменения"}
           </button>
         </div>
       </footer>

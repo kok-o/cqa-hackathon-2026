@@ -102,7 +102,7 @@ export default function QualitySummary({ groups, initialGroup, checklistId, vers
             <div><dt>Без оценки</dt><dd>{data.unrated}</dd></div>
           </dl>
           {data.without_points > 0 ? <p className="quality-note">Без применимых баллов — {data.without_points}.</p> : null}
-          {data.total === data.unrated ? <p className="quality-state">У этого набора ещё нет оценок по выбранной версии чек-листа.</p> : (
+          {data.total === data.unrated ? <p className="quality-state">У этого набора ещё нет оценок по выбранному чек-листу.</p> : (
             <>
               <div className="quality-critical">
                 <h2>{data.critical.length > 0 ? <AlertTriangle size={16} aria-hidden="true" /> : null} Грубые нарушения <strong>{data.critical.length}</strong></h2>

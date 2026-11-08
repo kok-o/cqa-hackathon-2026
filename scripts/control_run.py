@@ -296,9 +296,13 @@ def run(args, client=None):
                 model_name=config["model"], split="prod", approved_checklist=checklist)
             exported = api.request("GET", "/api/submission/export", params={"group_id": dataset.data.dataset_group_id,
                 "model_name": config["model"], "split": "prod", "team_name": team, "model_mode": mode}, finalizing=True)
-            if exported != expected:
-                raise RunError("Product export differs from this run's job snapshots; no staged output was replaced.")
             report = validate_submission(exported, conversations=conversations, split="prod")
+            # Storage exports in ID order; organizer inputs may use another order.
+            # Validate unique/full coverage first, then ignore only outer record order.
+            canonical_export = {**exported, "results": sorted(exported["results"], key=lambda item: item["conversation_id"])}
+            canonical_expected = {**expected, "results": sorted(expected["results"], key=lambda item: item["conversation_id"])}
+            if canonical_export != canonical_expected:
+                raise RunError("Product export differs from this run's job snapshots; no staged output was replaced.")
             atomic_json(args.out, exported)
             state.update(status="completed" if report["errors"] == 0 and stopped is None else "incomplete", report=report,
                          output_sha256=sha256(args.out.read_bytes()).hexdigest(), stopped_reason=stopped)

@@ -88,6 +88,29 @@ class ControlRunTests(unittest.TestCase):
                 with self.assertRaises(runner.RunError):
                     runner.load_dataset(self.source, True)
 
+    def test_source_order_can_differ_from_product_export_order(self):
+        self.dataset["data"]["records"].reverse()
+        self.source.write_text(json.dumps(self.dataset), encoding="utf-8")
+        self.assertEqual(self.run_quietly(), 0)
+        self.assertEqual(self.calls, 10)
+        self.assertEqual(runner._read(self.args.state)["report"]["ok"], 10)
+        output_ids = [record["conversation_id"] for record in runner._read(self.args.out)["results"]]
+        self.assertNotEqual(output_ids, [record["conversation_id"] for record in self.dataset["data"]["records"]])
+
+    def test_export_comparison_still_rejects_changed_content(self):
+        underlying = self.client
+        class ChangeExportRationale:
+            def request(wrapper, method, path, **kwargs):
+                response = underlying.request(method, path, **kwargs)
+                if path == "/api/submission/export":
+                    document = response.json()
+                    document["results"][0]["criteria"][0]["rationale"] = "Changed after evaluation"
+                    return httpx.Response(200, json=document)
+                return response
+        with self.assertRaisesRegex(runner.RunError, "differs from this run"):
+            self.run_quietly(ChangeExportRationale())
+        self.assertFalse(Path(self.args.out).exists())
+
     def test_changed_source_or_config_rejects_resume(self):
         self.assertEqual(self.run_quietly(), 0)
         self.dataset["data"]["records"][0]["transcript"][0]["text"] = "Changed source"
